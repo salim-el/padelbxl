@@ -75,8 +75,8 @@ export default function Home({ prices }: { prices: Price[] }) {
 
                 <header className={NAVY}>
                     <nav aria-label="Navigation principale" className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-                        <Link href="/" aria-label="PadelArena, accueil">
-                            <img src="/images/logo-fond-sombre.webp" alt="PadelArena" className="h-12 w-auto" />
+                        <Link href="/" aria-label="PadelBxl, accueil">
+                            <img src="/images/logo-fond-sombre.webp" alt="PadelBxl" className="h-12 w-auto" />
                         </Link>
                         <ul className="hidden items-center gap-6 text-sm font-semibold md:flex">
                             <li>
@@ -177,9 +177,9 @@ export default function Home({ prices }: { prices: Price[] }) {
                                     <p className="font-mono text-sm tracking-widest text-[#C8E64A] uppercase">Mode arcade</p>
                                     <h2 className="mt-2 text-3xl font-extrabold uppercase md:text-4xl">Votre match devient une partie</h2>
                                     <p className="mt-4 max-w-2xl text-[#F7F6F1]/80">
-                                        Des bordures LED encastrées sous le gazon dessinent des zones sur chacun des six terrains. Les règles restent
-                                        celles du padel : avant certains points, une zone s’allume au même endroit dans les deux camps et change la
-                                        valeur du point.
+                                        Des bandes LED au pied des parois signalent des zones sur chacun des six terrains. Le jeu reste le padel, avec
+                                        des règles de score propres au mode : avant certains points, une zone s’allume au même endroit dans les deux
+                                        camps et change la valeur du point.
                                     </p>
                                 </div>
                                 <Photo
