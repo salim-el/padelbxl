@@ -1,4 +1,4 @@
-# PadelArena
+# PadelBxl
 
 Application de réservation de terrains pour l'Arena Padel Club (6 terrains, Anderlecht).
 Épreuve intégrée, Bachelier en informatique de gestion, ICC Bruxelles, 2026-2027.
@@ -46,7 +46,7 @@ Mot de passe : `Padeltfeicc2026#`. Réservé à la démonstration.
 
 ## Tests
 
-Les tests tournent sur une base PostgreSQL nommée `padelarena_test`.
+Les tests tournent sur une base PostgreSQL nommée `padelbxl_test`.
 
 ```bash
 php artisan test

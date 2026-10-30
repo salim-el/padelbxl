@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "salim-el/padelarena",
+    "name": "salim-el/padelbxl",
     "type": "project",
-    "description": "PadelArena : réservation de terrains de padel, accès par QR code et mode Arcade.",
+    "description": "PadelBxl : réservation de terrains de padel, accès par QR code et mode Arcade.",
     "keywords": [
         "laravel",
         "padel",
@@ -10,7 +10,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.4",
+        "php": "^8.4.27",
         "chillerlan/php-qrcode": "^6.0",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^13.0",
