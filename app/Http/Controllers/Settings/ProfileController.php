@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\Booking;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,8 +52,16 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        // Une réservation à venir doit d'abord être annulée, pour que les règles de remboursement s'appliquent.
+        $upcoming = Booking::where('organizer_id', $user->id)->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->exists();
+        if ($upcoming) {
+            return back()->withErrors(['password' => 'Annulez d’abord vos réservations à venir.']);
+        }
+
         Auth::logout();
 
+        // Soft delete : réservations et factures restent liées au compte, anonymisé après 30 jours (accounts:anonymize).
+        $user->forceFill(['status' => 'deactivated'])->save();
         $user->delete();
 
         $request->session()->invalidate();

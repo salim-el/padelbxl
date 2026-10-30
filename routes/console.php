@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('bookings:expire-holds')->everyMinute();
+Schedule::command('accounts:anonymize')->dailyAt('03:00');
