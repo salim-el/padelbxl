@@ -39,7 +39,7 @@ class Booking extends Model
 
     public function organizer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'organizer_id');
+        return $this->belongsTo(User::class, 'organizer_id')->withTrashed();
     }
 
     public function players(): HasMany
