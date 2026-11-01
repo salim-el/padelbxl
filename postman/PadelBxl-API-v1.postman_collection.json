@@ -1,0 +1,83 @@
+{
+  "info": {
+    "name": "PadelBxl API v1",
+    "description": "API des logiciels partenaires de PadelBxl. Lancer « Connexion joueur » d'abord : le jeton est gardé dans la variable token. Le jeton d'appareil (terminalToken) se crée avec php artisan api:partner-token <e-mail du gérant> \"LED terrain 1\".",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000/api/v1" },
+    { "key": "token", "value": "" },
+    { "key": "terminalToken", "value": "" },
+    { "key": "bookingId", "value": "" },
+    { "key": "courtId", "value": "1" },
+    { "key": "date", "value": "2026-11-20" }
+  ],
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        { "name": "Terrains", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/courts" } },
+        { "name": "Créneaux d'un jour", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/availability?date={{date}}" } }
+      ]
+    },
+    {
+      "name": "Joueur",
+      "item": [
+        {
+          "name": "Connexion joueur",
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('201', () => pm.response.to.have.status(201));", "pm.collectionVariables.set('token', pm.response.json().token);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"lucas.martin@example.test\",\n  \"password\": \"<mot de passe de démonstration>\",\n  \"device_name\": \"Postman\"\n}" },
+            "url": "{{baseUrl}}/tokens"
+          }
+        },
+        { "name": "Mon profil", "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] }, "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/me" } },
+        {
+          "name": "Changer nom et langue",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Lucas Martin\",\n  \"locale\": \"nl\"\n}" },
+            "url": "{{baseUrl}}/me"
+          }
+        },
+        { "name": "Mes réservations", "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] }, "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/bookings" } },
+        {
+          "name": "Réserver un créneau",
+          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) pm.collectionVariables.set('bookingId', pm.response.json().data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"court_id\": {{courtId}},\n  \"starts_at\": \"{{date}}T19:30:00+01:00\"\n}" },
+            "url": "{{baseUrl}}/bookings"
+          }
+        },
+        { "name": "Une réservation", "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] }, "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/bookings/{{bookingId}}" } },
+        { "name": "Annuler une réservation", "request": { "method": "DELETE", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] }, "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/bookings/{{bookingId}}" } },
+        { "name": "Sans jeton (401)", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/bookings" } },
+        { "name": "Déconnexion (révoque le jeton)", "request": { "method": "DELETE", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] }, "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/tokens/current" } }
+      ]
+    },
+    {
+      "name": "Appareils du club",
+      "item": [
+        { "name": "Partie en cours (contrôleur LED)", "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{terminalToken}}" }] }, "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/terminal/courts/{{courtId}}/current" } },
+        {
+          "name": "Valider un QR (lecteur d'entrée)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{terminalToken}}" }] },
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"court_id\": {{courtId}},\n  \"token\": \"<contenu du QR>\"\n}" },
+            "url": "{{baseUrl}}/terminal/access"
+          }
+        },
+        { "name": "Jeton joueur refusé (403)", "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] }, "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/terminal/courts/{{courtId}}/current" } }
+      ]
+    }
+  ]
+}
