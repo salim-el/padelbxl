@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
+import { useT } from '@/lib/i18n';
 
 interface LoginForm {
     email: string;
@@ -24,6 +25,7 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
+    const t = useT();
     // Erreur posée par le serveur avant l'affichage, par exemple un compte suspendu déconnecté.
     const pageErrors = usePage<{ errors: Record<string, string> }>().props.errors;
     const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
@@ -41,12 +43,12 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
     return (
         <AuthLayout title="Connexion à votre compte" description="Entrez votre adresse e-mail et votre mot de passe">
-            <Head title="Connexion" />
+            <Head title={t('Connexion')} />
 
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Adresse e-mail</Label>
+                        <Label htmlFor="email">{t('Adresse e-mail')}</Label>
                         <Input
                             id="email"
                             type="email"
@@ -56,17 +58,17 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             autoComplete="email"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
-                            placeholder="prenom.nom@exemple.be"
+                            placeholder={t('prenom.nom@exemple.be')}
                         />
                         <InputError message={errors.email ?? pageErrors.email} />
                     </div>
 
                     <div className="grid gap-2">
                         <div className="flex items-center">
-                            <Label htmlFor="password">Mot de passe</Label>
+                            <Label htmlFor="password">{t('Mot de passe')}</Label>
                             {canResetPassword && (
                                 <TextLink href={route('password.request')} className="ml-auto text-sm" tabIndex={5}>
-                                    Mot de passe oublié ?
+                                    {t('Mot de passe oublié ?')}
                                 </TextLink>
                             )}
                         </div>
@@ -77,26 +79,26 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             autoComplete="current-password"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
-                            placeholder="Mot de passe"
+                            placeholder={t('Mot de passe')}
                         />
                         <InputError message={errors.password} />
                     </div>
 
                     <div className="flex items-center space-x-3">
                         <Checkbox id="remember" name="remember" tabIndex={3} />
-                        <Label htmlFor="remember">Rester connecté</Label>
+                        <Label htmlFor="remember">{t('Rester connecté')}</Label>
                     </div>
 
                     <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Se connecter
+                        {t('Se connecter')}
                     </Button>
                 </div>
 
                 <div className="text-muted-foreground text-center text-sm">
-                    Pas encore de compte ?{' '}
+                    {t('Pas encore de compte ?')}{' '}
                     <TextLink href={route('register')} tabIndex={5}>
-                        Créer un compte
+                        {t('Créer un compte')}
                     </TextLink>
                 </div>
             </form>

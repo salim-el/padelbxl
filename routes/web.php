@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\KioskController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PlanningController;
 use App\Models\PricingRule;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,7 @@ Route::get('/', fn () => Inertia::render('home', [
 // Le tableau de bord du kit mène au planning, cœur du produit.
 
 Route::get('planning', PlanningController::class)->name('planning');
+Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
