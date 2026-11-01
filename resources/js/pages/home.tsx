@@ -1,3 +1,5 @@
+import LanguageSwitcher from '@/components/language-switcher';
+import { useT } from '@/lib/i18n';
 import { euros } from '@/lib/money';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -42,27 +44,32 @@ function Photo({
 }
 
 function Step({ icon: Icon, title, text }: { icon: typeof CalendarDays; title: string; text: string }) {
+    const t = useT();
+
     return (
         <li className="rounded-xl border border-[#DAD7CC] bg-white p-6">
             <Icon className="size-8 text-[#1D5C7A]" aria-hidden />
-            <h3 className="mt-3 text-lg font-bold">{title}</h3>
-            <p className="mt-1 text-[#5F6B78]">{text}</p>
+            <h3 className="mt-3 text-lg font-bold">{t(title)}</h3>
+            <p className="mt-1 text-[#5F6B78]">{t(text)}</p>
         </li>
     );
 }
 
 export default function Home({ prices }: { prices: Price[] }) {
     const { auth } = usePage<SharedData>().props;
+    const t = useT();
     const from = Math.min(...prices.map((p) => p.price_cents));
     const classic = prices.filter((p) => !p.is_arena);
     const arena = prices.filter((p) => p.is_arena);
 
     return (
         <>
-            <Head title="Padel indoor à Anderlecht">
+            <Head title={t('Padel indoor à Anderlecht')}>
                 <meta
                     name="description"
-                    content="Six terrains de padel couverts à Anderlecht, tous jouables en mode arcade avec zones lumineuses. Réservation en ligne, paiement sécurisé, accès par QR code."
+                    content={t(
+                        'Six terrains de padel couverts à Anderlecht, tous jouables en mode arcade avec zones lumineuses. Réservation en ligne, paiement sécurisé, accès par QR code.',
+                    )}
                 />
             </Head>
             <div className="min-h-screen bg-[#F7F6F1] text-[#0E1B2C]">
@@ -70,56 +77,60 @@ export default function Home({ prices }: { prices: Price[] }) {
                     href="#contenu"
                     className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2"
                 >
-                    Aller au contenu
+                    {t('Aller au contenu')}
                 </a>
 
                 <header className={NAVY}>
-                    <nav aria-label="Navigation principale" className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-                        <Link href="/" aria-label="PadelBxl, accueil">
+                    <nav
+                        aria-label={t('Navigation principale')}
+                        className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4"
+                    >
+                        <Link href="/" aria-label={t('PadelBxl, accueil')}>
                             <img src="/images/logo-fond-sombre.webp" alt="PadelBxl" className="h-12 w-auto" />
                         </Link>
                         <ul className="hidden items-center gap-6 text-sm font-semibold md:flex">
                             <li>
                                 <a href="#arena" className="hover:text-[#C8E64A]">
-                                    Mode arcade
+                                    {t('Mode arcade')}
                                 </a>
                             </li>
                             <li>
                                 <a href="#comment" className="hover:text-[#C8E64A]">
-                                    Comment ça marche
+                                    {t('Comment ça marche')}
                                 </a>
                             </li>
                             <li>
                                 <a href="#tarifs" className="hover:text-[#C8E64A]">
-                                    Tarifs
+                                    {t('Tarifs')}
                                 </a>
                             </li>
                             <li>
                                 <Link href="/planning" className="hover:text-[#C8E64A]">
-                                    Planning
+                                    {t('Planning')}
                                 </Link>
                             </li>
                         </ul>
                         <div className="flex items-center gap-3">
+                            <LanguageSwitcher />
                             {auth.user ? (
                                 <Link href="/bookings" className="text-sm font-semibold hover:text-[#C8E64A]">
-                                    Mon espace
+                                    {t('Mon espace')}
                                 </Link>
                             ) : (
                                 <>
                                     <Link href="/login" className="text-sm font-semibold hover:text-[#C8E64A]">
-                                        Connexion
+                                        {t('Connexion')}
                                     </Link>
                                     <Link
                                         href="/register"
                                         className="rounded-lg border border-[#F7F6F1]/40 px-4 py-2 text-sm font-semibold transition hover:bg-white/10"
                                     >
-                                        Inscription
+                                        {t('Inscription')}
                                     </Link>
                                 </>
                             )}
                             <Link href="/planning" className={`${CTA} px-4 py-2 text-sm`}>
-                                Réserver
+                                {t('Réserver')}
                             </Link>
                         </div>
                     </nav>
@@ -131,29 +142,30 @@ export default function Home({ prices }: { prices: Price[] }) {
                         <div className="absolute inset-0 bg-gradient-to-r from-[#0E1B2C] via-[#0E1B2C]/85 to-[#0E1B2C]/20" aria-hidden />
                         <div className="relative mx-auto max-w-6xl px-4 pt-20 pb-32 md:pt-28 md:pb-40">
                             <div className="max-w-2xl">
-                                <p className="font-mono text-sm tracking-widest text-[#C8E64A] uppercase">Nouveau · Sur les 6 terrains</p>
+                                <p className="font-mono text-sm tracking-widest text-[#C8E64A] uppercase">{t('Nouveau · Sur les 6 terrains')}</p>
                                 <h1 className="mt-3 text-4xl leading-tight font-extrabold uppercase md:text-6xl">
-                                    Le padel,
+                                    {t('Le padel,')}
                                     <br />
-                                    <span className="text-[#C8E64A]">version arcade.</span>
+                                    <span className="text-[#C8E64A]">{t('version arcade.')}</span>
                                 </h1>
                                 <p className="mt-5 max-w-xl text-lg text-[#F7F6F1]/85">
-                                    Six terrains couverts à Anderlecht. En mode Arcade, des zones s’allument au sol et changent la valeur des points :
-                                    point double, faute ou points Arena.
+                                    {t(
+                                        'Six terrains couverts à Anderlecht. En mode Arcade, des zones s’allument au sol et changent la valeur des points : point double, faute ou points Arena.',
+                                    )}
                                 </p>
                                 <div className="mt-8 flex flex-wrap gap-3">
                                     <Link href="/planning" className={CTA}>
-                                        Réserver un terrain
+                                        {t('Réserver un terrain')}
                                     </Link>
                                     <a href="#arena" className={GHOST}>
-                                        Découvrir le mode arcade
+                                        {t('Découvrir le mode arcade')}
                                     </a>
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    <section aria-label="Le club en chiffres" className="relative z-10 mx-auto -mt-10 max-w-6xl px-4">
+                    <section aria-label={t('Le club en chiffres')} className="relative z-10 mx-auto -mt-10 max-w-6xl px-4">
                         <dl className="grid grid-cols-2 gap-3 rounded-2xl bg-white p-6 shadow-lg md:grid-cols-4">
                             {[
                                 ['6', 'terrains couverts'],
@@ -163,8 +175,8 @@ export default function Home({ prices }: { prices: Price[] }) {
                             ].map(([value, label]) => (
                                 <div key={label} className="text-center">
                                     <dt className="sr-only">{label}</dt>
-                                    <dd className="text-2xl font-extrabold text-[#0E1B2C] md:text-3xl">{value}</dd>
-                                    <dd className="text-sm text-[#5F6B78]">{label}</dd>
+                                    <dd className="text-2xl font-extrabold text-[#0E1B2C] md:text-3xl">{t(value)}</dd>
+                                    <dd className="text-sm text-[#5F6B78]">{t(label)}</dd>
                                 </div>
                             ))}
                         </dl>
@@ -174,18 +186,18 @@ export default function Home({ prices }: { prices: Price[] }) {
                         <div className="mx-auto max-w-6xl px-4">
                             <div className="grid items-center gap-10 md:grid-cols-2">
                                 <div>
-                                    <p className="font-mono text-sm tracking-widest text-[#C8E64A] uppercase">Mode arcade</p>
-                                    <h2 className="mt-2 text-3xl font-extrabold uppercase md:text-4xl">Votre match devient une partie</h2>
+                                    <p className="font-mono text-sm tracking-widest text-[#C8E64A] uppercase">{t('Mode arcade')}</p>
+                                    <h2 className="mt-2 text-3xl font-extrabold uppercase md:text-4xl">{t('Votre match devient une partie')}</h2>
                                     <p className="mt-4 max-w-2xl text-[#F7F6F1]/80">
-                                        Des bandes LED au pied des parois signalent des zones sur chacun des six terrains. Le jeu reste le padel, avec
-                                        des règles de score propres au mode : avant certains points, une zone s’allume au même endroit dans les deux
-                                        camps et change la valeur du point.
+                                        {t(
+                                            'Des bandes LED au pied des parois signalent des zones sur chacun des six terrains. Le jeu reste le padel, avec des règles de score propres au mode : avant certains points, une zone s’allume au même endroit dans les deux camps et change la valeur du point.',
+                                        )}
                                     </p>
                                 </div>
                                 <Photo
                                     name="arena"
                                     sizes="(min-width: 768px) 50vw, 100vw"
-                                    alt="Balle qui rebondit dans une zone lumineuse verte, sur un terrain en mode arcade éclairé par des LED"
+                                    alt={t('Balle qui rebondit dans une zone lumineuse verte, sur un terrain en mode arcade éclairé par des LED')}
                                     className="aspect-video w-full rounded-2xl object-cover shadow-[0_0_40px_rgba(200,230,74,0.25)]"
                                 />
                             </div>
@@ -209,30 +221,32 @@ export default function Home({ prices }: { prices: Price[] }) {
                                 ].map(({ icon: Icon, title, text }) => (
                                     <li key={title} className="rounded-xl border border-[#C8E64A]/30 bg-[#17304A] p-6">
                                         <Icon className="size-8 text-[#C8E64A]" aria-hidden />
-                                        <h3 className="mt-3 text-xl font-bold">{title}</h3>
-                                        <p className="mt-2 text-[#F7F6F1]/80">{text}</p>
+                                        <h3 className="mt-3 text-xl font-bold">{t(title)}</h3>
+                                        <p className="mt-2 text-[#F7F6F1]/80">{t(text)}</p>
                                     </li>
                                 ))}
                             </ul>
                             <p className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[#F7F6F1]/80">
                                 <span className="flex items-center gap-2">
-                                    <span className="inline-block size-3 shrink-0 rounded-sm bg-[#F2C94C]" aria-hidden /> zone Or : point double
+                                    <span className="inline-block size-3 shrink-0 rounded-sm bg-[#F2C94C]" aria-hidden />{' '}
+                                    {t('zone Or : point double')}
                                 </span>
                                 <span className="flex items-center gap-2">
-                                    <span className="inline-block size-3 shrink-0 rounded-sm bg-[#CC3342]" aria-hidden /> zone Rouge : faute
+                                    <span className="inline-block size-3 shrink-0 rounded-sm bg-[#CC3342]" aria-hidden /> {t('zone Rouge : faute')}
                                 </span>
                                 <span className="flex items-center gap-2">
-                                    <span className="inline-block size-3 shrink-0 rounded-sm bg-[#4A90D9]" aria-hidden /> zone Bleue : points Arena
+                                    <span className="inline-block size-3 shrink-0 rounded-sm bg-[#4A90D9]" aria-hidden />{' '}
+                                    {t('zone Bleue : points Arena')}
                                 </span>
                             </p>
                             <Link href="/planning" className={`${CTA} mt-8`}>
-                                Réserver en mode arcade
+                                {t('Réserver en mode arcade')}
                             </Link>
                         </div>
                     </section>
 
                     <section id="comment" className="mx-auto max-w-6xl px-4 py-20">
-                        <h2 className="text-3xl font-extrabold uppercase">Comment ça marche</h2>
+                        <h2 className="text-3xl font-extrabold uppercase">{t('Comment ça marche')}</h2>
                         <ol className="mt-8 grid gap-4 md:grid-cols-3">
                             <Step
                                 icon={CalendarDays}
@@ -254,15 +268,15 @@ export default function Home({ prices }: { prices: Price[] }) {
 
                     <section id="tarifs" className="bg-white py-20">
                         <div className="mx-auto max-w-6xl px-4">
-                            <h2 className="text-3xl font-extrabold uppercase">Tarifs</h2>
+                            <h2 className="text-3xl font-extrabold uppercase">{t('Tarifs')}</h2>
                             <p className="mt-2 text-[#5F6B78]">
-                                Prix par terrain et par créneau de 90 minutes, TVA de 6 % comprise. À partager entre les joueurs.
+                                {t('Prix par terrain et par créneau de 90 minutes, TVA de 6 % comprise. À partager entre les joueurs.')}
                             </p>
                             <div className="mt-8 grid gap-4 md:grid-cols-2">
                                 {[
-                                    { title: 'Mode classique', rows: classic, highlight: false },
+                                    { title: t('Mode classique'), rows: classic, highlight: false },
                                     {
-                                        title: `Mode arcade (+${euros((arena[0]?.price_cents ?? 0) - (classic[0]?.price_cents ?? 0))})`,
+                                        title: `${t('Mode arcade')} (+${euros((arena[0]?.price_cents ?? 0) - (classic[0]?.price_cents ?? 0))})`,
                                         rows: arena,
                                         highlight: true,
                                     },
@@ -276,7 +290,7 @@ export default function Home({ prices }: { prices: Price[] }) {
                                             {rows.map((p) => (
                                                 <li key={p.name} className="flex justify-between py-3">
                                                     <span>
-                                                        {p.name.replace('Arena ', '').replace(/^./, (c) => c.toUpperCase())} · {p.start} – {p.end}
+                                                        {t(p.name.replace('Arena ', '').replace(/^./, (c) => c.toUpperCase()))} · {p.start} – {p.end}
                                                     </span>
                                                     <strong>{euros(p.price_cents)}</strong>
                                                 </li>
@@ -292,10 +306,10 @@ export default function Home({ prices }: { prices: Price[] }) {
                         <Photo name="joueurs" alt="" className="absolute inset-0 h-full w-full object-cover" />
                         <div className="absolute inset-0 bg-[#0E1B2C]/75" aria-hidden />
                         <div className="relative">
-                            <h2 className="text-3xl font-extrabold uppercase md:text-4xl">Prêt à jouer ?</h2>
-                            <p className="mt-3 text-[#F7F6F1]/80">Les créneaux du soir partent vite. Réservez en moins d’une minute.</p>
+                            <h2 className="text-3xl font-extrabold uppercase md:text-4xl">{t('Prêt à jouer ?')}</h2>
+                            <p className="mt-3 text-[#F7F6F1]/80">{t('Les créneaux du soir partent vite. Réservez en moins d’une minute.')}</p>
                             <Link href="/planning" className={`${CTA} mt-6`}>
-                                Voir les créneaux libres
+                                {t('Voir les créneaux libres')}
                             </Link>
                         </div>
                     </section>
@@ -303,13 +317,13 @@ export default function Home({ prices }: { prices: Price[] }) {
 
                 <footer className="bg-[#0A1420] py-8 text-sm text-[#F7F6F1]/70">
                     <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-4 px-4">
-                        <p>Arena Padel Club · Anderlecht, Bruxelles</p>
-                        <nav aria-label="Liens du pied de page" className="flex gap-4">
+                        <p>{t('Arena Padel Club · Anderlecht, Bruxelles')}</p>
+                        <nav aria-label={t('Liens du pied de page')} className="flex gap-4">
                             <Link href="/planning" className="hover:text-[#C8E64A]">
-                                Planning
+                                {t('Planning')}
                             </Link>
                             <Link href={auth.user ? '/bookings' : '/login'} className="hover:text-[#C8E64A]">
-                                {auth.user ? 'Mes réservations' : 'Connexion'}
+                                {auth.user ? t('Mes réservations') : t('Connexion')}
                             </Link>
                         </nav>
                     </div>
