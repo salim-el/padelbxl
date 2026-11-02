@@ -29,7 +29,8 @@ const MONTHS: Record<string, string> = {
     novembre: 'nov.',
     décembre: 'déc.',
 };
-export const shortMonth = (m: string | undefined) => (m ? (MONTHS[m] ?? m) : '');
+// En néerlandais et en anglais, les trois premières lettres du mois suffisent (okt, Oct).
+export const shortMonth = (m: string | undefined) => (m ? (MONTHS[m] ?? m.slice(0, 3)) : '');
 
 export const GAME_MODES: Record<string, { label: string; text: string }> = {
     classic: { label: 'Classique', text: 'Un match de padel normal, sans supplément.' },

@@ -1,6 +1,7 @@
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
@@ -19,11 +20,12 @@ const sidebarNavItems: NavItem[] = [
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+    const t = useT();
     const currentPath = window.location.pathname;
 
     return (
         <div className="px-4 py-6">
-            <Heading title="Paramètres" description="Gérez votre profil et votre compte" />
+            <Heading title={t('Paramètres')} description={t('Gérez votre profil et votre compte')} />
 
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
@@ -39,7 +41,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                                 })}
                             >
                                 <Link href={item.url} prefetch>
-                                    {item.title}
+                                    {t(item.title)}
                                 </Link>
                             </Button>
                         ))}

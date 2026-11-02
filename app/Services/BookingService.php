@@ -45,18 +45,18 @@ class BookingService
     public function hold(User $user, Court $court, CarbonImmutable $startUtc): Booking
     {
         if ($user->status !== 'active' || $user->email_verified_at === null) {
-            throw new BookingException('Votre compte doit être actif et votre e-mail confirmé pour réserver.');
+            throw new BookingException(__('Votre compte doit être actif et votre e-mail confirmé pour réserver.'));
         }
         if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::SLOTS, true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
-            throw new BookingException('Ce créneau n’existe pas ou n’est plus réservable.');
+            throw new BookingException(__('Ce créneau n’existe pas ou n’est plus réservable.'));
         }
         $rule = $this->slots->priceFor($startUtc);
         if ($rule === null || ! $court->is_active) {
-            throw new BookingException('Ce terrain n’est pas réservable à cette heure.');
+            throw new BookingException(__('Ce terrain n’est pas réservable à cette heure.'));
         }
         $end = $startUtc->addMinutes(Clock::SLOT_MINUTES);
         if (CourtClosure::where('court_id', $court->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc)->exists()) {
-            throw new BookingException('Ce terrain est fermé sur ce créneau.');
+            throw new BookingException(__('Ce terrain est fermé sur ce créneau.'));
         }
 
         $this->expireHolds();
@@ -64,7 +64,7 @@ class BookingService
         return DB::transaction(function () use ($user, $court, $startUtc, $rule) {
             $active = Booking::where('organizer_id', $user->id)->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->count();
             if ($active >= self::MAX_ACTIVE) {
-                throw new BookingException('Vous avez déjà trois réservations à venir.');
+                throw new BookingException(__('Vous avez déjà trois réservations à venir.'));
             }
             try {
                 // Point de sauvegarde : un refus de la contrainte ne casse pas la transaction englobante.
@@ -84,7 +84,7 @@ class BookingService
             } catch (QueryException $e) {
                 // 23P01 : la contrainte d'exclusion refuse un chevauchement.
                 if ($e->getCode() === '23P01') {
-                    throw new BookingException('Ce créneau vient d’être réservé par quelqu’un d’autre.');
+                    throw new BookingException(__('Ce créneau vient d’être réservé par quelqu’un d’autre.'));
                 }
                 throw $e;
             }
@@ -102,10 +102,10 @@ class BookingService
         return DB::transaction(function () use ($booking, $user, $gameMode, $items) {
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ($user->status !== 'active') {
-                throw new BookingException('Votre compte est suspendu. Le paiement est refusé.');
+                throw new BookingException(__('Votre compte est suspendu. Le paiement est refusé.'));
             }
             if ($booking->status !== 'pending_payment' || $booking->hold_expires_at?->isPast()) {
-                throw new BookingException('Les dix minutes sont écoulées. Le créneau a été libéré, rien n’a été débité.');
+                throw new BookingException(__('Les dix minutes sont écoulées. Le créneau a été libéré, rien n’a été débité.'));
             }
             $player = $booking->players()->where('is_organizer', true)->firstOrFail();
             // Un mode arcade remplace le prix classique par le tarif arcade du même créneau (+14 €).
@@ -113,7 +113,7 @@ class BookingService
                 $rule = $this->slots->priceFor($booking->starts_at, true);
                 $supplement = $this->slots->arcadeSupplement($booking->starts_at);
                 if ($rule === null || $supplement === null) {
-                    throw new BookingException('Le mode arcade n’est pas disponible sur ce créneau.');
+                    throw new BookingException(__('Le mode arcade n’est pas disponible sur ce créneau.'));
                 }
                 // Le supplément s'ajoute au prix déjà bloqué, remise flash comprise.
                 $price = $booking->price_cents + $supplement;
@@ -180,10 +180,10 @@ class BookingService
         return DB::transaction(function () use ($booking, $user) {
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ($booking->status !== 'confirmed') {
-                throw new BookingException('Cette réservation ne peut plus être annulée.');
+                throw new BookingException(__('Cette réservation ne peut plus être annulée.'));
             }
             if (! $booking->starts_at->isFuture()) {
-                throw new BookingException('Le créneau a commencé. Seule une demande exceptionnelle reste possible.');
+                throw new BookingException(__('Le créneau a commencé. Seule une demande exceptionnelle reste possible.'));
             }
             $refundable = now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS));
             if ($refundable) {
@@ -223,13 +223,13 @@ class BookingService
         // Verrouiller les articles évite que deux paiements simultanés louent la même raquette.
         $products = Product::whereIn('id', array_keys($items))->where('is_active', true)->lockForUpdate()->get()->keyBy('id');
         foreach ($items as $productId => $quantity) {
-            $product = $products->get($productId) ?? throw new BookingException('Cet article n’est plus proposé.');
+            $product = $products->get($productId) ?? throw new BookingException(__('Cet article n’est plus proposé.'));
             $used = (int) BookingItem::where('product_id', $product->id)
                 ->whereHas('booking', fn ($q) => $q->whereIn('status', Booking::ACTIVE)->where('id', '!=', $booking->id)
                     ->where('starts_at', '<', $booking->ends_at)->where('ends_at', '>', $booking->starts_at))
                 ->sum('quantity');
             if ($product->kind === 'rental' && $used + $quantity > $product->stock) {
-                throw new BookingException("Plus assez de « {$product->name} » sur ce créneau : il en reste ".max(0, $product->stock - $used).'.');
+                throw new BookingException(__('Plus assez de « :product » sur ce créneau : il en reste :left.', ['product' => $product->name, 'left' => max(0, $product->stock - $used)]));
             }
             $reserved[] = BookingItem::create(['booking_id' => $booking->id, 'product_id' => $product->id, 'quantity' => $quantity, 'unit_price_cents' => $product->price_cents, 'vat_rate' => $product->vat_rate])->setRelation('product', $product);
         }
