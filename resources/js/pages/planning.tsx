@@ -1,5 +1,6 @@
 import { PageHeader } from '@/components/page-header';
 import AppLayout from '@/layouts/app-layout';
+import { useT } from '@/lib/i18n';
 import { euros, ucfirst } from '@/lib/money';
 import { type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -14,8 +15,9 @@ const NAV =
     'inline-flex size-9 items-center justify-center rounded-lg border border-[#F7F6F1]/30 text-[#F7F6F1] transition hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent';
 
 export default function Planning({ date, today, max, courts, rows, arcade_supplement_cents }: Props) {
-    const { auth, errors } = usePage<SharedData & { errors: Record<string, string> }>().props;
-    const label = new Date(`${date}T12:00:00`).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+    const t = useT();
+    const { auth, errors, locale } = usePage<SharedData & { errors: Record<string, string> }>().props;
+    const label = new Date(`${date}T12:00:00`).toLocaleDateString(`${locale}-BE`, { weekday: 'long', day: 'numeric', month: 'long' });
 
     const goTo = (d: string) => router.get('/planning', { date: d }, { preserveScroll: true, preserveState: true });
     // Décalage en jours sur la date locale, sans passer par le fuseau UTC.
@@ -37,16 +39,22 @@ export default function Planning({ date, today, max, courts, rows, arcade_supple
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Planning', href: '/planning' }]}>
-            <Head title="Planning" />
+        <AppLayout breadcrumbs={[{ title: t('Planning'), href: '/planning' }]}>
+            <Head title={t('Planning')} />
             <div className="flex flex-col gap-5 p-4">
-                <PageHeader eyebrow="Réserver un terrain" title="Choisissez un créneau">
+                <PageHeader eyebrow={t('Réserver un terrain')} title={t('Choisissez un créneau')}>
                     <div className="flex items-center gap-2">
-                        <button type="button" className={NAV} disabled={date <= today} onClick={() => goTo(shift(-1))} aria-label="Jour précédent">
+                        <button
+                            type="button"
+                            className={NAV}
+                            disabled={date <= today}
+                            onClick={() => goTo(shift(-1))}
+                            aria-label={t('Jour précédent')}
+                        >
                             <ChevronLeft className="size-5" />
                         </button>
                         <label className="sr-only" htmlFor="date">
-                            Date
+                            {t('Date')}
                         </label>
                         <input
                             id="date"
@@ -57,7 +65,7 @@ export default function Planning({ date, today, max, courts, rows, arcade_supple
                             className="rounded-lg border border-[#F7F6F1]/30 bg-[#17304A] px-3 py-1.5 text-[#F7F6F1] [color-scheme:dark]"
                             onChange={(e) => /^20\d{2}-\d{2}-\d{2}$/.test(e.target.value) && goTo(e.target.value)}
                         />
-                        <button type="button" className={NAV} disabled={date >= max} onClick={() => goTo(shift(1))} aria-label="Jour suivant">
+                        <button type="button" className={NAV} disabled={date >= max} onClick={() => goTo(shift(1))} aria-label={t('Jour suivant')}>
                             <ChevronRight className="size-5" />
                         </button>
                     </div>
@@ -65,7 +73,7 @@ export default function Planning({ date, today, max, courts, rows, arcade_supple
 
                 {errors.date && (
                     <p role="alert" className="rounded-lg border border-[#9E2833]/30 bg-[#FCE6E8] p-3 text-sm text-[#9E2833]">
-                        Choisissez une date entre aujourd’hui et le {max.split('-').reverse().join('/')}.
+                        {t('Choisissez une date entre aujourd’hui et le :date.', { date: max.split('-').reverse().join('/') })}
                     </p>
                 )}
                 {errors.booking && (
@@ -81,7 +89,7 @@ export default function Planning({ date, today, max, courts, rows, arcade_supple
                             <thead>
                                 <tr>
                                     <th className="w-20 px-2 py-1 text-left align-bottom text-xs font-semibold tracking-wide text-[#5F6B78] uppercase">
-                                        Créneau
+                                        {t('Créneau')}
                                     </th>
                                     {courts.map((c) => (
                                         <th key={c.id} className="px-2 py-1 text-left align-bottom">
@@ -107,16 +115,16 @@ export default function Planning({ date, today, max, courts, rows, arcade_supple
                                                     >
                                                         {euros(cell.price_cents)}
                                                         {cell.flash ? (
-                                                            <span className="block text-[11px] font-bold">flash −20 %</span>
+                                                            <span className="block text-[11px] font-bold">{t('flash −20 %')}</span>
                                                         ) : (
                                                             cell.off_peak && (
-                                                                <span className="block text-[11px] font-normal opacity-80">heure creuse</span>
+                                                                <span className="block text-[11px] font-normal opacity-80">{t('heure creuse')}</span>
                                                             )
                                                         )}
                                                     </button>
                                                 ) : (
                                                     <span className="flex h-14 items-center justify-center rounded-lg border border-dashed border-[#DAD7CC] px-2 text-center text-xs text-[#6B7480]">
-                                                        {cell.past ? 'Passé' : cell.closed ? 'Fermé' : 'Complet'}
+                                                        {t(cell.past ? 'Passé' : cell.closed ? 'Fermé' : 'Complet')}
                                                     </span>
                                                 )}
                                             </td>
@@ -130,26 +138,27 @@ export default function Planning({ date, today, max, courts, rows, arcade_supple
 
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#5F6B78]">
                     <span className="flex items-center gap-2">
-                        <span className="size-3 rounded-sm border border-[#DAD7CC] bg-white" aria-hidden /> Heure pleine
+                        <span className="size-3 rounded-sm border border-[#DAD7CC] bg-white" aria-hidden /> {t('Heure pleine')}
                     </span>
                     <span className="flex items-center gap-2">
-                        <span className="size-3 rounded-sm bg-[#E3F0F7]" aria-hidden /> Heure creuse
+                        <span className="size-3 rounded-sm bg-[#E3F0F7]" aria-hidden /> {t('Heure creuse')}
                     </span>
                     <span className="flex items-center gap-2">
-                        <span className="size-3 rounded-sm bg-[#FCE6E8] ring-1 ring-[#CC3342]/40" aria-hidden /> Flash : −20 % à moins de 3 h du début
+                        <span className="size-3 rounded-sm bg-[#FCE6E8] ring-1 ring-[#CC3342]/40" aria-hidden />{' '}
+                        {t('Flash : −20 % à moins de 3 h du début')}
                     </span>
                     <span className="flex items-center gap-2">
-                        <span className="size-3 rounded-sm bg-[#0E1B2C] ring-1 ring-[#C8E64A]" aria-hidden /> Mode arcade sur tous les terrains : +
-                        {euros(arcade_supplement_cents)} au paiement
+                        <span className="size-3 rounded-sm bg-[#0E1B2C] ring-1 ring-[#C8E64A]" aria-hidden />{' '}
+                        {t('Mode arcade sur tous les terrains : +:price au paiement', { price: euros(arcade_supplement_cents) })}
                     </span>
-                    <span>Prix TTC par créneau de 90 minutes, TVA de 6 % comprise. Annulation remboursée jusqu’à 24 h avant.</span>
+                    <span>{t('Prix TTC par créneau de 90 minutes, TVA de 6 % comprise. Annulation remboursée jusqu’à 24 h avant.')}</span>
                 </div>
                 {!auth.user && (
                     <p className="text-sm">
                         <Link href="/login" className="font-semibold underline">
-                            Connectez-vous
+                            {t('Connectez-vous')}
                         </Link>{' '}
-                        pour réserver.
+                        {t('pour réserver.')}
                     </p>
                 )}
             </div>
