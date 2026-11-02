@@ -52,6 +52,23 @@ class ApiTest extends TestCase
         $this->getJson('/api/v1/availability?date=2026-12-31')->assertUnprocessable();
     }
 
+    public function test_open_data_lists_only_free_slots_without_personal_data(): void
+    {
+        $taken = $this->confirmedBooking($this->lucas, 1, '2026-10-23', '19:30');
+
+        $response = $this->get('/api/v1/opendata/slots.jsonld?date=2026-10-23')->assertOk()
+            ->assertHeader('Content-Type', 'application/ld+json')
+            ->assertJsonPath('license', 'https://creativecommons.org/licenses/by/4.0/')
+            ->assertJsonCount(Court::where('is_active', true)->count(), 'items');
+
+        $court1 = collect($response->json('items'))->firstWhere('name', 'Terrain 1');
+        $this->assertNotContains($taken->starts_at->toIso8601String(), array_column($court1['event'], 'startDate'));
+        $this->assertCount(count(Clock::SLOTS) - 1, $court1['event']);
+        $this->assertStringNotContainsString('lucas', strtolower($response->getContent()));
+
+        $this->getJson('/api/v1/opendata/slots.jsonld?date=2025-01-01')->assertUnprocessable();
+    }
+
     public function test_private_routes_need_a_token(): void
     {
         $this->getJson('/api/v1/bookings')->assertUnauthorized();

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\BookingController;
 use App\Http\Controllers\Api\V1\CourtController;
 use App\Http\Controllers\Api\V1\MeController;
+use App\Http\Controllers\Api\V1\OpenDataController;
 use App\Http\Controllers\Api\V1\TerminalController;
 use App\Http\Controllers\Api\V1\TokenController;
 use App\Http\Middleware\EnsureAccountIsActive;
@@ -13,6 +14,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Route::get('courts', [CourtController::class, 'index'])->name('courts.index');
         Route::get('availability', [CourtController::class, 'availability'])->name('availability');
+        Route::get('opendata/slots.jsonld', [OpenDataController::class, 'slots'])->name('opendata.slots');
     });
     Route::post('tokens', [TokenController::class, 'store'])->middleware('throttle:5,1')->name('tokens.store');
 
