@@ -21,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Cahier des charges : 15 caractères minimum, sans règle de composition imposée.
-        Password::defaults(fn () => Password::min(15)->max(128));
+        // Refus des mots de passe déjà fuités (Have I Been Pwned, k-anonymat : seuls 5 caractères de l'empreinte SHA-1 partent).
+        Password::defaults(fn () => Password::min(15)->max(128)->uncompromised());
     }
 }
