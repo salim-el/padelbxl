@@ -10,6 +10,7 @@ use App\Services\Clock;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
@@ -94,5 +95,45 @@ class ActivityLogTest extends TestCase
         $token = $this->postJson('/api/v1/tokens', ['email' => 'lucas.martin@example.test', 'password' => DatabaseSeeder::DEMO_PASSWORD, 'device_name' => 'tests'])->json('token');
 
         $this->assertStringNotContainsString(explode('|', $token)[1], json_encode(Activity::sole()->toArray()));
+    }
+
+    public function test_the_manager_reads_the_log_newest_first_with_author_and_detail(): void
+    {
+        $rule = PricingRule::where('is_arena', true)->firstOrFail();
+        $old = $rule->price_cents;
+        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend");
+        $this->actingAs($this->marc)->patch("/admin/pricing-rules/{$rule->id}", ['price_cents' => $old + 500]);
+
+        $this->actingAs($this->marc)->get('/admin/journal')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('admin/journal')
+            ->where('entries.total', 2)
+            ->where('entries.data.0.event', 'price-updated')
+            ->where('entries.data.0.causer', $this->marc->name)
+            ->where('entries.data.0.subject', $rule->name)
+            ->where('entries.data.0.details', number_format($old / 100, 2, ',', ' ').' € → '.number_format(($old + 500) / 100, 2, ',', ' ').' €')
+            ->where('entries.data.1.subject', $this->lucas->name));
+    }
+
+    public function test_the_log_can_be_filtered_and_keeps_deleted_closures_readable(): void
+    {
+        $court = Court::where('name', 'Terrain 2')->firstOrFail();
+        $this->actingAs($this->marc)->post('/admin/closures', ['court_id' => $court->id, 'from' => '2026-12-01T08:00', 'to' => '2026-12-01T12:00', 'reason' => 'Entretien']);
+        $this->actingAs($this->marc)->delete('/admin/closures/'.CourtClosure::sole()->id);
+        $this->postJson('/api/v1/tokens', ['email' => 'lucas.martin@example.test', 'password' => DatabaseSeeder::DEMO_PASSWORD, 'device_name' => 'tests']);
+
+        $this->actingAs($this->marc)->get('/admin/journal?log=staff')->assertInertia(fn (Assert $page) => $page
+            ->where('entries.total', 2)
+            ->where('entries.data.0.event', 'closure-deleted')
+            ->where('entries.data.0.subject', 'Terrain 2')
+            ->where('entries.data.0.details', '01/12/2026 08:00 → 01/12/2026 12:00'));
+        $this->actingAs($this->marc)->get('/admin/journal?log=api')->assertInertia(fn (Assert $page) => $page
+            ->where('entries.total', 1)
+            ->where('entries.data.0.causer', $this->lucas->name));
+    }
+
+    public function test_players_cannot_read_the_log(): void
+    {
+        $this->actingAs($this->lucas)->get('/admin/journal')->assertForbidden();
+        $this->actingAs($this->marc)->get('/admin/journal?log=autre')->assertSessionHasErrors('log');
     }
 }
