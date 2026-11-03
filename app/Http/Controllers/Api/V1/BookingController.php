@@ -17,7 +17,7 @@ class BookingController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $items = Booking::with('court')->where('organizer_id', $request->user()->id)->orderByDesc('starts_at')->limit(50)->get();
+        $items = Booking::with('court')->where('organizer_id', $request->user()->id)->whereNull('walk_in_name')->orderByDesc('starts_at')->limit(50)->get();
 
         return response()->json(['data' => $items->map(fn ($b) => $this->present($b))->all()]);
     }
