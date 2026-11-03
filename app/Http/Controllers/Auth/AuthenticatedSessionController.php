@@ -31,6 +31,16 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        // Personnel avec double authentification : on retient le compte et on demande le code avant d'ouvrir la session.
+        if ($request->user()->hasTwoFactor()) {
+            $remember = $request->boolean('remember');
+            $id = $request->user()->id;
+            Auth::guard('web')->logout();
+            $request->session()->put(['login.id' => $id, 'login.remember' => $remember, 'login.at' => now()->timestamp]);
+
+            return to_route('two-factor.login');
+        }
+
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));

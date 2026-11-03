@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { type NavItem, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
 
 const sidebarNavItems: NavItem[] = [
     {
@@ -22,6 +22,9 @@ const sidebarNavItems: NavItem[] = [
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
     const t = useT();
     const currentPath = window.location.pathname;
+    const { auth } = usePage<SharedData>().props;
+    const isStaff = ['manager', 'admin'].includes(String(auth.user?.role));
+    const items = isStaff ? [...sidebarNavItems, { title: 'Double authentification', url: '/settings/two-factor', icon: null }] : sidebarNavItems;
 
     return (
         <div className="px-4 py-6">
@@ -30,7 +33,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav className="flex flex-col space-y-1 space-x-0">
-                        {sidebarNavItems.map((item) => (
+                        {items.map((item) => (
                             <Button
                                 key={item.url}
                                 size="sm"
