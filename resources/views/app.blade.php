@@ -8,7 +8,8 @@
 
         {{-- Charte T10 : police système, aucune police téléchargée chez un tiers. --}}
 
-        @routes
+        {{-- Le nonce est créé ici, avant @vite, pour que Vite le pose aussi sur ses balises. --}}
+        @routes(nonce: app('csp-nonce'))
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         @inertiaHead
