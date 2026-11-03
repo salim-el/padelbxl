@@ -17,7 +17,8 @@
       "name": "Public",
       "item": [
         { "name": "Terrains", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/courts" } },
-        { "name": "Créneaux d'un jour", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/availability?date={{date}}" } }
+        { "name": "Créneaux d'un jour", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/availability?date={{date}}" } },
+        { "name": "Données ouvertes (JSON-LD OpenActive)", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/ld+json" }], "url": "{{baseUrl}}/opendata/slots.jsonld?date={{date}}" } }
       ]
     },
     {
