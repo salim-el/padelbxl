@@ -184,3 +184,12 @@
         0 0 5px #c8e64a;
     transform: rotate(3deg) translate(0, -4px);
 }
+
+/* Impression (ticket du comptoir, réservation) : seule la page sort, sans menu, fil d'Ariane ni message de confirmation. */
+@media print {
+    [data-side],
+    header,
+    [role='status'] {
+        display: none !important;
+    }
+}
