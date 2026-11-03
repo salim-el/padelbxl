@@ -20,6 +20,7 @@ class PartnerToken extends Command
             return self::FAILURE;
         }
         $token = $owner->createToken($this->argument('name'), ['terminal'], now()->addYear());
+        activity('api')->causedBy($owner)->performedOn($token->accessToken)->event('device-token-created')->log('Jeton d’appareil créé');
         // Le jeton en clair ne s'affiche qu'une fois : seule son empreinte est gardée en base.
         $this->line($token->plainTextToken);
 

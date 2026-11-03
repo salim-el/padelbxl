@@ -32,13 +32,16 @@ class TokenController extends Controller
         }
         $expires = now()->addDays(self::PLAYER_TOKEN_DAYS);
         $token = $user->createToken($data['device_name'], ['bookings'], $expires);
+        activity('api')->causedBy($user)->performedOn($token->accessToken)->event('token-created')->log('Jeton API créé');
 
         return response()->json(['token' => $token->plainTextToken, 'abilities' => ['bookings'], 'expires_at' => $expires->toIso8601String()], 201);
     }
 
     public function destroy(Request $request): Response
     {
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()->currentAccessToken();
+        $token->delete();
+        activity('api')->causedBy($request->user())->performedOn($token)->event('token-revoked')->log('Jeton API révoqué');
 
         return response()->noContent();
     }
