@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('bookings/{booking}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
     Route::post('bookings/{booking}/pay', [BookingController::class, 'pay'])->name('bookings.pay');
     Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('bookings/{booking}/invoices/{invoice:number}/ubl', [BookingController::class, 'ubl'])->scopeBindings()->name('bookings.invoices.ubl');
     Route::post('bookings/{booking}/rematch', [BookingController::class, 'rematch'])->middleware('throttle:10,1')->name('bookings.rematch');
     Route::get('kiosk', [KioskController::class, 'show'])->name('kiosk');
     Route::post('kiosk', [KioskController::class, 'validateToken'])->middleware('throttle:30,1')->name('kiosk.validate');
