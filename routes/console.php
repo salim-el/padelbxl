@@ -10,3 +10,5 @@ Artisan::command('inspire', function () {
 
 Schedule::command('bookings:expire-holds')->everyMinute();
 Schedule::command('accounts:anonymize')->dailyAt('03:00');
+// Le journal des actions sensibles n'est gardé qu'un an (minimisation RGPD).
+Schedule::command('activitylog:clean')->dailyAt('03:30');
