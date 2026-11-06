@@ -62,7 +62,7 @@ class BookingController extends Controller
             return back()->withErrors(['booking' => $e->getMessage()]);
         }
 
-        return to_route('bookings.show', $booking)->with('success', 'Réservation confirmée. Votre facture est disponible.');
+        return to_route('bookings.show', $booking)->with('success', __('Réservation confirmée. Votre facture est disponible.'));
     }
 
     public function show(Request $request, Booking $booking): Response
@@ -109,8 +109,8 @@ class BookingController extends Controller
             return back()->withErrors(['booking' => $e->getMessage()]);
         }
         $message = $booking->status === 'cancelled_refunded'
-            ? 'Réservation annulée et remboursée. Une note de crédit a été émise.'
-            : 'Réservation annulée. Moins de 24 h avant le match, elle n’est pas remboursée.';
+            ? __('Réservation annulée et remboursée. Une note de crédit a été émise.')
+            : __('Réservation annulée. Moins de 24 h avant le match, elle n’est pas remboursée.');
 
         return to_route('bookings.show', $booking)->with('success', $message);
     }
@@ -129,7 +129,7 @@ class BookingController extends Controller
             'id' => $b->public_id,
             'court' => $b->court->name,
             'is_arena' => $b->is_arena,
-            'date' => $start->locale('fr')->isoFormat('dddd D MMMM YYYY'),
+            'date' => $start->locale(app()->getLocale())->isoFormat(__('dddd D MMMM YYYY')),
             'time' => $start->format('H:i').' – '.Clock::local($b->ends_at)->format('H:i'),
             'status' => $b->status,
             'price_cents' => $b->price_cents,
@@ -137,7 +137,7 @@ class BookingController extends Controller
             'hold_expires_at' => $b->hold_expires_at?->toIso8601String(),
             // Faux à moins de 24 h du match : l'annulation n'est plus remboursée.
             'refundable' => now()->lte($b->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS)),
-            'free_cancellation_until' => Clock::local($b->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS))->locale('fr')->isoFormat('dddd D MMMM [à] HH:mm'),
+            'free_cancellation_until' => Clock::local($b->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS))->locale(app()->getLocale())->isoFormat(__('dddd D MMMM [à] HH:mm')),
             'cancellable' => $b->status === 'confirmed' && $b->starts_at->isFuture(),
             'game_mode' => $b->game_mode,
             'arcade_price_cents' => ($supplement = app(SlotService::class)->arcadeSupplement($b->starts_at)) === null ? null : $b->price_cents + $supplement,
