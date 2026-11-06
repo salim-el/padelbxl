@@ -23,6 +23,8 @@ createInertiaApp({
     progress: {
         // Barre de chargement en vert balle, l'accent de la charte T10.
         color: '#C8E64A',
+        // Le style de la barre est dans app.css : une balise <style> injectée serait bloquée par la CSP.
+        includeCSS: false,
     },
 });
 
