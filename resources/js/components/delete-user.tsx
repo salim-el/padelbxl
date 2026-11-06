@@ -11,8 +11,10 @@ import { Label } from '@/components/ui/label';
 import HeadingSmall from '@/components/heading-small';
 
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useT } from '@/lib/i18n';
 
 export default function DeleteUser() {
+    const t = useT();
     const passwordInput = useRef<HTMLInputElement>(null);
     const { data, setData, delete: destroy, processing, reset, errors, clearErrors } = useForm({ password: '' });
 
@@ -34,27 +36,28 @@ export default function DeleteUser() {
 
     return (
         <div className="space-y-6">
-            <HeadingSmall title="Supprimer le compte" description="Supprimer votre compte et les données qui y sont liées" />
+            <HeadingSmall title={t('Supprimer le compte')} description={t('Supprimer votre compte et les données qui y sont liées')} />
             <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
                 <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                    <p className="font-medium">Attention</p>
-                    <p className="text-sm">Cette action est définitive.</p>
+                    <p className="font-medium">{t('Attention')}</p>
+                    <p className="text-sm">{t('Cette action est définitive.')}</p>
                 </div>
 
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Button variant="destructive">Supprimer le compte</Button>
+                        <Button variant="destructive">{t('Supprimer le compte')}</Button>
                     </DialogTrigger>
                     <DialogContent>
-                        <DialogTitle>Voulez-vous vraiment supprimer votre compte ?</DialogTitle>
+                        <DialogTitle>{t('Voulez-vous vraiment supprimer votre compte ?')}</DialogTitle>
                         <DialogDescription>
-                            Vos données personnelles seront effacées. Les factures déjà émises restent conservées 7 ans, comme la loi l’impose. Entrez
-                            votre mot de passe pour confirmer.
+                            {t(
+                                'Vos données personnelles seront effacées. Les factures déjà émises restent conservées 7 ans, comme la loi l’impose. Entrez votre mot de passe pour confirmer.',
+                            )}
                         </DialogDescription>
                         <form className="space-y-6" onSubmit={deleteUser}>
                             <div className="grid gap-2">
                                 <Label htmlFor="password" className="sr-only">
-                                    Mot de passe
+                                    {t('Mot de passe')}
                                 </Label>
 
                                 <PasswordInput
@@ -63,7 +66,7 @@ export default function DeleteUser() {
                                     ref={passwordInput}
                                     value={data.password}
                                     onChange={(e) => setData('password', e.target.value)}
-                                    placeholder="Mot de passe"
+                                    placeholder={t('Mot de passe')}
                                     autoComplete="current-password"
                                 />
 
@@ -73,12 +76,12 @@ export default function DeleteUser() {
                             <DialogFooter>
                                 <DialogClose asChild>
                                     <Button variant="secondary" onClick={closeModal}>
-                                        Annuler
+                                        {t('Annuler')}
                                     </Button>
                                 </DialogClose>
 
                                 <Button variant="destructive" disabled={processing} asChild>
-                                    <button type="submit">Supprimer le compte</button>
+                                    <button type="submit">{t('Supprimer le compte')}</button>
                                 </Button>
                             </DialogFooter>
                         </form>

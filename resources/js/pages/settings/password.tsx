@@ -11,6 +11,7 @@ import { PasswordInput } from '@/components/password-input';
 import { Button } from '@/components/ui/button';
 
 import { Label } from '@/components/ui/label';
+import { useT } from '@/lib/i18n';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -20,6 +21,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Password() {
+    const t = useT();
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
@@ -51,18 +53,18 @@ export default function Password() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Mot de passe" />
+            <Head title={t('Mot de passe')} />
 
             <SettingsLayout>
                 <div className="space-y-6">
                     <HeadingSmall
-                        title="Changer de mot de passe"
-                        description="Choisissez un mot de passe long et unique pour protéger votre compte"
+                        title={t('Changer de mot de passe')}
+                        description={t('Choisissez un mot de passe long et unique pour protéger votre compte')}
                     />
 
                     <form onSubmit={updatePassword} className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="current_password">Mot de passe actuel</Label>
+                            <Label htmlFor="current_password">{t('Mot de passe actuel')}</Label>
 
                             <PasswordInput
                                 id="current_password"
@@ -71,14 +73,14 @@ export default function Password() {
                                 onChange={(e) => setData('current_password', e.target.value)}
                                 className="mt-1 block w-full"
                                 autoComplete="current-password"
-                                placeholder="Mot de passe actuel"
+                                placeholder={t('Mot de passe actuel')}
                             />
 
                             <InputError message={errors.current_password} />
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Nouveau mot de passe</Label>
+                            <Label htmlFor="password">{t('Nouveau mot de passe')}</Label>
 
                             <PasswordInput
                                 id="password"
@@ -87,14 +89,14 @@ export default function Password() {
                                 onChange={(e) => setData('password', e.target.value)}
                                 className="mt-1 block w-full"
                                 autoComplete="new-password"
-                                placeholder="Nouveau mot de passe"
+                                placeholder={t('Nouveau mot de passe')}
                             />
 
                             <InputError message={errors.password} />
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">Confirmer le mot de passe</Label>
+                            <Label htmlFor="password_confirmation">{t('Confirmer le mot de passe')}</Label>
 
                             <PasswordInput
                                 id="password_confirmation"
@@ -102,14 +104,14 @@ export default function Password() {
                                 onChange={(e) => setData('password_confirmation', e.target.value)}
                                 className="mt-1 block w-full"
                                 autoComplete="new-password"
-                                placeholder="Confirmer le mot de passe"
+                                placeholder={t('Confirmer le mot de passe')}
                             />
 
                             <InputError message={errors.password_confirmation} />
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Enregistrer le mot de passe</Button>
+                            <Button disabled={processing}>{t('Enregistrer le mot de passe')}</Button>
 
                             <Transition
                                 show={recentlySuccessful}
@@ -118,7 +120,7 @@ export default function Password() {
                                 leave="transition ease-in-out"
                                 leaveTo="opacity-0"
                             >
-                                <p className="text-sm text-neutral-600">Enregistré</p>
+                                <p className="text-sm text-neutral-600">{t('Enregistré')}</p>
                             </Transition>
                         </div>
                     </form>

@@ -1,6 +1,7 @@
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import AppLayout from '@/layouts/app-layout';
+import { useT } from '@/lib/i18n';
 import { euros, shortMonth, ucfirst } from '@/lib/money';
 import { Head, Link } from '@inertiajs/react';
 import { ChevronRight, Ticket } from 'lucide-react';
@@ -8,25 +9,26 @@ import { ChevronRight, Ticket } from 'lucide-react';
 type Booking = { id: string; court: string; is_arena: boolean; date: string; time: string; status: string; price_cents: number };
 
 export default function Index({ bookings }: { bookings: Booking[] }) {
+    const t = useT();
     return (
-        <AppLayout breadcrumbs={[{ title: 'Mes réservations', href: '/bookings' }]}>
-            <Head title="Mes réservations" />
+        <AppLayout breadcrumbs={[{ title: t('Mes réservations'), href: '/bookings' }]}>
+            <Head title={t('Mes réservations')} />
             <div className="flex flex-col gap-5 p-4">
-                <PageHeader eyebrow="Mon espace" title="Mes réservations">
+                <PageHeader eyebrow={t('Mon espace')} title={t('Mes réservations')}>
                     <Link
                         href="/planning"
                         className="rounded-lg bg-[#C8E64A] px-4 py-2 text-sm font-bold text-[#0E1B2C] transition hover:bg-[#b5d23c]"
                     >
-                        Réserver un terrain
+                        {t('Réserver un terrain')}
                     </Link>
                 </PageHeader>
 
                 {bookings.length === 0 ? (
                     <div className="bg-card flex flex-col items-center gap-3 rounded-2xl border border-dashed p-10 text-center">
                         <Ticket className="size-10 text-[#1D5C7A]" aria-hidden />
-                        <p className="font-semibold">Aucune réservation pour l’instant.</p>
+                        <p className="font-semibold">{t('Aucune réservation pour l’instant.')}</p>
                         <Link href="/planning" className="text-sm font-semibold underline">
-                            Voir les créneaux libres
+                            {t('Voir les créneaux libres')}
                         </Link>
                     </div>
                 ) : (

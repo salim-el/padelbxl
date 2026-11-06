@@ -2,6 +2,7 @@ import { BackButton } from '@/components/back-button';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
+import { useT } from '@/lib/i18n';
 import { euros, GAME_MODES, ucfirst } from '@/lib/money';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { CalendarDays, Clock, ShieldAlert, ShieldCheck, Timer } from 'lucide-react';
@@ -24,6 +25,7 @@ type Booking = {
 type Product = { id: number; name: string; kind: 'rental' | 'sale'; price_cents: number };
 
 export default function Checkout({ booking, products }: { booking: Booking; products: Product[] }) {
+    const t = useT();
     const { data, setData, post, processing, errors } = useForm<{ accept_terms: boolean; game_mode: string | null; items: Record<number, number> }>({
         accept_terms: false,
         game_mode: 'classic',
@@ -47,18 +49,18 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
     const urgent = left < 120;
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Paiement', href: '#' }]}>
-            <Head title="Paiement" />
+        <AppLayout breadcrumbs={[{ title: t('Paiement'), href: '#' }]}>
+            <Head title={t('Paiement')} />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-4">
-                <BackButton href="/planning">Planning</BackButton>
-                <PageHeader eyebrow="Dernière étape" title="Paiement">
+                <BackButton href="/planning">{t('Planning')}</BackButton>
+                <PageHeader eyebrow={t('Dernière étape')} title={t('Paiement')}>
                     <span
                         aria-live="polite"
                         className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-mono text-sm font-bold ${urgent ? 'bg-[#CC3342] text-white' : 'bg-[#C8E64A] text-[#0E1B2C]'}`}
                     >
                         <Timer className="size-4" aria-hidden />
                         {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
-                        <span className="sr-only">avant la libération du créneau</span>
+                        <span className="sr-only">{t('avant la libération du créneau')}</span>
                     </span>
                 </PageHeader>
 
@@ -73,23 +75,24 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                         </li>
                         {booking.refundable ? (
                             <li className="flex items-center gap-2">
-                                <ShieldCheck className="size-4 text-[#4E6600]" aria-hidden /> Annulation gratuite jusqu’au{' '}
-                                {booking.free_cancellation_until}
+                                <ShieldCheck className="size-4 text-[#4E6600]" aria-hidden />{' '}
+                                {t('Annulation gratuite jusqu’au :date', { date: booking.free_cancellation_until })}
                             </li>
                         ) : (
                             <li className="flex items-center gap-2 font-semibold text-[#9E2833]">
-                                <ShieldAlert className="size-4" aria-hidden /> Match dans moins de 24 h : une annulation ne sera pas remboursée.
+                                <ShieldAlert className="size-4" aria-hidden />{' '}
+                                {t('Match dans moins de 24 h : une annulation ne sera pas remboursée.')}
                             </li>
                         )}
                     </ul>
                     <div className="mt-5 flex items-end justify-between border-t border-dashed pt-4">
-                        <span className="text-sm text-[#5F6B78]">Total TTC, TVA {booking.vat_rate} % comprise</span>
+                        <span className="text-sm text-[#5F6B78]">{t('Total TTC, TVA :rate % comprise', { rate: booking.vat_rate })}</span>
                         <span className="text-3xl font-extrabold">{euros(total)}</span>
                     </div>
                 </section>
 
                 <p className="rounded-lg bg-[#E6ECF2] p-3 text-sm text-[#17304A]">
-                    Version alpha : le paiement est simulé. Aucune carte n’est débitée.
+                    {t('Version alpha : le paiement est simulé. Aucune carte n’est débitée.')}
                 </p>
 
                 <form
@@ -101,7 +104,7 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                 >
                     {booking.arcade_price_cents !== null && (
                         <fieldset className="flex flex-col gap-2">
-                            <legend className="mb-2 font-bold">Choisissez votre mode de jeu</legend>
+                            <legend className="mb-2 font-bold">{t('Choisissez votre mode de jeu')}</legend>
                             <div className="grid gap-2 sm:grid-cols-2">
                                 {Object.entries(GAME_MODES).map(([value, mode]) => (
                                     <label
@@ -121,29 +124,29 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                                             className="sr-only"
                                         />
                                         <span className={`flex justify-between gap-2 font-bold ${data.game_mode === value ? 'text-[#C8E64A]' : ''}`}>
-                                            {mode.label}
+                                            {t(mode.label)}
                                             <span className="text-xs">
                                                 {value === 'classic' || booking.arcade_price_cents === null
-                                                    ? 'inclus'
+                                                    ? t('inclus')
                                                     : `+${euros(booking.arcade_price_cents - booking.price_cents)}`}
                                             </span>
                                         </span>
-                                        <span className="mt-1 block text-xs opacity-80">{mode.text}</span>
+                                        <span className="mt-1 block text-xs opacity-80">{t(mode.text)}</span>
                                     </label>
                                 ))}
                             </div>
-                            {errors.game_mode && <p className="text-sm text-[#9E2833]">Choisissez un des modes de jeu proposés.</p>}
+                            {errors.game_mode && <p className="text-sm text-[#9E2833]">{t('Choisissez un des modes de jeu proposés.')}</p>}
                         </fieldset>
                     )}
                     {products.length > 0 && (
                         <fieldset className="flex flex-col gap-2">
-                            <legend className="mb-2 font-bold">Matériel</legend>
+                            <legend className="mb-2 font-bold">{t('Matériel')}</legend>
                             {products.map((p) => (
                                 <div key={p.id} className="bg-card flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
                                     <span>
                                         <span className="font-semibold">{p.name}</span>
                                         <span className="text-muted-foreground block text-xs">
-                                            {euros(p.price_cents)} {p.kind === 'rental' ? 'par partie' : 'l’unité'} · TVA 21 %
+                                            {euros(p.price_cents)} {t(p.kind === 'rental' ? 'par partie' : 'l’unité')} · {t('TVA 21 %')}
                                         </span>
                                     </span>
                                     <span className="flex items-center gap-2">
@@ -151,7 +154,7 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                                             type="button"
                                             onClick={() => setQty(p.id, (data.items[p.id] ?? 0) - 1)}
                                             className="size-8 rounded-md border font-bold"
-                                            aria-label={`Retirer : ${p.name}`}
+                                            aria-label={t('Retirer : :name', { name: p.name })}
                                         >
                                             −
                                         </button>
@@ -162,7 +165,7 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                                             type="button"
                                             onClick={() => setQty(p.id, (data.items[p.id] ?? 0) + 1)}
                                             className="size-8 rounded-md border font-bold"
-                                            aria-label={`Ajouter : ${p.name}`}
+                                            aria-label={t('Ajouter : :name', { name: p.name })}
                                         >
                                             +
                                         </button>
@@ -183,14 +186,14 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                             checked={data.accept_terms}
                             onChange={(e) => setData('accept_terms', e.target.checked)}
                         />
-                        J’accepte les conditions générales et la règle d’annulation de 24 heures.
+                        {t('J’accepte les conditions générales et la règle d’annulation de 24 heures.')}
                     </label>
-                    {errors.accept_terms && <p className="text-sm text-[#9E2833]">Vous devez accepter les conditions pour réserver.</p>}
+                    {errors.accept_terms && <p className="text-sm text-[#9E2833]">{t('Vous devez accepter les conditions pour réserver.')}</p>}
                     <Button type="submit" size="lg" className="h-12 text-base font-bold" disabled={processing || left === 0}>
-                        Payer {euros(total)}
+                        {t('Payer :amount', { amount: euros(total) })}
                     </Button>
                     {left === 0 && (
-                        <p className="text-sm text-[#9E2833]">Les dix minutes sont écoulées. Revenez au planning pour choisir un créneau.</p>
+                        <p className="text-sm text-[#9E2833]">{t('Les dix minutes sont écoulées. Revenez au planning pour choisir un créneau.')}</p>
                     )}
                 </form>
             </div>
