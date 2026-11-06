@@ -75,6 +75,7 @@ class AdminController extends Controller
     {
         $this->ensurePlayer($request, $user);
         $user->forceFill(['status' => 'suspended'])->save();
+        activity('staff')->performedOn($user)->event('account-suspended')->log('Compte suspendu');
 
         return back()->with('success', "Le compte de {$user->name} est suspendu. Il ne peut plus réserver.");
     }
@@ -83,6 +84,7 @@ class AdminController extends Controller
     {
         $this->ensurePlayer($request, $user);
         $user->forceFill(['status' => 'active', 'suspended_until' => null])->save();
+        activity('staff')->performedOn($user)->event('account-reactivated')->log('Compte réactivé');
 
         return back()->with('success', "Le compte de {$user->name} est réactivé.");
     }
@@ -108,7 +110,10 @@ class AdminController extends Controller
         if ($classic !== null && $arcade !== null && $arcade < $classic) {
             return back()->withErrors(['price_cents' => 'Le tarif arcade doit rester au moins égal au tarif classique.']);
         }
+        $old = $rule->price_cents;
         $rule->update(['price_cents' => $data['price_cents']]);
+        activity('staff')->performedOn($rule)->event('price-updated')
+            ->withProperties(['old_cents' => $old, 'new_cents' => $rule->price_cents])->log('Tarif modifié');
 
         return back()->with('success', "Tarif « {$rule->name} » mis à jour.");
     }
@@ -130,7 +135,8 @@ class AdminController extends Controller
         if ($conflicts > 0) {
             return back()->withErrors(['closure' => "$conflicts réservation(s) active(s) sur cette période. Annulez-les d’abord."]);
         }
-        CourtClosure::create(['court_id' => $data['court_id'], 'starts_at' => $from, 'ends_at' => $to, 'reason' => $data['reason'], 'created_by' => $request->user()->id]);
+        $closure = CourtClosure::create(['court_id' => $data['court_id'], 'starts_at' => $from, 'ends_at' => $to, 'reason' => $data['reason'], 'created_by' => $request->user()->id]);
+        activity('staff')->performedOn($closure)->event('closure-created')->log('Fermeture de terrain ajoutée');
 
         return back()->with('success', 'Fermeture enregistrée. Le planning n’affiche plus ces créneaux.');
     }
@@ -139,6 +145,8 @@ class AdminController extends Controller
     {
         $this->ensureStaff($request);
         $closure->delete();
+        activity('staff')->performedOn($closure)->event('closure-deleted')
+            ->withProperties(['court_id' => $closure->court_id, 'from' => $closure->starts_at, 'to' => $closure->ends_at])->log('Fermeture de terrain supprimée');
 
         return back()->with('success', 'Fermeture supprimée. Les créneaux sont de nouveau réservables.');
     }
