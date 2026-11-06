@@ -22,7 +22,7 @@ class EnsureAccountIsActive
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->withErrors(['email' => 'Votre compte est suspendu. Contactez l’accueil du club.']);
+            return redirect()->route('login')->withErrors(['email' => __('Votre compte est suspendu. Contactez l’accueil du club.')]);
         }
 
         return $next($request);

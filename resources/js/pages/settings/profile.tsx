@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { useT } from '@/lib/i18n';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -20,6 +21,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
+    const t = useT();
     const { auth } = usePage<SharedData>().props;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
@@ -35,15 +37,15 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Profil" />
+            <Head title={t('Profil')} />
 
             <SettingsLayout>
                 <div className="space-y-6">
-                    <HeadingSmall title="Informations du profil" description="Modifiez votre nom et votre adresse e-mail" />
+                    <HeadingSmall title={t('Informations du profil')} description={t('Modifiez votre nom et votre adresse e-mail')} />
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Nom complet</Label>
+                            <Label htmlFor="name">{t('Nom complet')}</Label>
 
                             <Input
                                 id="name"
@@ -52,14 +54,14 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                 onChange={(e) => setData('name', e.target.value)}
                                 required
                                 autoComplete="name"
-                                placeholder="Prénom et nom"
+                                placeholder={t('Prénom et nom')}
                             />
 
                             <InputError className="mt-2" message={errors.name} />
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="email">Adresse e-mail</Label>
+                            <Label htmlFor="email">{t('Adresse e-mail')}</Label>
 
                             <Input
                                 id="email"
@@ -69,7 +71,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                 onChange={(e) => setData('email', e.target.value)}
                                 required
                                 autoComplete="username"
-                                placeholder="Adresse e-mail"
+                                placeholder={t('Adresse e-mail')}
                             />
 
                             <InputError className="mt-2" message={errors.email} />
@@ -78,27 +80,27 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                         {mustVerifyEmail && auth.user.email_verified_at === null && (
                             <div>
                                 <p className="mt-2 text-sm text-neutral-800">
-                                    Votre adresse e-mail n’est pas encore confirmée.
+                                    {t('Votre adresse e-mail n’est pas encore confirmée.')}{' '}
                                     <Link
                                         href={route('verification.send')}
                                         method="post"
                                         as="button"
                                         className="rounded-md text-sm text-neutral-600 underline hover:text-neutral-900 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
                                     >
-                                        Renvoyer l’e-mail de confirmation.
+                                        {t('Renvoyer l’e-mail de confirmation.')}
                                     </Link>
                                 </p>
 
                                 {status === 'verification-link-sent' && (
                                     <div className="mt-2 text-sm font-medium text-green-600">
-                                        Un nouveau lien de confirmation vient d’être envoyé à votre adresse e-mail.
+                                        {t('Un nouveau lien de confirmation vient d’être envoyé à votre adresse e-mail.')}
                                     </div>
                                 )}
                             </div>
                         )}
 
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Enregistrer</Button>
+                            <Button disabled={processing}>{t('Enregistrer')}</Button>
 
                             <Transition
                                 show={recentlySuccessful}
@@ -107,7 +109,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                 leave="transition ease-in-out"
                                 leaveTo="opacity-0"
                             >
-                                <p className="text-sm text-neutral-600">Enregistré</p>
+                                <p className="text-sm text-neutral-600">{t('Enregistré')}</p>
                             </Transition>
                         </div>
                     </form>

@@ -10,5 +10,7 @@ export function useT() {
     const { locale } = usePage<SharedData>().props;
     const dictionnaire = DICTIONNAIRES[locale] ?? {};
 
-    return (texte: string) => dictionnaire[texte] ?? texte;
+    // Les variables s'écrivent :nom dans le texte, par exemple t('Payer :amount', { amount: '48,00 €' }).
+    return (texte: string, variables: Record<string, string | number> = {}) =>
+        Object.entries(variables).reduce((s, [nom, valeur]) => s.replaceAll(`:${nom}`, String(valeur)), dictionnaire[texte] ?? texte);
 }
