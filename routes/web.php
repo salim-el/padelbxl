@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CounterController;
 use App\Http\Controllers\KioskController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PlanningController;
@@ -41,6 +42,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('kiosk', [KioskController::class, 'validateToken'])->middleware('throttle:30,1')->name('kiosk.validate');
     Route::get('admin', [AdminController::class, 'index'])->name('admin');
     Route::get('admin/journal', [AdminController::class, 'journal'])->name('admin.journal');
+    Route::get('admin/counter', [CounterController::class, 'create'])->name('admin.counter');
+    Route::post('admin/counter', [CounterController::class, 'store'])->middleware('throttle:30,1')->name('admin.counter.store');
+    Route::get('admin/counter/{booking}', [CounterController::class, 'show'])->name('admin.counter.show');
+    Route::post('admin/counter/{booking}/cancel', [CounterController::class, 'cancel'])->name('admin.counter.cancel');
     Route::post('admin/users/{user}/suspend', [AdminController::class, 'suspend'])->name('admin.users.suspend');
     Route::post('admin/users/{user}/reactivate', [AdminController::class, 'reactivate'])->name('admin.users.reactivate');
     Route::patch('admin/pricing-rules/{rule}', [AdminController::class, 'updatePrice'])->name('admin.pricing-rules.update');

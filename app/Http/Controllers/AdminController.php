@@ -43,7 +43,7 @@ class AdminController extends Controller
                 'id' => $b->public_id,
                 'court' => $b->court->name,
                 'time' => Clock::local($b->starts_at)->format('H:i').' – '.Clock::local($b->ends_at)->format('H:i'),
-                'player' => $b->organizer->name,
+                'player' => $b->walk_in_name ? $b->walk_in_name.' (comptoir)' : $b->organizer->name,
                 'status' => $b->status,
                 'game_mode' => $b->game_mode,
             ])->all(),
@@ -102,6 +102,7 @@ class AdminController extends Controller
         return match (true) {
             $a->subject instanceof User, $a->subject instanceof PricingRule => $a->subject->name,
             $a->subject instanceof CourtClosure => $a->subject->court?->name,
+            $a->subject instanceof Booking => $a->subject->walk_in_name ?? $a->subject->court?->name,
             $a->subject !== null => $a->subject->name ?? null,
             $a->event === 'closure-deleted' => Court::find($a->properties['court_id'] ?? null)?->name,
             default => null,
