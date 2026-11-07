@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use PragmaRX\Google2FA\Google2FA;
 
 class User extends Authenticatable
 {
@@ -43,6 +44,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
     ];
 
     /**
@@ -55,6 +57,32 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function hasTwoFactor(): bool
+    {
+        return $this->two_factor_confirmed_at !== null;
+    }
+
+    /** Vérifie un code de l'application d'authentification et refuse un code déjà utilisé (rejeu dans la même tranche de 30 s). */
+    public function verifyTwoFactorCode(string $code): bool
+    {
+        if (! $this->hasTwoFactor()) {
+            return false;
+        }
+        $counter = (new Google2FA)->verifyKeyNewer($this->two_factor_secret, $code, $this->two_factor_last_counter ?? 0);
+        if ($counter === false) {
+            return false;
+        }
+        // Mise à jour conditionnelle : deux requêtes simultanées avec le même code, une seule passe.
+        $won = static::whereKey($this->id)
+            ->where(fn ($q) => $q->whereNull('two_factor_last_counter')->orWhere('two_factor_last_counter', '<', $counter))
+            ->update(['two_factor_last_counter' => $counter]) === 1;
+        $this->two_factor_last_counter = $counter;
+
+        return $won;
     }
 }
