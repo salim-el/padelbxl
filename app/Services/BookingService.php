@@ -42,7 +42,8 @@ class BookingService
         return $ids->count();
     }
 
-    public function hold(User $user, Court $court, CarbonImmutable $startUtc): Booking
+    /** @param array{walk_in_name: string, walk_in_contact: string}|null $walkIn client du comptoir, sans compte */
+    public function hold(User $user, Court $court, CarbonImmutable $startUtc, ?array $walkIn = null): Booking
     {
         if ($user->status !== 'active' || $user->email_verified_at === null) {
             throw new BookingException(__('Votre compte doit être actif et votre e-mail confirmé pour réserver.'));
@@ -61,9 +62,10 @@ class BookingService
 
         $this->expireHolds();
 
-        return DB::transaction(function () use ($user, $court, $startUtc, $rule) {
-            $active = Booking::where('organizer_id', $user->id)->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->count();
-            if ($active >= self::MAX_ACTIVE) {
+        return DB::transaction(function () use ($user, $court, $startUtc, $rule, $walkIn) {
+            // La limite de trois réservations vise un joueur, pas le gérant qui encode pour des clients au comptoir.
+            $active = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->count();
+            if ($walkIn === null && $active >= self::MAX_ACTIVE) {
                 throw new BookingException(__('Vous avez déjà trois réservations à venir.'));
             }
             try {
@@ -80,6 +82,7 @@ class BookingService
                     'vat_rate' => $rule->vat_rate,
                     'is_arena' => false,
                     'hold_expires_at' => now()->addMinutes(self::HOLD_MINUTES),
+                    ...($walkIn ?? []),
                 ]));
             } catch (QueryException $e) {
                 // 23P01 : la contrainte d'exclusion refuse un chevauchement.
@@ -95,11 +98,24 @@ class BookingService
         });
     }
 
+    /**
+     * Réservation au comptoir : créneau bloqué puis payé sur place (espèces ou terminal) dans la même transaction,
+     * donc jamais de créneau à moitié réservé si le paiement échoue.
+     */
+    public function counter(User $staff, Court $court, CarbonImmutable $startUtc, string $name, string $contact, ?string $gameMode, string $method): Booking
+    {
+        return DB::transaction(function () use ($staff, $court, $startUtc, $name, $contact, $gameMode, $method) {
+            $booking = $this->hold($staff, $court, $startUtc, ['walk_in_name' => $name, 'walk_in_contact' => $contact]);
+
+            return $this->confirmPayment($booking, $staff, $gameMode, [], $method);
+        });
+    }
+
     /** Paiement simulé de l'alpha. En production, la confirmation viendra de la notification signée de Stripe. */
     /** @param array<int, int> $items quantité par identifiant d'article */
-    public function confirmPayment(Booking $booking, User $user, ?string $gameMode = null, array $items = []): Booking
+    public function confirmPayment(Booking $booking, User $user, ?string $gameMode = null, array $items = [], string $method = 'card'): Booking
     {
-        return DB::transaction(function () use ($booking, $user, $gameMode, $items) {
+        return DB::transaction(function () use ($booking, $user, $gameMode, $items, $method) {
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ($user->status !== 'active') {
                 throw new BookingException(__('Votre compte est suspendu. Le paiement est refusé.'));
@@ -129,8 +145,9 @@ class BookingService
                 'booking_id' => $booking->id,
                 'booking_player_id' => $player->id,
                 'payer_id' => $user->id,
-                'method' => 'card',
-                'provider_reference' => 'test_'.Str::uuid(),
+                'method' => $method,
+                // Espèces et terminal du club n'ont pas de référence chez un prestataire de paiement.
+                'provider_reference' => $method === 'card' ? 'test_'.Str::uuid() : null,
                 'amount_cents' => $amount,
                 'status' => 'succeeded',
                 'paid_at' => now(),
@@ -147,9 +164,9 @@ class BookingService
                 'booking_id' => $booking->id,
                 'payment_id' => $payment->id,
                 'issued_at' => now(),
-                'customer_name' => $user->name,
-                'customer_company' => $user->company_name,
-                'customer_vat' => $user->vat_number,
+                'customer_name' => $booking->walk_in_name ?? $user->name,
+                'customer_company' => $booking->walk_in_name ? null : $user->company_name,
+                'customer_vat' => $booking->walk_in_name ? null : $user->vat_number,
                 'net_cents' => $net,
                 'vat_rate' => $booking->vat_rate,
                 'vat_cents' => $amount - $net,

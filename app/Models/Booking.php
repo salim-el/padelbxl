@@ -12,7 +12,7 @@ class Booking extends Model
 
     public const GAME_MODES = ['arcade'];
 
-    protected $fillable = ['public_id', 'court_id', 'organizer_id', 'pricing_rule_id', 'starts_at', 'ends_at', 'status', 'price_cents', 'vat_rate', 'is_arena', 'hold_expires_at', 'cancelled_at', 'game_mode'];
+    protected $fillable = ['public_id', 'court_id', 'organizer_id', 'pricing_rule_id', 'starts_at', 'ends_at', 'status', 'price_cents', 'vat_rate', 'is_arena', 'hold_expires_at', 'cancelled_at', 'game_mode', 'walk_in_name', 'walk_in_contact'];
 
     protected function casts(): array
     {
