@@ -40,6 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('kiosk', [KioskController::class, 'show'])->name('kiosk');
     Route::post('kiosk', [KioskController::class, 'validateToken'])->middleware('throttle:30,1')->name('kiosk.validate');
     Route::get('admin', [AdminController::class, 'index'])->name('admin');
+    Route::get('admin/journal', [AdminController::class, 'journal'])->name('admin.journal');
     Route::post('admin/users/{user}/suspend', [AdminController::class, 'suspend'])->name('admin.users.suspend');
     Route::post('admin/users/{user}/reactivate', [AdminController::class, 'reactivate'])->name('admin.users.reactivate');
     Route::patch('admin/pricing-rules/{rule}', [AdminController::class, 'updatePrice'])->name('admin.pricing-rules.update');

@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Activitylog\Models\Activity;
 
 class AdminController extends Controller
 {
@@ -69,6 +70,53 @@ class AdminController extends Controller
                     'created_at' => $u->created_at?->setTimezone(Clock::ZONE)->format('d/m/Y'),
                 ]),
         ]);
+    }
+
+    /** Journal des actions sensibles (T16) : lecture seule, du plus récent au plus ancien. */
+    public function journal(Request $request): Response
+    {
+        $this->ensureStaff($request);
+        $log = $request->validate(['log' => ['nullable', 'in:staff,api']])['log'] ?? null;
+
+        return Inertia::render('admin/journal', [
+            'log' => $log,
+            'entries' => Activity::with('causer', 'subject')
+                ->when($log, fn ($q) => $q->where('log_name', $log))
+                ->latest('id')
+                ->paginate(25)->withQueryString()->through(fn (Activity $a) => [
+                    'id' => $a->id,
+                    'at' => $a->created_at->setTimezone(Clock::ZONE)->format('d/m/Y H:i'),
+                    'log' => $a->log_name,
+                    'event' => $a->event,
+                    'description' => $a->description,
+                    'causer' => $a->causer?->name,
+                    'subject' => $this->subjectLabel($a),
+                    'details' => $this->details($a),
+                ]),
+        ]);
+    }
+
+    // L'objet visé peut avoir été supprimé (fermeture rouverte, jeton révoqué) : on garde alors une étiquette neutre.
+    private function subjectLabel(Activity $a): ?string
+    {
+        return match (true) {
+            $a->subject instanceof User, $a->subject instanceof PricingRule => $a->subject->name,
+            $a->subject instanceof CourtClosure => $a->subject->court?->name,
+            $a->subject !== null => $a->subject->name ?? null,
+            $a->event === 'closure-deleted' => Court::find($a->properties['court_id'] ?? null)?->name,
+            default => null,
+        };
+    }
+
+    private function details(Activity $a): ?string
+    {
+        $p = $a->properties;
+
+        return match ($a->event) {
+            'price-updated' => number_format($p['old_cents'] / 100, 2, ',', ' ').' € → '.number_format($p['new_cents'] / 100, 2, ',', ' ').' €',
+            'closure-deleted' => Clock::local(CarbonImmutable::parse($p['from']))->format('d/m/Y H:i').' → '.Clock::local(CarbonImmutable::parse($p['to']))->format('d/m/Y H:i'),
+            default => null,
+        };
     }
 
     public function suspend(Request $request, User $user): RedirectResponse
