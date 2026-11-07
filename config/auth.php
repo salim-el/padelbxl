@@ -20,6 +20,9 @@ return [
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
+    // Double authentification obligatoire pour le gérant et l'administrateur (T16). Coupée seulement dans les tests qui ne la visent pas.
+    'staff_two_factor' => (bool) env('STAFF_TWO_FACTOR', true),
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Guards
