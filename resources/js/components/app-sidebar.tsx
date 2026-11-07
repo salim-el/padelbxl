@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, LayoutDashboard, QrCode, ScrollText, Ticket } from 'lucide-react';
+import { CalendarDays, LayoutDashboard, QrCode, ScrollText, Store, Ticket } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -14,6 +14,7 @@ const mainNavItems: NavItem[] = [
 
 const staffNavItems: NavItem[] = [
     { title: 'Tableau de bord', url: '/admin', icon: LayoutDashboard },
+    { title: 'Comptoir', url: '/admin/counter', icon: Store },
     { title: 'Journal', url: '/admin/journal', icon: ScrollText },
     { title: 'Borne d’accès', url: '/kiosk', icon: QrCode },
 ];
