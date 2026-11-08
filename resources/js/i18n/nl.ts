@@ -211,6 +211,26 @@ const nl: Record<string, string> = {
     'Confirmation du mot de passe': 'Wachtwoordbevestiging',
     Confirmer: 'Bevestigen',
     'Afficher ou masquer le menu': 'Menu tonen of verbergen',
+    'Part à payer': 'Aandeel te betalen',
+    'Part réglée': 'Aandeel betaald',
+    'Réglée par l’organisateur': 'Betaald door de organisator',
+    'Ma part': 'Mijn aandeel',
+    'Invitation de :name': 'Uitnodiging van :name',
+    'Votre part, TVA comprise': 'Jouw aandeel, btw inbegrepen',
+    'Sans paiement 24 h avant le match, l’organisateur règle votre part.':
+        'Heb je 24 uur voor de match nog niet betaald, dan betaalt de organisator jouw aandeel.',
+    'Partager le prix (facultatif)': 'De prijs delen (optioneel)',
+    'Chaque partenaire reçoit un e-mail et paie sa part. Vous ne payez que la vôtre.':
+        'Elke partner krijgt een e-mail en betaalt zijn aandeel. Jij betaalt alleen het jouwe.',
+    'E-mail du partenaire :n': 'E-mail van partner :n',
+    'Cette adresse e-mail n’est pas valable ou est en double.': 'Dit e-mailadres is ongeldig of staat er dubbel.',
+    'Part de chaque partenaire : :share. Votre part : :mine.': 'Aandeel per partner: :share. Jouw aandeel: :mine.',
+    'Ma carte sert de garantie : les parts encore impayées 24 h avant le match me seront débitées.':
+        'Mijn kaart dient als waarborg: aandelen die 24 uur voor de match nog niet betaald zijn, worden van mij gedebiteerd.',
+    'Le prix ne se partage que pour un match dans plus de 24 h.': 'De prijs kan alleen gedeeld worden voor een match over meer dan 24 uur.',
+    'Prix partagé': 'Gedeelde prijs',
+    vous: 'jij',
+    'Parties où l’on vous invite': 'Matchen waarvoor je uitgenodigd bent',
 };
 
 export default nl;
