@@ -2,9 +2,9 @@ import { BackButton } from '@/components/back-button';
 import { StatusBadge } from '@/components/status-badge';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
-import { euros, GAME_MODES, ucfirst } from '@/lib/money';
+import { euros, GAME_MODES, SHARE_LABELS, ucfirst } from '@/lib/money';
 import { Head, router, usePage } from '@inertiajs/react';
-import { CalendarDays, Clock, FileText, RotateCcw } from 'lucide-react';
+import { CalendarDays, Clock, FileText, RotateCcw, Users } from 'lucide-react';
 
 type Booking = {
     id: string;
@@ -25,9 +25,10 @@ type Props = {
     qr_window: string | null;
     items: { name: string; quantity: number; total_cents: number }[];
     invoices: { number: string; total_cents: number; vat_cents: number; ubl: boolean }[];
+    players: { name: string; is_organizer: boolean; share_cents: number; status: string }[];
 };
 
-export default function Show({ booking, qr, qr_window, items, invoices }: Props) {
+export default function Show({ booking, qr, qr_window, items, invoices, players }: Props) {
     const t = useT();
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
 
@@ -136,6 +137,26 @@ export default function Show({ booking, qr, qr_window, items, invoices }: Props)
                     </footer>
                 </article>
 
+                {players.length > 0 && (
+                    <section className="bg-card rounded-2xl border p-5" aria-labelledby="partage">
+                        <h2 id="partage" className="mb-3 flex items-center gap-2 font-bold">
+                            <Users className="size-4 text-[#1D5C7A]" aria-hidden /> {t('Prix partagé')}
+                        </h2>
+                        <ul className="space-y-2 text-sm">
+                            {players.map((p) => (
+                                <li key={p.name} className="flex items-center justify-between gap-3">
+                                    <span className="min-w-0 truncate">
+                                        {p.name} {p.is_organizer && <span className="text-[#5F6B78]">({t('vous')})</span>}
+                                    </span>
+                                    <span className="flex shrink-0 items-center gap-2">
+                                        <span className="text-[#5F6B78]">{t(SHARE_LABELS[p.status] ?? p.status)}</span>
+                                        <strong>{euros(p.share_cents)}</strong>
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
                 {['confirmed', 'used'].includes(booking.status) && (
                     <button
                         type="button"

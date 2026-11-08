@@ -26,17 +26,34 @@ type Product = { id: number; name: string; kind: 'rental' | 'sale'; price_cents:
 
 export default function Checkout({ booking, products }: { booking: Booking; products: Product[] }) {
     const t = useT();
-    const { data, setData, post, processing, errors } = useForm<{ accept_terms: boolean; game_mode: string | null; items: Record<number, number> }>({
+    const { data, setData, post, processing, errors } = useForm<{
+        accept_terms: boolean;
+        game_mode: string | null;
+        items: Record<number, number>;
+        guests: string[];
+        accept_guarantee: boolean;
+    }>({
         accept_terms: false,
         game_mode: 'classic',
         items: {},
+        guests: ['', '', ''],
+        accept_guarantee: false,
     });
     const pageErrors = usePage<{ errors: Record<string, string> }>().props.errors;
     const [left, setLeft] = useState(0);
     const arcade = data.game_mode !== 'classic' && booking.arcade_price_cents !== null;
     const court = arcade ? (booking.arcade_price_cents as number) : booking.price_cents;
     const extras = products.reduce((sum, p) => sum + (data.items[p.id] ?? 0) * p.price_cents, 0);
-    const total = court + extras;
+    // Même calcul que le serveur : part égale, les centimes restants à l'organisateur.
+    const partners = data.guests.filter((g) => g.trim() !== '').length;
+    const share = Math.floor(court / (partners + 1));
+    const myShare = court - share * partners;
+    const total = myShare + extras;
+    const setGuest = (i: number, email: string) =>
+        setData(
+            'guests',
+            data.guests.map((g, j) => (j === i ? email : g)),
+        );
     const setQty = (id: number, q: number) => setData('items', { ...data.items, [id]: Math.max(0, Math.min(4, q)) });
 
     useEffect(() => {
@@ -173,6 +190,49 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                                 </div>
                             ))}
                         </fieldset>
+                    )}
+                    {booking.refundable ? (
+                        <fieldset className="flex flex-col gap-2">
+                            <legend className="mb-1 font-bold">{t('Partager le prix (facultatif)')}</legend>
+                            <p className="text-sm text-[#5F6B78]">
+                                {t('Chaque partenaire reçoit un e-mail et paie sa part. Vous ne payez que la vôtre.')}
+                            </p>
+                            {data.guests.map((g, i) => (
+                                <label key={i} className="flex flex-col gap-1 text-sm">
+                                    <span className="sr-only">{t('E-mail du partenaire :n', { n: i + 1 })}</span>
+                                    <input
+                                        type="email"
+                                        autoComplete="off"
+                                        value={g}
+                                        onChange={(e) => setGuest(i, e.target.value)}
+                                        placeholder={t('E-mail du partenaire :n', { n: i + 1 })}
+                                        className="bg-card rounded-lg border px-3 py-2"
+                                    />
+                                    {errors[`guests.${i}` as keyof typeof errors] && (
+                                        <span className="text-[#9E2833]">{t('Cette adresse e-mail n’est pas valable ou est en double.')}</span>
+                                    )}
+                                </label>
+                            ))}
+                            {partners > 0 && (
+                                <>
+                                    <p className="rounded-lg bg-[#E3F0F7] p-3 text-sm text-[#17304A]">
+                                        {t('Part de chaque partenaire : :share. Votre part : :mine.', { share: euros(share), mine: euros(myShare) })}
+                                    </p>
+                                    <label className="flex items-start gap-3 text-sm">
+                                        <input
+                                            type="checkbox"
+                                            className="mt-0.5 size-4 accent-[#1D5C7A]"
+                                            checked={data.accept_guarantee}
+                                            onChange={(e) => setData('accept_guarantee', e.target.checked)}
+                                        />
+                                        {t('Ma carte sert de garantie : les parts encore impayées 24 h avant le match me seront débitées.')}
+                                    </label>
+                                    {errors.accept_guarantee && <p className="text-sm text-[#9E2833]">{errors.accept_guarantee}</p>}
+                                </>
+                            )}
+                        </fieldset>
+                    ) : (
+                        <p className="text-sm text-[#5F6B78]">{t('Le prix ne se partage que pour un match dans plus de 24 h.')}</p>
                     )}
                     {pageErrors.booking && (
                         <p role="alert" className="rounded-lg border border-[#9E2833]/30 bg-[#FCE6E8] p-3 text-sm text-[#9E2833]">
