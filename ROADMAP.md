@@ -61,13 +61,13 @@ Déjà fusionné dans `develop` :
 | `feature/staff-two-factor` | Double authentification obligatoire du personnel, refus des mots de passe déjà fuités |
 | `feature/counter-booking` | Réservation au comptoir pour un client sans compte, ticket et QR code imprimés |
 | `feature/ubl-export` | Facture électronique UBL (Peppol BIS 3.0) pour les clients entreprises |
+| `feature/split-payment` | Partage du prix entre quatre joueurs au plus, invitation par e-mail, part payée par chacun avec sa facture et son QR code ; carte de garantie de l'organisateur débitée des parts impayées 24 h avant le match |
 
 Encore prévu. Dates cibles ; chaque branche est créée au moment où le travail commence.
 
 | Période | Branche | Objectif |
 |---|---|---|
 | 27/10 – 07/11 | `feature/stripe-payment` | Paiement réel en mode test Stripe, confirmation par notification signée |
-| 03/11 – 14/11 | `feature/split-payment` | Partage du prix entre les quatre joueurs, invitations, carte de garantie |
 | 10/11 – 21/11 | `feature/open-matches` | Annonce pour compléter une partie, liste d'attente (dépend du partage du prix) |
 | 10/11 – 21/11 | `feature/arena-mode` | Moteur de jeu Arcade : 5 séquences de zones prédéfinies, point double, faute, point en or ; validation des rebonds sur tablette et simulateur web ; score en direct |
 | 24/11 – 01/12 | `feature/accessibility-audit` | Contrôle WCAG 2.1 AA de tous les écrans, corrections |

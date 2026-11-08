@@ -18,5 +18,19 @@
     "Annulez d’abord vos réservations à venir.": "Cancel your upcoming bookings first.",
     "Votre compte est suspendu. Contactez l’accueil du club.": "Your account is suspended. Contact the club reception.",
     "dddd D MMMM YYYY": "dddd D MMMM YYYY",
-    "dddd D MMMM [à] HH:mm": "dddd D MMMM [at] HH:mm"
+    "dddd D MMMM [à] HH:mm": "dddd D MMMM [at] HH:mm",
+    "Cette invitation n’existe pas.": "This invitation does not exist.",
+    "Votre part est déjà réglée.": "Your share has already been paid.",
+    "Cette partie n’accepte plus de paiement.": "This game no longer accepts payments.",
+    "Invitez au plus trois autres joueurs, sans vous compter.": "Invite at most three other players, not counting yourself.",
+    "Le prix ne se partage que pour un match dans plus de 24 h.": "The price can only be shared for a match more than 24 hours away.",
+    "Acceptez la garantie pour partager le prix.": "Accept the guarantee to share the price.",
+    "Réservation confirmée. Vos partenaires ont reçu leur invitation par e-mail.": "Booking confirmed. Your partners have received their invitation by email.",
+    "Part réglée. Votre QR code est prêt.": "Share paid. Your QR code is ready.",
+    ":name vous invite à une partie de padel": ":name invites you to a padel game",
+    ":name a réservé le :court le :date à :time et partage le prix avec vous.": ":name has booked :court on :date at :time and is sharing the price with you.",
+    "Votre part : :amount.": "Your share: :amount.",
+    "Payer ma part": "Pay my share",
+    "Sans paiement 24 h avant le match, l’organisateur règle votre part.": "If you have not paid 24 hours before the match, the organiser pays your share.",
+    "Vous avez envoyé trop d’invitations aujourd’hui. Réessayez demain.": "You have sent too many invitations today. Try again tomorrow."
 }

@@ -34,5 +34,19 @@
     "Annulez d’abord vos réservations à venir.": "Annuleer eerst je komende reservaties.",
     "Votre compte est suspendu. Contactez l’accueil du club.": "Je account is geschorst. Neem contact op met het onthaal van de club.",
     "dddd D MMMM YYYY": "dddd D MMMM YYYY",
-    "dddd D MMMM [à] HH:mm": "dddd D MMMM [om] HH:mm"
+    "dddd D MMMM [à] HH:mm": "dddd D MMMM [om] HH:mm",
+    "Cette invitation n’existe pas.": "Deze uitnodiging bestaat niet.",
+    "Votre part est déjà réglée.": "Je aandeel is al betaald.",
+    "Cette partie n’accepte plus de paiement.": "Voor deze match kan niet meer betaald worden.",
+    "Invitez au plus trois autres joueurs, sans vous compter.": "Nodig hoogstens drie andere spelers uit, jezelf niet meegerekend.",
+    "Le prix ne se partage que pour un match dans plus de 24 h.": "De prijs kan alleen gedeeld worden voor een match over meer dan 24 uur.",
+    "Acceptez la garantie pour partager le prix.": "Aanvaard de waarborg om de prijs te delen.",
+    "Réservation confirmée. Vos partenaires ont reçu leur invitation par e-mail.": "Reservatie bevestigd. Je partners hebben hun uitnodiging per e-mail gekregen.",
+    "Part réglée. Votre QR code est prêt.": "Aandeel betaald. Je QR-code is klaar.",
+    ":name vous invite à une partie de padel": ":name nodigt je uit voor een padelmatch",
+    ":name a réservé le :court le :date à :time et partage le prix avec vous.": ":name heeft :court gereserveerd op :date om :time en deelt de prijs met jou.",
+    "Votre part : :amount.": "Jouw aandeel: :amount.",
+    "Payer ma part": "Mijn aandeel betalen",
+    "Sans paiement 24 h avant le match, l’organisateur règle votre part.": "Heb je 24 uur voor de match nog niet betaald, dan betaalt de organisator jouw aandeel.",
+    "Vous avez envoyé trop d’invitations aujourd’hui. Réessayez demain.": "Je hebt vandaag te veel uitnodigingen verstuurd. Probeer het morgen opnieuw."
 }
