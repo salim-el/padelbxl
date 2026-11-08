@@ -35,8 +35,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('bookings', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('bookings.store');
     Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
     Route::get('bookings/{booking}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
-    Route::post('bookings/{booking}/pay', [BookingController::class, 'pay'])->name('bookings.pay');
+    // Limité : le paiement peut envoyer jusqu'à trois invitations par e-mail.
+    Route::post('bookings/{booking}/pay', [BookingController::class, 'pay'])->middleware('throttle:10,1')->name('bookings.pay');
     Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+    Route::get('bookings/{booking}/share', [BookingController::class, 'share'])->name('bookings.share');
+    Route::post('bookings/{booking}/share', [BookingController::class, 'payShare'])->middleware('throttle:10,1')->name('bookings.share.pay');
     Route::get('bookings/{booking}/invoices/{invoice:number}/ubl', [BookingController::class, 'ubl'])->scopeBindings()->name('bookings.invoices.ubl');
     Route::post('bookings/{booking}/rematch', [BookingController::class, 'rematch'])->middleware('throttle:10,1')->name('bookings.rematch');
     Route::get('kiosk', [KioskController::class, 'show'])->name('kiosk');

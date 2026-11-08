@@ -12,6 +12,13 @@ export const STATUS_LABELS: Record<string, string> = {
     frozen: 'Gelée',
 };
 
+// État de la part d'un joueur quand le prix est partagé.
+export const SHARE_LABELS: Record<string, string> = {
+    invited: 'Part à payer',
+    paid: 'Part réglée',
+    covered: 'Réglée par l’organisateur',
+};
+
 // Majuscule au premier mot seulement, comme le veut le français (« Dimanche 25 octobre »).
 export const ucfirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 

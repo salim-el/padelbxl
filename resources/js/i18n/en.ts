@@ -211,6 +211,26 @@ const en: Record<string, string> = {
     'Confirmation du mot de passe': 'Password confirmation',
     Confirmer: 'Confirm',
     'Afficher ou masquer le menu': 'Show or hide the menu',
+    'Part à payer': 'Share to pay',
+    'Part réglée': 'Share paid',
+    'Réglée par l’organisateur': 'Paid by the organiser',
+    'Ma part': 'My share',
+    'Invitation de :name': 'Invitation from :name',
+    'Votre part, TVA comprise': 'Your share, VAT included',
+    'Sans paiement 24 h avant le match, l’organisateur règle votre part.':
+        'If you have not paid 24 hours before the match, the organiser pays your share.',
+    'Partager le prix (facultatif)': 'Share the price (optional)',
+    'Chaque partenaire reçoit un e-mail et paie sa part. Vous ne payez que la vôtre.':
+        'Each partner receives an email and pays their share. You only pay yours.',
+    'E-mail du partenaire :n': 'Partner :n email',
+    'Cette adresse e-mail n’est pas valable ou est en double.': 'This email address is not valid or is a duplicate.',
+    'Part de chaque partenaire : :share. Votre part : :mine.': 'Each partner’s share: :share. Your share: :mine.',
+    'Ma carte sert de garantie : les parts encore impayées 24 h avant le match me seront débitées.':
+        'My card is the guarantee: shares still unpaid 24 hours before the match will be charged to me.',
+    'Le prix ne se partage que pour un match dans plus de 24 h.': 'The price can only be shared for a match more than 24 hours away.',
+    'Prix partagé': 'Shared price',
+    vous: 'you',
+    'Parties où l’on vous invite': 'Games you are invited to',
 };
 
 export default en;

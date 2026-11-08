@@ -16,9 +16,12 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Refund;
 use App\Models\User;
+use App\Notifications\ShareInvitation;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class BookingService
@@ -28,6 +31,11 @@ class BookingService
     public const MAX_ACTIVE = 3;
 
     public const FREE_CANCELLATION_HOURS = 24;
+
+    public const MAX_PLAYERS = 4;
+
+    /** Invitations par organisateur et par jour : quatre parties partagées, pas un relais d'e-mails. */
+    public const MAX_INVITATIONS_PER_DAY = 12;
 
     public function __construct(private SlotService $slots) {}
 
@@ -111,11 +119,15 @@ class BookingService
         });
     }
 
-    /** Paiement simulé de l'alpha. En production, la confirmation viendra de la notification signée de Stripe. */
-    /** @param array<int, int> $items quantité par identifiant d'article */
-    public function confirmPayment(Booking $booking, User $user, ?string $gameMode = null, array $items = [], string $method = 'card'): Booking
+    /**
+     * Paiement simulé de l'alpha. En production, la confirmation viendra de la notification signée de Stripe.
+     *
+     * @param  array<int, int>  $items  quantité par identifiant d'article
+     * @param  list<string>  $guests  e-mails des joueurs qui paient leur part, trois au plus
+     */
+    public function confirmPayment(Booking $booking, User $user, ?string $gameMode = null, array $items = [], string $method = 'card', array $guests = []): Booking
     {
-        return DB::transaction(function () use ($booking, $user, $gameMode, $items, $method) {
+        return DB::transaction(function () use ($booking, $user, $gameMode, $items, $method, $guests) {
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ($user->status !== 'active') {
                 throw new BookingException(__('Votre compte est suspendu. Le paiement est refusé.'));
@@ -136,60 +148,189 @@ class BookingService
                 $booking->update(['is_arena' => true, 'game_mode' => $gameMode, 'pricing_rule_id' => $rule->id, 'price_cents' => $price, 'vat_rate' => $rule->vat_rate]);
                 $player->update(['share_cents' => $price]);
             }
-            $lines = [['label' => $booking->court->name.($booking->is_arena ? ' – partie Arena' : '').' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i'), 'quantity' => 1, 'unit' => $player->share_cents, 'vat' => (float) $booking->vat_rate]];
+            if ($guests !== []) {
+                $this->splitShares($booking, $player, $user, $guests);
+            }
+            $lines = [$this->courtLine($booking, $player)];
             foreach ($this->reserveItems($booking, array_filter($items)) as $item) {
                 $lines[] = ['label' => $item->product->name, 'quantity' => $item->quantity, 'unit' => $item->unit_price_cents, 'vat' => (float) $item->vat_rate];
             }
-            $amount = array_sum(array_map(fn ($l) => $l['quantity'] * $l['unit'], $lines));
-            $payment = Payment::create([
-                'booking_id' => $booking->id,
-                'booking_player_id' => $player->id,
-                'payer_id' => $user->id,
-                'method' => $method,
-                // Espèces et terminal du club n'ont pas de référence chez un prestataire de paiement.
-                'provider_reference' => $method === 'card' ? 'test_'.Str::uuid() : null,
-                'amount_cents' => $amount,
-                'status' => 'succeeded',
-                'paid_at' => now(),
-            ]);
-            // La TVA se calcule ligne par ligne : 6 % sur le terrain, 21 % sur le matériel.
-            foreach ($lines as &$l) {
-                $l['total'] = $l['quantity'] * $l['unit'];
-                $l['net'] = (int) round($l['total'] / (1 + $l['vat'] / 100));
-            }
-            unset($l);
-            $net = array_sum(array_column($lines, 'net'));
-            $invoice = Invoice::create([
-                'number' => $this->nextNumber('invoice', 'F'),
-                'booking_id' => $booking->id,
-                'payment_id' => $payment->id,
-                'issued_at' => now(),
-                'customer_name' => $booking->walk_in_name ?? $user->name,
-                'customer_company' => $booking->walk_in_name ? null : $user->company_name,
-                'customer_vat' => $booking->walk_in_name ? null : $user->vat_number,
-                'net_cents' => $net,
-                'vat_rate' => $booking->vat_rate,
-                'vat_cents' => $amount - $net,
-                'total_cents' => $amount,
-            ]);
-            foreach ($lines as $l) {
-                InvoiceLine::create([
-                    'invoice_id' => $invoice->id, 'label' => $l['label'], 'quantity' => $l['quantity'], 'unit_price_cents' => $l['unit'],
-                    'vat_rate' => $l['vat'], 'net_cents' => $l['net'], 'vat_cents' => $l['total'] - $l['net'], 'total_cents' => $l['total'],
-                ]);
-            }
+            $this->charge($booking, $player, $user, $lines, $method);
             $player->update(['status' => 'paid']);
-            AccessPass::create([
-                'booking_player_id' => $player->id,
-                'token_hash' => hash('sha256', self::passToken($player)),
-                'valid_from' => $booking->starts_at->subMinutes(15),
-                'valid_until' => $booking->ends_at,
-            ]);
             $booking->update(['hold_expires_at' => null]);
             $this->transition($booking, 'confirmed', 'Paiement reçu.', $user->id);
 
             return $booking->fresh();
         });
+    }
+
+    /** Un joueur invité règle sa part : il reçoit sa propre facture et son propre QR code. */
+    public function payShare(Booking $booking, User $user): BookingPlayer
+    {
+        return DB::transaction(function () use ($booking, $user) {
+            // Le verrou sur la réservation sérialise ce paiement avec la garantie de l'organisateur.
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $player = self::invitedPlayer($booking, $user) ?? throw new BookingException(__('Cette invitation n’existe pas.'));
+            if ($player->status !== 'invited') {
+                throw new BookingException(__('Votre part est déjà réglée.'));
+            }
+            if ($booking->status !== 'confirmed' || ! $booking->starts_at->isFuture()) {
+                throw new BookingException(__('Cette partie n’accepte plus de paiement.'));
+            }
+            if ($user->status !== 'active') {
+                throw new BookingException(__('Votre compte est suspendu. Le paiement est refusé.'));
+            }
+            if ($user->email_verified_at === null) {
+                throw new BookingException(__('Votre compte doit être actif et votre e-mail confirmé pour réserver.'));
+            }
+            // Une invitation envoyée à une adresse sans compte est rattachée au compte créé ensuite avec cette adresse.
+            $player->update(['user_id' => $user->id]);
+            $this->charge($booking, $player, $user, [$this->courtLine($booking, $player)], 'card');
+            $player->update(['status' => 'paid']);
+
+            return $player->fresh();
+        });
+    }
+
+    /**
+     * Carte de garantie : à 24 h du match, l'organisateur paie les parts encore impayées.
+     * C'est le moment où une annulation cesse d'être remboursée, le club ne porte donc jamais le risque.
+     */
+    public function chargeUnpaidShares(): int
+    {
+        $ids = BookingPlayer::where('status', 'invited')->where('is_organizer', false)
+            ->whereHas('booking', fn ($q) => $q->where('status', 'confirmed')->where('starts_at', '<=', now()->addHours(self::FREE_CANCELLATION_HOURS)))
+            ->pluck('id');
+        $charged = 0;
+        foreach ($ids as $id) {
+            $charged += DB::transaction(function () use ($id) {
+                $booking = Booking::whereKey(BookingPlayer::whereKey($id)->value('booking_id'))->lockForUpdate()->firstOrFail();
+                $player = BookingPlayer::findOrFail($id);
+                // Relu sous verrou : le joueur a pu payer entre la recherche et le verrou.
+                if ($player->status !== 'invited' || $booking->status !== 'confirmed') {
+                    return 0;
+                }
+                $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card');
+                $player->update(['status' => 'covered']);
+
+                return 1;
+            });
+        }
+
+        return $charged;
+    }
+
+    /** Ligne invitée de ce joueur sur la réservation, retrouvée par son compte ou par l'adresse invitée. */
+    public static function invitedPlayer(Booking $booking, User $user): ?BookingPlayer
+    {
+        return self::invitationsOf($booking->players()->getQuery(), $user)->first();
+    }
+
+    /**
+     * Restreint aux invitations de ce joueur. L'adresse invitée ne compte que si son e-mail est confirmé :
+     * sinon n'importe qui s'inscrirait avec l'adresse d'un autre pour prendre sa place.
+     *
+     * @param  Builder<BookingPlayer>  $players
+     * @return Builder<BookingPlayer>
+     */
+    public static function invitationsOf(Builder $players, User $user): Builder
+    {
+        return $players->where('is_organizer', false)->where(fn ($q) => $q->where('user_id', $user->id)
+            ->when($user->email_verified_at !== null, fn ($q) => $q->orWhere(fn ($q) => $q->whereNull('user_id')->whereRaw('lower(guest_email) = ?', [mb_strtolower($user->email)]))));
+    }
+
+    /** @param list<string> $guests */
+    private function splitShares(Booking $booking, BookingPlayer $organizer, User $user, array $guests): void
+    {
+        $guests = array_values(array_unique(array_map(fn ($e) => mb_strtolower(trim($e)), $guests)));
+        if ($booking->walk_in_name !== null || count($guests) > self::MAX_PLAYERS - 1 || in_array(mb_strtolower($user->email), $guests, true)) {
+            throw new BookingException(__('Invitez au plus trois autres joueurs, sans vous compter.'));
+        }
+        if (now()->gt($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS))) {
+            throw new BookingException(__('Le prix ne se partage que pour un match dans plus de 24 h.'));
+        }
+        $sentToday = BookingPlayer::where('is_organizer', false)->where('joined_at', '>', now()->subDay())
+            ->whereHas('booking', fn ($q) => $q->where('organizer_id', $user->id))->count();
+        if ($sentToday + count($guests) > self::MAX_INVITATIONS_PER_DAY) {
+            throw new BookingException(__('Vous avez envoyé trop d’invitations aujourd’hui. Réessayez demain.'));
+        }
+        $share = intdiv($booking->price_cents, count($guests) + 1);
+        // Les centimes qui ne se divisent pas restent à l'organisateur.
+        $organizer->update(['share_cents' => $booking->price_cents - $share * count($guests)]);
+        foreach ($guests as $email) {
+            // Un compte dont l'e-mail n'est pas confirmé ne prouve pas qu'il possède l'adresse : l'invitation reste alors à l'adresse.
+            $invited = User::whereRaw('lower(email) = ?', [$email])->whereNotNull('email_verified_at')->first();
+            BookingPlayer::create([
+                // guest_email garde toujours l'adresse tapée : c'est la seule que l'organisateur reverra.
+                'booking_id' => $booking->id, 'user_id' => $invited?->id, 'guest_email' => $email,
+                'is_organizer' => false, 'share_cents' => $share, 'status' => 'invited',
+            ]);
+            // Envoyé seulement si le paiement aboutit : une transaction annulée n'invite personne.
+            DB::afterCommit(function () use ($booking, $user, $share, $email, $invited) {
+                $mail = (new ShareInvitation($booking, $user->name, $share))->locale($invited?->locale ?? app()->getLocale());
+                $invited ? $invited->notify($mail) : Notification::route('mail', $email)->notify($mail);
+            });
+        }
+    }
+
+    private function courtLine(Booking $booking, BookingPlayer $player): array
+    {
+        return ['label' => $booking->court->name.($booking->is_arena ? ' – partie Arena' : '').' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i'), 'quantity' => 1, 'unit' => $player->share_cents, 'vat' => (float) $booking->vat_rate];
+    }
+
+    /**
+     * Encaisse les lignes, émet la facture au nom de celui qui paie et le QR code du joueur.
+     *
+     * @param  list<array{label: string, quantity: int, unit: int, vat: float}>  $lines
+     */
+    private function charge(Booking $booking, BookingPlayer $player, User $payer, array $lines, string $method): Payment
+    {
+        $amount = array_sum(array_map(fn ($l) => $l['quantity'] * $l['unit'], $lines));
+        $payment = Payment::create([
+            'booking_id' => $booking->id,
+            'booking_player_id' => $player->id,
+            'payer_id' => $payer->id,
+            'method' => $method,
+            // Espèces et terminal du club n'ont pas de référence chez un prestataire de paiement.
+            'provider_reference' => $method === 'card' ? 'test_'.Str::uuid() : null,
+            'amount_cents' => $amount,
+            'status' => 'succeeded',
+            'paid_at' => now(),
+        ]);
+        // La TVA se calcule ligne par ligne : 6 % sur le terrain, 21 % sur le matériel.
+        foreach ($lines as &$l) {
+            $l['total'] = $l['quantity'] * $l['unit'];
+            $l['net'] = (int) round($l['total'] / (1 + $l['vat'] / 100));
+        }
+        unset($l);
+        $net = array_sum(array_column($lines, 'net'));
+        $invoice = Invoice::create([
+            'number' => $this->nextNumber('invoice', 'F'),
+            'booking_id' => $booking->id,
+            'payment_id' => $payment->id,
+            'issued_at' => now(),
+            'customer_name' => $booking->walk_in_name ?? $payer->name,
+            'customer_company' => $booking->walk_in_name ? null : $payer->company_name,
+            'customer_vat' => $booking->walk_in_name ? null : $payer->vat_number,
+            'net_cents' => $net,
+            'vat_rate' => $booking->vat_rate,
+            'vat_cents' => $amount - $net,
+            'total_cents' => $amount,
+        ]);
+        foreach ($lines as $l) {
+            InvoiceLine::create([
+                'invoice_id' => $invoice->id, 'label' => $l['label'], 'quantity' => $l['quantity'], 'unit_price_cents' => $l['unit'],
+                'vat_rate' => $l['vat'], 'net_cents' => $l['net'], 'vat_cents' => $l['total'] - $l['net'], 'total_cents' => $l['total'],
+            ]);
+        }
+        AccessPass::create([
+            'booking_player_id' => $player->id,
+            'token_hash' => hash('sha256', self::passToken($player)),
+            'valid_from' => $booking->starts_at->subMinutes(15),
+            'valid_until' => $booking->ends_at,
+        ]);
+
+        return $payment;
     }
 
     public function cancel(Booking $booking, User $user): Booking
@@ -217,6 +358,13 @@ class BookingService
                     ]);
                     Refund::create(['payment_id' => $payment->id, 'amount_cents' => $payment->amount_cents, 'reason' => 'cancellation_24h', 'status' => 'succeeded', 'credit_note_id' => $note->id]);
                     $payment->update(['status' => 'refunded']);
+                }
+            }
+            if (! $refundable) {
+                // Annulée trop tard : la garantie encaisse ici les parts impayées, sans attendre la tâche planifiée.
+                foreach ($booking->players()->where('is_organizer', false)->where('status', 'invited')->get() as $player) {
+                    $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card');
+                    $player->update(['status' => 'covered']);
                 }
             }
             AccessPass::whereIn('booking_player_id', $booking->players()->pluck('id'))->whereNull('revoked_at')->update(['revoked_at' => now()]);

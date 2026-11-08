@@ -2,13 +2,14 @@ import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
-import { euros, shortMonth, ucfirst } from '@/lib/money';
+import { euros, SHARE_LABELS, shortMonth, ucfirst } from '@/lib/money';
 import { Head, Link } from '@inertiajs/react';
-import { ChevronRight, Ticket } from 'lucide-react';
+import { ChevronRight, Ticket, Users } from 'lucide-react';
 
 type Booking = { id: string; court: string; is_arena: boolean; date: string; time: string; status: string; price_cents: number };
+type Invitation = Booking & { organizer: string; share_cents: number; share_status: string };
 
-export default function Index({ bookings }: { bookings: Booking[] }) {
+export default function Index({ bookings, invitations }: { bookings: Booking[]; invitations: Invitation[] }) {
     const t = useT();
     return (
         <AppLayout breadcrumbs={[{ title: t('Mes réservations'), href: '/bookings' }]}>
@@ -22,6 +23,41 @@ export default function Index({ bookings }: { bookings: Booking[] }) {
                         {t('Réserver un terrain')}
                     </Link>
                 </PageHeader>
+
+                {invitations.length > 0 && (
+                    <section aria-labelledby="invitations" className="flex flex-col gap-3">
+                        <h2 id="invitations" className="font-bold">
+                            {t('Parties où l’on vous invite')}
+                        </h2>
+                        <ul className="grid gap-3 md:grid-cols-2">
+                            {invitations.map((b) => (
+                                <li key={b.id}>
+                                    <Link
+                                        href={`/bookings/${b.id}/share`}
+                                        className="bg-card group flex items-center gap-4 rounded-2xl border p-4 shadow-sm transition hover:border-[#C8E64A] hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#1D5C7A] focus-visible:outline-none"
+                                    >
+                                        <Users className="size-8 shrink-0 text-[#1D5C7A]" aria-hidden />
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block font-bold">
+                                                {b.court} · {t('Invitation de :name', { name: b.organizer })}
+                                            </span>
+                                            <span className="block text-sm text-[#5F6B78]">
+                                                {ucfirst(b.date)} · {b.time}
+                                            </span>
+                                            <span className="mt-1 flex items-center gap-3 text-sm">
+                                                <span className={b.share_status === 'invited' ? 'font-semibold text-[#9E2833]' : 'text-[#4E6600]'}>
+                                                    {t(SHARE_LABELS[b.share_status] ?? b.share_status)}
+                                                </span>
+                                                <span className="font-semibold">{euros(b.share_cents)}</span>
+                                            </span>
+                                        </span>
+                                        <ChevronRight className="size-5 text-[#5F6B78] transition group-hover:translate-x-0.5" aria-hidden />
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
 
                 {bookings.length === 0 ? (
                     <div className="bg-card flex flex-col items-center gap-3 rounded-2xl border border-dashed p-10 text-center">
