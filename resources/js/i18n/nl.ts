@@ -123,6 +123,7 @@ const nl: Record<string, string> = {
     'Valable de :window, pour ce terrain uniquement.': 'Geldig van :window, enkel voor dit terrein.',
     'Aucun QR code actif pour cette réservation.': 'Geen actieve QR-code voor deze reservatie.',
     'Facture :number': 'Factuur :number',
+    'Facture électronique (UBL)': 'Elektronische factuur (UBL)',
     'dont TVA :vat': 'waarvan btw :vat',
     Prix: 'Prijs',
     'Revanche : même terrain, même heure, la semaine prochaine': 'Revanche: zelfde terrein, zelfde uur, volgende week',
