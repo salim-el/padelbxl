@@ -5,14 +5,17 @@ namespace App\Http\Controllers;
 use App\Exceptions\BookingException;
 use App\Models\Booking;
 use App\Models\Court;
+use App\Models\Invoice;
 use App\Models\Product;
 use App\Services\BookingService;
 use App\Services\Clock;
 use App\Services\SlotService;
+use App\Services\UblInvoice;
 use Carbon\CarbonImmutable;
 use chillerlan\QRCode\QRCode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -80,7 +83,23 @@ class BookingController extends Controller
             'qr' => $qr,
             'qr_window' => $pass ? Clock::local($pass->valid_from)->format('H:i').' – '.Clock::local($pass->valid_until)->format('H:i') : null,
             'items' => $booking->items->map(fn ($i) => ['name' => $i->product->name, 'quantity' => $i->quantity, 'total_cents' => $i->quantity * $i->unit_price_cents])->all(),
-            'invoices' => $booking->invoices->map(fn ($i) => ['number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents])->all(),
+            'invoices' => $booking->invoices->map(fn ($i) => [
+                'number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents,
+                'ubl' => $i->customer_vat !== null && UblInvoice::sellerIsConfigured(),
+            ])->all(),
+        ]);
+    }
+
+    /** Facture électronique UBL (Peppol BIS 3.0), pour une facture établie au nom d'une entreprise. */
+    public function ubl(Request $request, Booking $booking, Invoice $invoice): HttpResponse
+    {
+        $this->ensureOwner($request, $booking);
+        abort_if($invoice->customer_vat === null, 404);
+        abort_unless(UblInvoice::sellerIsConfigured(), 503, 'Les coordonnées du club (CLUB_* dans .env) ne sont pas complètes.');
+
+        return response((new UblInvoice)->toXml($invoice, $booking->public_id), 200, [
+            'Content-Type' => 'application/xml; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$invoice->number.'.xml"',
         ]);
     }
 
