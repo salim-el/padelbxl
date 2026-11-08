@@ -123,6 +123,7 @@ const en: Record<string, string> = {
     'Valable de :window, pour ce terrain uniquement.': 'Valid :window, for this court only.',
     'Aucun QR code actif pour cette réservation.': 'No active QR code for this booking.',
     'Facture :number': 'Invoice :number',
+    'Facture électronique (UBL)': 'E-invoice (UBL)',
     'dont TVA :vat': 'incl. VAT :vat',
     Prix: 'Price',
     'Revanche : même terrain, même heure, la semaine prochaine': 'Rematch: same court, same time, next week',

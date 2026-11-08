@@ -24,7 +24,7 @@ type Props = {
     qr: string | null;
     qr_window: string | null;
     items: { name: string; quantity: number; total_cents: number }[];
-    invoices: { number: string; total_cents: number; vat_cents: number }[];
+    invoices: { number: string; total_cents: number; vat_cents: number; ubl: boolean }[];
 };
 
 export default function Show({ booking, qr, qr_window, items, invoices }: Props) {
@@ -111,6 +111,15 @@ export default function Show({ booking, qr, qr_window, items, invoices }: Props)
                                 <p key={i.number} className="flex items-center justify-between gap-3">
                                     <span className="flex items-center gap-2">
                                         <FileText className="size-4 text-[#1D5C7A]" aria-hidden /> {t('Facture :number', { number: i.number })}
+                                        {i.ubl && (
+                                            <a
+                                                href={`/bookings/${booking.id}/invoices/${i.number}/ubl`}
+                                                download
+                                                className="text-[#1D5C7A] underline"
+                                            >
+                                                {t('Facture électronique (UBL)')}
+                                            </a>
+                                        )}
                                     </span>
                                     <span>
                                         <strong>{euros(i.total_cents)}</strong>{' '}
