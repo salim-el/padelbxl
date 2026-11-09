@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "salim-el/padelbxl",
     "type": "project",
-    "description": "PadelBxl : réservation de terrains de padel, accès par QR code et mode Arcade.",
+    "description": "PadelBxl : réservation de terrains de padel, paiement partagé et accès par QR code.",
     "keywords": [
         "laravel",
         "padel",
