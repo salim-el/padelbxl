@@ -11,13 +11,14 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, Menu, QrCode, Search, Ticket } from 'lucide-react';
+import { CalendarDays, Menu, QrCode, Search, Ticket, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
 const mainNavItems: NavItem[] = [
     { title: 'Planning', url: '/planning', icon: CalendarDays },
     { title: 'Mes réservations', url: '/bookings', icon: Ticket },
+    { title: 'Parties ouvertes', url: '/open-matches', icon: Users },
     { title: 'Borne d’accès', url: '/kiosk', icon: QrCode },
 ];
 

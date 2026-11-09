@@ -16,7 +16,9 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Refund;
 use App\Models\User;
+use App\Models\WaitlistEntry;
 use App\Notifications\ShareInvitation;
+use App\Notifications\SpotAvailable;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
@@ -124,10 +126,11 @@ class BookingService
      *
      * @param  array<int, int>  $items  quantité par identifiant d'article
      * @param  list<string>  $guests  e-mails des joueurs qui paient leur part, trois au plus
+     * @param  int  $openSpots  places proposées aux autres membres du club, en plus des invités
      */
-    public function confirmPayment(Booking $booking, User $user, ?string $gameMode = null, array $items = [], string $method = 'card', array $guests = []): Booking
+    public function confirmPayment(Booking $booking, User $user, ?string $gameMode = null, array $items = [], string $method = 'card', array $guests = [], int $openSpots = 0): Booking
     {
-        return DB::transaction(function () use ($booking, $user, $gameMode, $items, $method, $guests) {
+        return DB::transaction(function () use ($booking, $user, $gameMode, $items, $method, $guests, $openSpots) {
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ($user->status !== 'active') {
                 throw new BookingException(__('Votre compte est suspendu. Le paiement est refusé.'));
@@ -148,8 +151,8 @@ class BookingService
                 $booking->update(['is_arena' => true, 'game_mode' => $gameMode, 'pricing_rule_id' => $rule->id, 'price_cents' => $price, 'vat_rate' => $rule->vat_rate]);
                 $player->update(['share_cents' => $price]);
             }
-            if ($guests !== []) {
-                $this->splitShares($booking, $player, $user, $guests);
+            if ($guests !== [] || $openSpots > 0) {
+                $this->splitShares($booking, $player, $user, $guests, $openSpots);
             }
             $lines = [$this->courtLine($booking, $player)];
             foreach ($this->reserveItems($booking, array_filter($items)) as $item) {
@@ -239,24 +242,113 @@ class BookingService
             ->when($user->email_verified_at !== null, fn ($q) => $q->orWhere(fn ($q) => $q->whereNull('user_id')->whereRaw('lower(guest_email) = ?', [mb_strtolower($user->email)]))));
     }
 
+    /**
+     * Parties ouvertes encore joignables : confirmées, à plus de 24 h, avec au moins une place née ouverte.
+     * Après 24 h, la garantie de l'organisateur a payé les places vides : il n'y a plus rien à prendre.
+     *
+     * @return Builder<Booking>
+     */
+    public static function openMatches(): Builder
+    {
+        return Booking::where('status', 'confirmed')->whereNull('walk_in_name')
+            ->where('starts_at', '>', now()->addHours(self::FREE_CANCELLATION_HOURS))
+            ->whereHas('players', fn ($q) => $q->where('is_organizer', false)->whereNull('guest_email'));
+    }
+
+    /** Un membre du club prend une place ouverte et paie sa part tout de suite. */
+    public function joinOpenMatch(Booking $booking, User $user): BookingPlayer
+    {
+        return DB::transaction(function () use ($booking, $user) {
+            $booking = $this->lockJoinable($booking, $user);
+            $spot = $booking->players()->where('is_organizer', false)->whereNull('user_id')->whereNull('guest_email')
+                ->where('status', 'invited')->lockForUpdate()->first()
+                ?? throw new BookingException(__('Cette partie est complète. Inscrivez-vous sur la liste d’attente.'));
+            $spot->update(['user_id' => $user->id]);
+            $this->charge($booking, $spot, $user, [$this->courtLine($booking, $spot)], 'card');
+            $spot->update(['status' => 'paid']);
+            WaitlistEntry::where('booking_id', $booking->id)->where('user_id', $user->id)->delete();
+
+            return $spot->fresh();
+        });
+    }
+
+    public function joinWaitlist(Booking $booking, User $user): WaitlistEntry
+    {
+        return DB::transaction(function () use ($booking, $user) {
+            $booking = $this->lockJoinable($booking, $user);
+            if ($booking->players()->where('is_organizer', false)->whereNull('user_id')->whereNull('guest_email')->where('status', 'invited')->exists()) {
+                throw new BookingException(__('Une place est encore libre : prenez-la directement.'));
+            }
+
+            return WaitlistEntry::firstOrCreate(['booking_id' => $booking->id, 'user_id' => $user->id]);
+        });
+    }
+
+    public function leaveWaitlist(Booking $booking, User $user): void
+    {
+        WaitlistEntry::where('booking_id', $booking->id)->where('user_id', $user->id)->delete();
+    }
+
+    /**
+     * Un invité refuse avant 24 h : sa place devient ouverte et la liste d'attente est prévenue.
+     * Après 24 h, la garantie a déjà payé sa part et la place n'est plus à rendre.
+     */
+    public function declineShare(Booking $booking, User $user): void
+    {
+        DB::transaction(function () use ($booking, $user) {
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $player = self::invitedPlayer($booking, $user) ?? throw new BookingException(__('Cette invitation n’existe pas.'));
+            if ($player->status !== 'invited' || $booking->status !== 'confirmed' || now()->gt($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS))) {
+                throw new BookingException(__('Cette invitation ne peut plus être refusée.'));
+            }
+            $player->update(['user_id' => null, 'guest_email' => null]);
+            DB::afterCommit(function () use ($booking) {
+                foreach (WaitlistEntry::with('user')->where('booking_id', $booking->id)->get() as $entry) {
+                    $entry->user?->notify((new SpotAvailable($booking))->locale($entry->user->locale ?? app()->getLocale()));
+                }
+            });
+        });
+    }
+
+    /** Verrouille une partie ouverte et vérifie que ce membre peut y entrer. */
+    private function lockJoinable(Booking $booking, User $user): Booking
+    {
+        $booking = self::openMatches()->whereKey($booking->id)->lockForUpdate()->first()
+            ?? throw new BookingException(__('Cette partie n’accepte plus de joueurs.'));
+        if ($user->status !== 'active' || $user->email_verified_at === null) {
+            throw new BookingException(__('Votre compte doit être actif et votre e-mail confirmé pour réserver.'));
+        }
+        if ($booking->organizer_id === $user->id || self::invitedPlayer($booking, $user) !== null) {
+            throw new BookingException(__('Vous faites déjà partie de cette partie.'));
+        }
+
+        return $booking;
+    }
+
     /** @param list<string> $guests */
-    private function splitShares(Booking $booking, BookingPlayer $organizer, User $user, array $guests): void
+    private function splitShares(Booking $booking, BookingPlayer $organizer, User $user, array $guests, int $openSpots): void
     {
         $guests = array_values(array_unique(array_map(fn ($e) => mb_strtolower(trim($e)), $guests)));
-        if ($booking->walk_in_name !== null || count($guests) > self::MAX_PLAYERS - 1 || in_array(mb_strtolower($user->email), $guests, true)) {
+        $others = count($guests) + $openSpots;
+        if ($booking->walk_in_name !== null || $openSpots < 0 || $others > self::MAX_PLAYERS - 1 || in_array(mb_strtolower($user->email), $guests, true)) {
             throw new BookingException(__('Invitez au plus trois autres joueurs, sans vous compter.'));
         }
         if (now()->gt($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS))) {
             throw new BookingException(__('Le prix ne se partage que pour un match dans plus de 24 h.'));
         }
-        $sentToday = BookingPlayer::where('is_organizer', false)->where('joined_at', '>', now()->subDay())
+        // Seules les adresses e-mail comptent : une place ouverte n'envoie aucun message.
+        $sentToday = BookingPlayer::where('is_organizer', false)->whereNotNull('guest_email')->where('joined_at', '>', now()->subDay())
             ->whereHas('booking', fn ($q) => $q->where('organizer_id', $user->id))->count();
         if ($sentToday + count($guests) > self::MAX_INVITATIONS_PER_DAY) {
             throw new BookingException(__('Vous avez envoyé trop d’invitations aujourd’hui. Réessayez demain.'));
         }
-        $share = intdiv($booking->price_cents, count($guests) + 1);
+        $share = intdiv($booking->price_cents, $others + 1);
         // Les centimes qui ne se divisent pas restent à l'organisateur.
-        $organizer->update(['share_cents' => $booking->price_cents - $share * count($guests)]);
+        $organizer->update(['share_cents' => $booking->price_cents - $share * $others]);
+        for ($i = 0; $i < $openSpots; $i++) {
+            // Place ouverte : ni compte ni adresse, le premier membre qui paie la prend.
+            BookingPlayer::create(['booking_id' => $booking->id, 'user_id' => null, 'guest_email' => null, 'is_organizer' => false, 'share_cents' => $share, 'status' => 'invited']);
+        }
         foreach ($guests as $email) {
             // Un compte dont l'e-mail n'est pas confirmé ne prouve pas qu'il possède l'adresse : l'invitation reste alors à l'adresse.
             $invited = User::whereRaw('lower(email) = ?', [$email])->whereNotNull('email_verified_at')->first();
