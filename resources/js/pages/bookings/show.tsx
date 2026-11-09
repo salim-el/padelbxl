@@ -25,7 +25,7 @@ type Props = {
     qr_window: string | null;
     items: { name: string; quantity: number; total_cents: number }[];
     invoices: { number: string; total_cents: number; vat_cents: number; ubl: boolean }[];
-    players: { name: string; is_organizer: boolean; share_cents: number; status: string }[];
+    players: { name: string | null; is_organizer: boolean; open: boolean; taken: boolean; share_cents: number; status: string }[];
 };
 
 export default function Show({ booking, qr, qr_window, items, invoices, players }: Props) {
@@ -143,10 +143,11 @@ export default function Show({ booking, qr, qr_window, items, invoices, players 
                             <Users className="size-4 text-[#1D5C7A]" aria-hidden /> {t('Prix partagé')}
                         </h2>
                         <ul className="space-y-2 text-sm">
-                            {players.map((p) => (
-                                <li key={p.name} className="flex items-center justify-between gap-3">
+                            {players.map((p, i) => (
+                                <li key={i} className="flex items-center justify-between gap-3">
                                     <span className="min-w-0 truncate">
-                                        {p.name} {p.is_organizer && <span className="text-[#5F6B78]">({t('vous')})</span>}
+                                        {p.open ? t(p.taken ? 'Place ouverte, prise par un membre' : 'Place ouverte, encore libre') : p.name}{' '}
+                                        {p.is_organizer && <span className="text-[#5F6B78]">({t('vous')})</span>}
                                     </span>
                                     <span className="flex shrink-0 items-center gap-2">
                                         <span className="text-[#5F6B78]">{t(SHARE_LABELS[p.status] ?? p.status)}</span>

@@ -231,6 +231,29 @@ const en: Record<string, string> = {
     'Prix partagé': 'Shared price',
     vous: 'you',
     'Parties où l’on vous invite': 'Games you are invited to',
+    'Parties ouvertes': 'Open games',
+    'Compléter une partie': 'Fill a game',
+    'Des membres cherchent des joueurs. Vous payez votre part et recevez votre propre QR code.':
+        'Members are looking for players. You pay your share and get your own QR code.',
+    'Aucune partie ouverte pour le moment.': 'No open games right now.',
+    Complet: 'Full',
+    '1 place libre': '1 spot left',
+    ':n places libres': ':n spots left',
+    'votre part, TVA comprise': 'your share, VAT included',
+    'Vous jouez dans cette partie. Voir mon QR code': 'You play in this game. See my QR code',
+    'Prendre la place et payer :amount': 'Take the spot and pay :amount',
+    'Quitter la liste d’attente': 'Leave the waiting list',
+    'M’inscrire sur la liste d’attente': 'Join the waiting list',
+    'Places ouvertes au club': 'Spots open to the club',
+    'Un autre membre peut prendre la place et payer sa part.': 'Another member can take the spot and pay their share.',
+    'Une place ouverte de moins': 'One open spot less',
+    'Une place ouverte de plus': 'One more open spot',
+    'Invitez au plus trois autres joueurs, sans vous compter.': 'Invite at most three other players, not counting yourself.',
+    'Place ouverte, prise par un membre': 'Open spot, taken by a member',
+    'Place ouverte, encore libre': 'Open spot, still free',
+    'Refuser l’invitation ? Votre place sera proposée aux autres membres du club.':
+        'Decline the invitation? Your spot will be offered to the other club members.',
+    'Je ne peux pas venir': 'I can’t come',
 };
 
 export default en;

@@ -31,12 +31,14 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
         game_mode: string | null;
         items: Record<number, number>;
         guests: string[];
+        open_spots: number;
         accept_guarantee: boolean;
     }>({
         accept_terms: false,
         game_mode: 'classic',
         items: {},
         guests: ['', '', ''],
+        open_spots: 0,
         accept_guarantee: false,
     });
     const pageErrors = usePage<{ errors: Record<string, string> }>().props.errors;
@@ -45,7 +47,9 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
     const court = arcade ? (booking.arcade_price_cents as number) : booking.price_cents;
     const extras = products.reduce((sum, p) => sum + (data.items[p.id] ?? 0) * p.price_cents, 0);
     // Même calcul que le serveur : part égale, les centimes restants à l'organisateur.
-    const partners = data.guests.filter((g) => g.trim() !== '').length;
+    const emails = data.guests.filter((g) => g.trim() !== '').length;
+    const partners = emails + data.open_spots;
+    const maxOpen = 3 - emails;
     const share = Math.floor(court / (partners + 1));
     const myShare = court - share * partners;
     const total = myShare + extras;
@@ -213,6 +217,38 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                                     )}
                                 </label>
                             ))}
+                            <div className="bg-card flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
+                                <span>
+                                    <span className="font-semibold">{t('Places ouvertes au club')}</span>
+                                    <span className="text-muted-foreground block text-xs">
+                                        {t('Un autre membre peut prendre la place et payer sa part.')}
+                                    </span>
+                                </span>
+                                <span className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setData('open_spots', Math.max(0, data.open_spots - 1))}
+                                        className="size-8 rounded-md border font-bold"
+                                        aria-label={t('Une place ouverte de moins')}
+                                    >
+                                        −
+                                    </button>
+                                    <span className="w-6 text-center font-semibold" aria-live="polite">
+                                        {data.open_spots}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setData('open_spots', Math.min(maxOpen, data.open_spots + 1))}
+                                        className="size-8 rounded-md border font-bold"
+                                        aria-label={t('Une place ouverte de plus')}
+                                    >
+                                        +
+                                    </button>
+                                </span>
+                            </div>
+                            {partners > 3 && (
+                                <p className="text-sm text-[#9E2833]">{t('Invitez au plus trois autres joueurs, sans vous compter.')}</p>
+                            )}
                             {partners > 0 && (
                                 <>
                                     <p className="rounded-lg bg-[#E3F0F7] p-3 text-sm text-[#17304A]">
