@@ -17,17 +17,15 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         foreach (range(1, 6) as $i) {
-            Court::create(['name' => "Terrain $i", 'is_arena' => true]);
+            Court::create(['name' => "Terrain $i"]);
         }
         // TVA de 6 % : accès aux installations sportives.
         $rules = [
-            ['Heures creuses', '09:00', '17:00', 3360, false],
-            ['Heures pleines', '17:00', '23:00', 4800, false],
-            ['Arena heures creuses', '09:00', '17:00', 4760, true],
-            ['Arena heures pleines', '17:00', '23:00', 6200, true],
+            ['Heures creuses', '09:00', '17:00', 3360],
+            ['Heures pleines', '17:00', '23:00', 4800],
         ];
-        foreach ($rules as [$name, $start, $end, $price, $arena]) {
-            PricingRule::create(['name' => $name, 'start_time' => $start, 'end_time' => $end, 'price_cents' => $price, 'vat_rate' => 6, 'is_arena' => $arena, 'valid_from' => '2026-01-01']);
+        foreach ($rules as [$name, $start, $end, $price]) {
+            PricingRule::create(['name' => $name, 'start_time' => $start, 'end_time' => $end, 'price_cents' => $price, 'vat_rate' => 6, 'valid_from' => '2026-01-01']);
         }
         // Matériel : TVA de 21 %, contrairement à l'accès au terrain.
         Product::create(['name' => 'Location de raquette', 'kind' => 'rental', 'price_cents' => 400, 'vat_rate' => 21, 'stock' => 12]);

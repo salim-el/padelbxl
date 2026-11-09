@@ -1,6 +1,6 @@
 import { SVGAttributes } from 'react';
 
-// Balle de padel (coutures découpées par un masque) et deux cases en diagonale, comme des pixels d'arcade.
+// Balle de padel (coutures découpées par un masque) et deux cases en diagonale, comme deux pixels.
 export default function AppLogoIcon(props: SVGAttributes<SVGElement>) {
     return (
         <svg {...props} viewBox="0 0 45 42" xmlns="http://www.w3.org/2000/svg">

@@ -12,7 +12,7 @@ class CourtController extends Controller
 {
     public function index(): JsonResponse
     {
-        return response()->json(['data' => Court::where('is_active', true)->orderBy('id')->get(['id', 'name', 'is_arena'])]);
+        return response()->json(['data' => Court::where('is_active', true)->orderBy('id')->get(['id', 'name'])]);
     }
 
     /** Créneaux libres d'un jour, sans aucune donnée personnelle : lisible sans jeton. */

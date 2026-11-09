@@ -90,7 +90,6 @@ class BookingService
                     'status' => 'pending_payment',
                     'price_cents' => $this->slots->priceCents($rule, $startUtc),
                     'vat_rate' => $rule->vat_rate,
-                    'is_arena' => false,
                     'hold_expires_at' => now()->addMinutes(self::HOLD_MINUTES),
                     ...($walkIn ?? []),
                 ]));
@@ -112,12 +111,12 @@ class BookingService
      * Réservation au comptoir : créneau bloqué puis payé sur place (espèces ou terminal) dans la même transaction,
      * donc jamais de créneau à moitié réservé si le paiement échoue.
      */
-    public function counter(User $staff, Court $court, CarbonImmutable $startUtc, string $name, string $contact, ?string $gameMode, string $method): Booking
+    public function counter(User $staff, Court $court, CarbonImmutable $startUtc, string $name, string $contact, string $method): Booking
     {
-        return DB::transaction(function () use ($staff, $court, $startUtc, $name, $contact, $gameMode, $method) {
+        return DB::transaction(function () use ($staff, $court, $startUtc, $name, $contact, $method) {
             $booking = $this->hold($staff, $court, $startUtc, ['walk_in_name' => $name, 'walk_in_contact' => $contact]);
 
-            return $this->confirmPayment($booking, $staff, $gameMode, [], $method);
+            return $this->confirmPayment($booking, $staff, [], $method);
         });
     }
 
@@ -128,9 +127,9 @@ class BookingService
      * @param  list<string>  $guests  e-mails des joueurs qui paient leur part, trois au plus
      * @param  int  $openSpots  places proposées aux autres membres du club, en plus des invités
      */
-    public function confirmPayment(Booking $booking, User $user, ?string $gameMode = null, array $items = [], string $method = 'card', array $guests = [], int $openSpots = 0): Booking
+    public function confirmPayment(Booking $booking, User $user, array $items = [], string $method = 'card', array $guests = [], int $openSpots = 0): Booking
     {
-        return DB::transaction(function () use ($booking, $user, $gameMode, $items, $method, $guests, $openSpots) {
+        return DB::transaction(function () use ($booking, $user, $items, $method, $guests, $openSpots) {
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ($user->status !== 'active') {
                 throw new BookingException(__('Votre compte est suspendu. Le paiement est refusé.'));
@@ -139,18 +138,6 @@ class BookingService
                 throw new BookingException(__('Les dix minutes sont écoulées. Le créneau a été libéré, rien n’a été débité.'));
             }
             $player = $booking->players()->where('is_organizer', true)->firstOrFail();
-            // Un mode arcade remplace le prix classique par le tarif arcade du même créneau (+14 €).
-            if ($gameMode !== null && $gameMode !== 'classic') {
-                $rule = $this->slots->priceFor($booking->starts_at, true);
-                $supplement = $this->slots->arcadeSupplement($booking->starts_at);
-                if ($rule === null || $supplement === null) {
-                    throw new BookingException(__('Le mode arcade n’est pas disponible sur ce créneau.'));
-                }
-                // Le supplément s'ajoute au prix déjà bloqué, remise flash comprise.
-                $price = $booking->price_cents + $supplement;
-                $booking->update(['is_arena' => true, 'game_mode' => $gameMode, 'pricing_rule_id' => $rule->id, 'price_cents' => $price, 'vat_rate' => $rule->vat_rate]);
-                $player->update(['share_cents' => $price]);
-            }
             if ($guests !== [] || $openSpots > 0) {
                 $this->splitShares($booking, $player, $user, $guests, $openSpots);
             }
@@ -367,7 +354,7 @@ class BookingService
 
     private function courtLine(Booking $booking, BookingPlayer $player): array
     {
-        return ['label' => $booking->court->name.($booking->is_arena ? ' – partie Arena' : '').' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i'), 'quantity' => 1, 'unit' => $player->share_cents, 'vat' => (float) $booking->vat_rate];
+        return ['label' => $booking->court->name.' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i'), 'quantity' => 1, 'unit' => $player->share_cents, 'vat' => (float) $booking->vat_rate];
     }
 
     /**

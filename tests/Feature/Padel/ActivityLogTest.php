@@ -45,7 +45,7 @@ class ActivityLogTest extends TestCase
 
     public function test_a_price_change_keeps_the_old_and_new_price(): void
     {
-        $rule = PricingRule::where('is_arena', true)->firstOrFail();
+        $rule = PricingRule::where('name', 'Heures pleines')->firstOrFail();
         $old = $rule->price_cents;
 
         $this->actingAs($this->marc)->patch("/admin/pricing-rules/{$rule->id}", ['price_cents' => $old + 500]);
@@ -99,7 +99,7 @@ class ActivityLogTest extends TestCase
 
     public function test_the_manager_reads_the_log_newest_first_with_author_and_detail(): void
     {
-        $rule = PricingRule::where('is_arena', true)->firstOrFail();
+        $rule = PricingRule::where('name', 'Heures pleines')->firstOrFail();
         $old = $rule->price_cents;
         $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend");
         $this->actingAs($this->marc)->patch("/admin/pricing-rules/{$rule->id}", ['price_cents' => $old + 500]);

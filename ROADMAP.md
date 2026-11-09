@@ -63,13 +63,13 @@ Déjà fusionné dans `develop` :
 | `feature/ubl-export` | Facture électronique UBL (Peppol BIS 3.0) pour les clients entreprises |
 | `feature/split-payment` | Partage du prix entre quatre joueurs au plus, invitation par e-mail, part payée par chacun avec sa facture et son QR code ; carte de garantie de l'organisateur débitée des parts impayées 24 h avant le match |
 | `feature/open-matches` | Places ouvertes aux membres du club au moment du paiement, place prise en payant sa part, liste d'attente prévenue par e-mail quand un invité refuse ; liste sans nom ni adresse des joueurs |
+| `refactor/remove-arcade` | Retrait du mode Arcade : terrains classiques seulement, tarifs et supplément Arena supprimés, accueil, planning, paiement, comptoir et API simplifiés ; les réservations déjà payées gardent leur prix et leurs factures |
 
 Encore prévu. Dates cibles ; chaque branche est créée au moment où le travail commence.
 
 | Période | Branche | Objectif |
 |---|---|---|
 | 27/10 – 07/11 | `feature/stripe-payment` | Paiement réel en mode test Stripe, confirmation par notification signée |
-| 10/11 – 21/11 | `feature/arena-mode` | Moteur de jeu Arcade : 5 séquences de zones prédéfinies, point double, faute, point en or ; validation des rebonds sur tablette et simulateur web ; score en direct |
 | 24/11 – 01/12 | `feature/accessibility-audit` | Contrôle WCAG 2.1 AA de tous les écrans, corrections |
 | 01/12 – 05/12 | `release/0.2.0-beta` | Tests de bout en bout, documentation, étiquette `v0.2.0-beta` |
 
@@ -78,10 +78,6 @@ Encore prévu. Dates cibles ; chaque branche est créée au moment où le travai
 | Idée | Intérêt | Difficulté |
 |---|---|---|
 | Réservation récurrente | Le même créneau chaque semaine pour un groupe fixe | Moyenne |
-| Points Arena, défis et paliers | Fidélité du document de conception : points gagnés en partie, défis récompensés au bar, paliers de récompenses | Moyenne |
-| Événement privé | Plusieurs terrains en même temps pour une entreprise ou un anniversaire, classement commun | Moyenne |
-| Profil de progression | Records et zones réussies, à partir des événements mesurés par les LED | Moyenne |
-| Mode Rotatif | 3 contre 3 sur un hexagone dont le sol tourne : nouveauté future, hors TFE, après validation de l'Arcade | Élevée |
-| Ambiances lumineuses | Thèmes prédéfinis seulement, pour respecter la limite de clignotements du T03 | Moyenne |
+| Événement privé | Plusieurs terrains en même temps pour une entreprise ou un anniversaire | Moyenne |
 
 Écartée : une musique choisie par les joueurs. Diffuser de la musique dans un lieu public demande une licence payante (Unisono en Belgique).

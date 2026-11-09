@@ -38,14 +38,3 @@ const MONTHS: Record<string, string> = {
 };
 // En néerlandais et en anglais, les trois premières lettres du mois suffisent (okt, Oct).
 export const shortMonth = (m: string | undefined) => (m ? (MONTHS[m] ?? m.slice(0, 3)) : '');
-
-export const GAME_MODES: Record<string, { label: string; text: string }> = {
-    classic: { label: 'Classique', text: 'Un match de padel normal, sans supplément.' },
-    arcade: {
-        label: 'Arcade',
-        text: 'Les règles du padel, avec des zones lumineuses en miroir dans les deux camps : Or (point double), Rouge (faute) et Bleue (points Arena).',
-    },
-};
-
-// Supplément du mode arcade, identique à l'écart des tarifs (48 € → 62 €).
-export const ARCADE_SUPPLEMENT_CENTS = 1400;

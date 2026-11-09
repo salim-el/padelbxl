@@ -15,14 +15,13 @@ Route::get('/', fn () => Inertia::render('home', [
     'prices' => PricingRule::query()
         ->whereDate('valid_from', '<=', today())
         ->where(fn ($q) => $q->whereNull('valid_until')->orWhereDate('valid_until', '>=', today()))
-        ->orderBy('is_arena')->orderBy('start_time')
+        ->orderBy('start_time')
         ->get()
         ->map(fn (PricingRule $r) => [
             'name' => $r->name,
             'start' => substr($r->start_time, 0, 5),
             'end' => substr($r->end_time, 0, 5),
             'price_cents' => $r->price_cents,
-            'is_arena' => $r->is_arena,
         ]),
 ]))->name('home');
 

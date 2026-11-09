@@ -71,8 +71,6 @@ class BookingController extends Controller
             'status' => $b->status,
             'price_cents' => $b->price_cents,
             'vat_rate' => (float) $b->vat_rate,
-            'is_arena' => $b->is_arena,
-            'game_mode' => $b->game_mode,
             'hold_expires_at' => $b->hold_expires_at?->toIso8601String(),
             'refundable' => now()->lte($b->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS)),
             'cancellable' => $b->status === 'confirmed' && $b->starts_at->isFuture(),

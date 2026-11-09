@@ -1,12 +1,9 @@
 // Traductions de l’interface : la clé est le texte français écrit dans le code.
 const en: Record<string, string> = {
     'Padel indoor à Anderlecht': 'Indoor padel in Anderlecht',
-    'Six terrains de padel couverts à Anderlecht, tous jouables en mode arcade avec zones lumineuses. Réservation en ligne, paiement sécurisé, accès par QR code.':
-        'Six covered padel courts in Anderlecht, all playable in arcade mode with light zones. Online booking, secure payment, QR code access.',
     'Aller au contenu': 'Skip to content',
     'Navigation principale': 'Main navigation',
     'PadelBxl, accueil': 'PadelBxl, home',
-    'Mode arcade': 'Arcade mode',
     'Comment ça marche': 'How it works',
     Tarifs: 'Prices',
     Planning: 'Schedule',
@@ -16,35 +13,13 @@ const en: Record<string, string> = {
     Réserver: 'Book',
     'Nouveau · Sur les 6 terrains': 'New · On all 6 courts',
     'Le padel,': 'Padel,',
-    'version arcade.': 'arcade edition.',
-    'Six terrains couverts à Anderlecht. En mode Arcade, des zones s’allument au sol et changent la valeur des points : point double, faute ou points Arena.':
-        'Six covered courts in Anderlecht. In Arcade mode, zones light up on the floor and change the value of points: double point, fault or Arena points.',
     'Réserver un terrain': 'Book a court',
-    'Découvrir le mode arcade': 'Discover arcade mode',
     'Le club en chiffres': 'The club in figures',
     'terrains couverts': 'covered courts',
-    'modes de jeu': 'game modes',
     '9 h – 22 h 30': '9 am – 10:30 pm',
     'tous les jours': 'every day',
     'le créneau de 90 min, dès': 'per 90-minute slot, from',
     'Votre match devient une partie': 'Your match becomes a game',
-    'Des bandes LED au pied des parois signalent des zones sur chacun des six terrains. Le jeu reste le padel, avec des règles de score propres au mode : avant certains points, une zone s’allume au même endroit dans les deux camps et change la valeur du point.':
-        'LED strips at the foot of the walls mark zones on each of the six courts. The game is still padel, with scoring rules specific to this mode: before some points, a zone lights up in the same spot on both sides and changes the value of the point.',
-    'Balle qui rebondit dans une zone lumineuse verte, sur un terrain en mode arcade éclairé par des LED':
-        'Ball bouncing in a green light zone, on a court in arcade mode lit by LEDs',
-    'Zone Or': 'Gold zone',
-    'Gagnez le point avec une balle qui a rebondi dans la zone Or adverse : il compte double.':
-        'Win the point with a ball that bounced in the opponent’s Gold zone: it counts double.',
-    'Zone Rouge': 'Red zone',
-    'Une balle dont le premier rebond tombe dans la zone Rouge adverse est faute, comme une balle dehors.':
-        'A ball whose first bounce lands in the opponent’s Red zone is a fault, like a ball out.',
-    'Zone Bleue': 'Blue zone',
-    'Un point gagné avec un rebond dans la zone Bleue adverse rapporte des points Arena, sans changer le score.':
-        'A point won with a bounce in the opponent’s Blue zone earns Arena points, without changing the score.',
-    'zone Or : point double': 'Gold zone: double point',
-    'zone Rouge : faute': 'Red zone: fault',
-    'zone Bleue : points Arena': 'Blue zone: Arena points',
-    'Réserver en mode arcade': 'Book in arcade mode',
     '1. Choisissez un créneau': '1. Choose a slot',
     'Le planning montre les terrains libres en temps réel, sans compte. Un créneau dure 90 minutes.':
         'The schedule shows free courts in real time, without an account. A slot lasts 90 minutes.',
@@ -107,7 +82,6 @@ const en: Record<string, string> = {
     'Heure pleine': 'Peak hour',
     'Heure creuse': 'Off-peak hour',
     'Flash : −20 % à moins de 3 h du début': 'Flash: −20% less than 3 hours before the start',
-    'Mode arcade sur tous les terrains : +:price au paiement': 'Arcade mode on every court: +:price at checkout',
     'Prix TTC par créneau de 90 minutes, TVA de 6 % comprise. Annulation remboursée jusqu’à 24 h avant.':
         'Price per 90-minute slot, 6% VAT included. Cancellations are refunded up to 24 hours before.',
     'Connectez-vous': 'Log in',
@@ -115,9 +89,7 @@ const en: Record<string, string> = {
     'Aucune réservation pour l’instant.': 'No bookings yet.',
     'Annuler cette réservation ?': 'Cancel this booking?',
     Réservation: 'Booking',
-    'Partie arcade': 'Arcade game',
     'Partie classique': 'Classic game',
-    'Mode :mode': ':mode mode',
     'QR code d’accès au terrain': 'Court access QR code',
     'Votre QR code personnel': 'Your personal QR code',
     'Valable de :window, pour ce terrain uniquement.': 'Valid :window, for this court only.',
@@ -138,9 +110,7 @@ const en: Record<string, string> = {
     'Match dans moins de 24 h : une annulation ne sera pas remboursée.': 'Match in less than 24 hours: a cancellation will not be refunded.',
     'Total TTC, TVA :rate % comprise': 'Total, :rate% VAT included',
     'Version alpha : le paiement est simulé. Aucune carte n’est débitée.': 'Alpha version: payment is simulated. No card is charged.',
-    'Choisissez votre mode de jeu': 'Choose your game mode',
     inclus: 'included',
-    'Choisissez un des modes de jeu proposés.': 'Choose one of the game modes offered.',
     Matériel: 'Equipment',
     'par partie': 'per game',
     'l’unité': 'each',
@@ -162,10 +132,7 @@ const en: Record<string, string> = {
     'Annulée sans remboursement': 'Cancelled without refund',
     Gelée: 'Frozen',
     Classique: 'Classic',
-    Arcade: 'Arcade',
     'Un match de padel normal, sans supplément.': 'A normal padel match, no extra charge.',
-    'Les règles du padel, avec des zones lumineuses en miroir dans les deux camps : Or (point double), Rouge (faute) et Bleue (points Arena).':
-        'Padel rules, with mirrored light zones on both sides: Gold (double point), Red (fault) and Blue (Arena points).',
     'Tableau de bord': 'Dashboard',
     'Borne d’accès': 'Access terminal',
     Paramètres: 'Settings',
@@ -236,7 +203,6 @@ const en: Record<string, string> = {
     'Des membres cherchent des joueurs. Vous payez votre part et recevez votre propre QR code.':
         'Members are looking for players. You pay your share and get your own QR code.',
     'Aucune partie ouverte pour le moment.': 'No open games right now.',
-    Complet: 'Full',
     '1 place libre': '1 spot left',
     ':n places libres': ':n spots left',
     'votre part, TVA comprise': 'your share, VAT included',
@@ -254,6 +220,15 @@ const en: Record<string, string> = {
     'Refuser l’invitation ? Votre place sera proposée aux autres membres du club.':
         'Decline the invitation? Your spot will be offered to the other club members.',
     'Je ne peux pas venir': 'I can’t come',
+    'Padel indoor · Anderlecht': 'Indoor padel · Anderlecht',
+    'sans attendre.': 'no waiting.',
+    'Six terrains couverts à Anderlecht. Réservez en ligne, partagez le prix entre joueurs et entrez avec votre QR code.':
+        'Six indoor courts in Anderlecht. Book online, split the price between players and get in with your QR code.',
+    'Six terrains de padel couverts à Anderlecht. Réservation en ligne, prix partagé entre joueurs, accès par QR code.':
+        'Six indoor padel courts in Anderlecht. Online booking, price split between players, access by QR code.',
+    'Voir les tarifs': 'See the prices',
+    '24 h': '24 h',
+    'annulation gratuite avant le match': 'free cancellation before the game',
 };
 
 export default en;
