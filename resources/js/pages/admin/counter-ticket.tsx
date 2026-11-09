@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
-import { euros, GAME_MODES } from '@/lib/money';
+import { euros } from '@/lib/money';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Printer } from 'lucide-react';
 
@@ -15,7 +15,6 @@ type Ticket = {
     name: string;
     contact: string;
     status: string;
-    game_mode: string | null;
     price_cents: number;
     invoice: string | null;
     cancellable: boolean;
@@ -59,7 +58,7 @@ export default function CounterTicket({ booking, qr, qr_window }: { booking: Tic
                         {booking.court} · {booking.date} · {booking.time}
                     </p>
                     <p className="text-muted-foreground text-sm">
-                        {GAME_MODES[booking.game_mode ?? 'classic']?.label} · {euros(booking.price_cents)} TTC payé
+                        {euros(booking.price_cents)} TTC payé
                         {booking.invoice && ` · facture ${booking.invoice}`}
                     </p>
                     {qr ? (

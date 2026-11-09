@@ -37,7 +37,7 @@ class CounterBookingTest extends TestCase
     {
         return $this->actingAs($this->marc)->post('/admin/counter', [
             'court_id' => $this->court->id, 'date' => '2026-10-23', 'time' => '18:00',
-            'name' => 'Sofia Janssens', 'contact' => '0470 12 34 56', 'game_mode' => 'classic', 'method' => 'cash',
+            'name' => 'Sofia Janssens', 'contact' => '0470 12 34 56', 'method' => 'cash',
             ...$override,
         ]);
     }
@@ -67,16 +67,12 @@ class CounterBookingTest extends TestCase
             ->where('qr', fn ($qr) => str_starts_with($qr, 'data:image/svg+xml')));
     }
 
-    public function test_arcade_adds_the_supplement_and_the_terminal_is_recorded(): void
+    public function test_a_terminal_payment_is_recorded(): void
     {
-        $this->book(['time' => '16:30'])->assertRedirect();
-        $base = Booking::where('walk_in_name', 'Sofia Janssens')->sole()->price_cents;
-        $this->book(['time' => '18:00', 'name' => 'Tom Peeters', 'game_mode' => 'arcade', 'method' => 'terminal']);
+        $this->book(['time' => '18:00', 'name' => 'Tom Peeters', 'method' => 'terminal'])->assertRedirect();
 
-        $arcade = Booking::where('walk_in_name', 'Tom Peeters')->sole();
-        $this->assertTrue($arcade->is_arena);
-        $this->assertSame('terminal', Payment::where('booking_id', $arcade->id)->sole()->method);
-        $this->assertGreaterThan($base, $arcade->price_cents);
+        $booking = Booking::where('walk_in_name', 'Tom Peeters')->sole();
+        $this->assertSame('terminal', Payment::where('booking_id', $booking->id)->sole()->method);
     }
 
     public function test_a_slot_already_taken_is_refused_and_nothing_is_charged(): void

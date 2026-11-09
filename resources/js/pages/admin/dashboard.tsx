@@ -2,13 +2,13 @@ import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
-import { euros, GAME_MODES } from '@/lib/money';
+import { euros } from '@/lib/money';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { CalendarCheck, Gauge, TrendingUp, Wallet } from 'lucide-react';
 import { useState } from 'react';
 
 type Stats = { bookings_today: number; occupancy: number; revenue_today_cents: number; revenue_month_cents: number };
-type Row = { id: string; court: string; time: string; player: string; status: string; game_mode: string | null };
+type Row = { id: string; court: string; time: string; player: string; status: string };
 type Account = { id: number; name: string; email: string; verified: boolean; role: string; status: string; created_at: string | null };
 type Page<T> = { data: T[]; current_page: number; last_page: number; total: number; prev_page_url: string | null; next_page_url: string | null };
 
@@ -34,7 +34,7 @@ function Stat({ label, value, icon: Icon }: { label: string; value: string; icon
     );
 }
 
-type Rule = { id: number; name: string; start: string; end: string; price_cents: number; is_arena: boolean };
+type Rule = { id: number; name: string; start: string; end: string; price_cents: number };
 type Closure = { id: number; court: string; reason: string; from: string; to: string };
 
 function PriceRow({ rule }: { rule: Rule }) {
@@ -125,7 +125,6 @@ export default function Dashboard({
                                         <th className="p-2">Heure</th>
                                         <th className="p-2">Terrain</th>
                                         <th className="p-2">Joueur</th>
-                                        <th className="p-2">Mode de jeu</th>
                                         <th className="p-2">État</th>
                                     </tr>
                                 </thead>
@@ -135,7 +134,6 @@ export default function Dashboard({
                                             <td className="p-2 whitespace-nowrap">{b.time}</td>
                                             <td className="p-2">{b.court}</td>
                                             <td className="p-2">{b.player}</td>
-                                            <td className="p-2">{GAME_MODES[b.game_mode ?? 'classic']?.label}</td>
                                             <td className="p-2">
                                                 <StatusBadge status={b.status} />
                                             </td>

@@ -27,22 +27,12 @@ class SlotService
         return $this->isFlash($startUtc) ? (int) round($rule->price_cents * (100 - self::FLASH_PERCENT) / 100) : $rule->price_cents;
     }
 
-    /** Supplément du mode arcade sur ce créneau : écart entre le tarif arcade et le tarif classique. */
-    public function arcadeSupplement(CarbonImmutable $startUtc): ?int
-    {
-        $classic = $this->priceFor($startUtc);
-        $arcade = $this->priceFor($startUtc, true);
-
-        return $classic && $arcade ? $arcade->price_cents - $classic->price_cents : null;
-    }
-
-    /** Règle de prix d'un créneau : classique, ou arcade avec son supplément. */
-    public function priceFor(CarbonImmutable $startUtc, bool $arcade = false): ?PricingRule
+    /** Règle de prix d'un créneau, selon l'heure et la date. */
+    public function priceFor(CarbonImmutable $startUtc): ?PricingRule
     {
         $local = Clock::local($startUtc);
 
         return PricingRule::query()
-            ->where('is_arena', $arcade)
             ->where('start_time', '<=', $local->format('H:i:s'))
             ->where('end_time', '>', $local->format('H:i:s'))
             ->whereDate('valid_from', '<=', $local->toDateString())
@@ -88,8 +78,7 @@ class SlotService
         }
 
         return [
-            'arcade_supplement_cents' => $this->arcadeSupplement(Clock::slotStart($date, Clock::SLOTS[count(Clock::SLOTS) - 1])),
-            'courts' => $courts->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'is_arena' => $c->is_arena])->all(),
+            'courts' => $courts->map(fn ($c) => ['id' => $c->id, 'name' => $c->name])->all(),
             'rows' => $rows,
         ];
     }

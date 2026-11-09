@@ -22,7 +22,6 @@ class OpenDataController extends Controller
         $date = $request->validate(['date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today', 'before_or_equal:+30 days']])['date']
             ?? Clock::local(CarbonImmutable::now())->toDateString();
         $day = $slots->forDate($date);
-        $arcade = $day['arcade_supplement_cents'];
 
         $items = collect($day['courts'])->map(fn (array $court, int $i) => [
             '@type' => 'FacilityUse',
@@ -33,12 +32,9 @@ class OpenDataController extends Controller
             'location' => ['@type' => 'Place', 'name' => self::CLUB, 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Anderlecht', 'postalCode' => '1070', 'addressCountry' => 'BE']],
             'event' => collect($day['rows'])
                 ->filter(fn (array $row) => $row['cells'][$i]['available'])
-                ->map(function (array $row) use ($i, $arcade) {
+                ->map(function (array $row) use ($i) {
                     $price = $row['cells'][$i]['price_cents'];
                     $offers = [['@type' => 'Offer', 'name' => 'Partie classique', 'price' => $price / 100, 'priceCurrency' => 'EUR']];
-                    if ($arcade !== null) {
-                        $offers[] = ['@type' => 'Offer', 'name' => 'Partie Arcade', 'price' => ($price + $arcade) / 100, 'priceCurrency' => 'EUR'];
-                    }
 
                     return [
                         '@type' => 'Slot',

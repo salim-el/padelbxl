@@ -1,12 +1,9 @@
 // Traductions de l’interface : la clé est le texte français écrit dans le code.
 const nl: Record<string, string> = {
     'Padel indoor à Anderlecht': 'Indoor padel in Anderlecht',
-    'Six terrains de padel couverts à Anderlecht, tous jouables en mode arcade avec zones lumineuses. Réservation en ligne, paiement sécurisé, accès par QR code.':
-        'Zes overdekte padelterreinen in Anderlecht, allemaal speelbaar in arcademodus met lichtzones. Online reserveren, veilig betalen, toegang met QR-code.',
     'Aller au contenu': 'Naar de inhoud',
     'Navigation principale': 'Hoofdnavigatie',
     'PadelBxl, accueil': 'PadelBxl, startpagina',
-    'Mode arcade': 'Arcademodus',
     'Comment ça marche': 'Hoe werkt het',
     Tarifs: 'Tarieven',
     Planning: 'Planning',
@@ -16,35 +13,13 @@ const nl: Record<string, string> = {
     Réserver: 'Reserveren',
     'Nouveau · Sur les 6 terrains': 'Nieuw · Op alle 6 terreinen',
     'Le padel,': 'Padel,',
-    'version arcade.': 'arcadeversie.',
-    'Six terrains couverts à Anderlecht. En mode Arcade, des zones s’allument au sol et changent la valeur des points : point double, faute ou points Arena.':
-        'Zes overdekte terreinen in Anderlecht. In arcademodus lichten zones op de grond op en veranderen ze de waarde van de punten: dubbel punt, fout of Arena-punten.',
     'Réserver un terrain': 'Een terrein reserveren',
-    'Découvrir le mode arcade': 'Ontdek de arcademodus',
     'Le club en chiffres': 'De club in cijfers',
     'terrains couverts': 'overdekte terreinen',
-    'modes de jeu': 'spelmodi',
     '9 h – 22 h 30': '9.00 – 22.30 uur',
     'tous les jours': 'elke dag',
     'le créneau de 90 min, dès': 'het tijdslot van 90 min, vanaf',
     'Votre match devient une partie': 'Je match wordt een spel',
-    'Des bandes LED au pied des parois signalent des zones sur chacun des six terrains. Le jeu reste le padel, avec des règles de score propres au mode : avant certains points, une zone s’allume au même endroit dans les deux camps et change la valeur du point.':
-        'Ledstrips onderaan de wanden geven zones aan op elk van de zes terreinen. Het spel blijft padel, met eigen scoreregels voor deze modus: voor sommige punten licht een zone op dezelfde plaats in beide speelhelften op en verandert ze de waarde van het punt.',
-    'Balle qui rebondit dans une zone lumineuse verte, sur un terrain en mode arcade éclairé par des LED':
-        'Bal die stuitert in een groene lichtzone, op een terrein in arcademodus verlicht door leds',
-    'Zone Or': 'Gouden zone',
-    'Gagnez le point avec une balle qui a rebondi dans la zone Or adverse : il compte double.':
-        'Win het punt met een bal die in de gouden zone van de tegenstander stuitert: het telt dubbel.',
-    'Zone Rouge': 'Rode zone',
-    'Une balle dont le premier rebond tombe dans la zone Rouge adverse est faute, comme une balle dehors.':
-        'Een bal die eerst in de rode zone van de tegenstander stuitert, is fout, net als een bal buiten.',
-    'Zone Bleue': 'Blauwe zone',
-    'Un point gagné avec un rebond dans la zone Bleue adverse rapporte des points Arena, sans changer le score.':
-        'Een punt gewonnen met een stuit in de blauwe zone van de tegenstander levert Arena-punten op, zonder de score te veranderen.',
-    'zone Or : point double': 'gouden zone: dubbel punt',
-    'zone Rouge : faute': 'rode zone: fout',
-    'zone Bleue : points Arena': 'blauwe zone: Arena-punten',
-    'Réserver en mode arcade': 'Reserveren in arcademodus',
     '1. Choisissez un créneau': '1. Kies een tijdslot',
     'Le planning montre les terrains libres en temps réel, sans compte. Un créneau dure 90 minutes.':
         'De planning toont de vrije terreinen in real time, zonder account. Een tijdslot duurt 90 minuten.',
@@ -107,7 +82,6 @@ const nl: Record<string, string> = {
     'Heure pleine': 'Piekuur',
     'Heure creuse': 'Daluur',
     'Flash : −20 % à moins de 3 h du début': 'Flash: −20 % minder dan 3 uur voor de start',
-    'Mode arcade sur tous les terrains : +:price au paiement': 'Arcademodus op alle terreinen: +:price bij het betalen',
     'Prix TTC par créneau de 90 minutes, TVA de 6 % comprise. Annulation remboursée jusqu’à 24 h avant.':
         'Prijs per tijdslot van 90 minuten, inclusief 6 % btw. Terugbetaling bij annulering tot 24 uur vooraf.',
     'Connectez-vous': 'Log in',
@@ -115,9 +89,7 @@ const nl: Record<string, string> = {
     'Aucune réservation pour l’instant.': 'Nog geen reservaties.',
     'Annuler cette réservation ?': 'Deze reservatie annuleren?',
     Réservation: 'Reservatie',
-    'Partie arcade': 'Arcadespel',
     'Partie classique': 'Klassiek spel',
-    'Mode :mode': 'Modus :mode',
     'QR code d’accès au terrain': 'QR-code voor toegang tot het terrein',
     'Votre QR code personnel': 'Je persoonlijke QR-code',
     'Valable de :window, pour ce terrain uniquement.': 'Geldig van :window, enkel voor dit terrein.',
@@ -138,9 +110,7 @@ const nl: Record<string, string> = {
     'Match dans moins de 24 h : une annulation ne sera pas remboursée.': 'Match binnen 24 uur: een annulering wordt niet terugbetaald.',
     'Total TTC, TVA :rate % comprise': 'Totaal, inclusief :rate % btw',
     'Version alpha : le paiement est simulé. Aucune carte n’est débitée.': 'Alfaversie: de betaling is gesimuleerd. Er wordt geen kaart gedebiteerd.',
-    'Choisissez votre mode de jeu': 'Kies je spelmodus',
     inclus: 'inbegrepen',
-    'Choisissez un des modes de jeu proposés.': 'Kies een van de aangeboden spelmodi.',
     Matériel: 'Materiaal',
     'par partie': 'per spel',
     'l’unité': 'per stuk',
@@ -162,10 +132,7 @@ const nl: Record<string, string> = {
     'Annulée sans remboursement': 'Geannuleerd zonder terugbetaling',
     Gelée: 'Bevroren',
     Classique: 'Klassiek',
-    Arcade: 'Arcade',
     'Un match de padel normal, sans supplément.': 'Een gewone padelmatch, zonder toeslag.',
-    'Les règles du padel, avec des zones lumineuses en miroir dans les deux camps : Or (point double), Rouge (faute) et Bleue (points Arena).':
-        'De padelregels, met gespiegelde lichtzones aan beide kanten: Goud (dubbel punt), Rood (fout) en Blauw (Arena-punten).',
     'Tableau de bord': 'Dashboard',
     'Borne d’accès': 'Toegangszuil',
     Paramètres: 'Instellingen',
@@ -236,7 +203,6 @@ const nl: Record<string, string> = {
     'Des membres cherchent des joueurs. Vous payez votre part et recevez votre propre QR code.':
         'Leden zoeken spelers. Je betaalt je aandeel en krijgt je eigen QR-code.',
     'Aucune partie ouverte pour le moment.': 'Er zijn momenteel geen open matchen.',
-    Complet: 'Volzet',
     '1 place libre': '1 plaats vrij',
     ':n places libres': ':n plaatsen vrij',
     'votre part, TVA comprise': 'jouw aandeel, btw inbegrepen',
@@ -254,6 +220,15 @@ const nl: Record<string, string> = {
     'Refuser l’invitation ? Votre place sera proposée aux autres membres du club.':
         'De uitnodiging weigeren? Je plaats wordt aan de andere clubleden aangeboden.',
     'Je ne peux pas venir': 'Ik kan niet komen',
+    'Padel indoor · Anderlecht': 'Indoor padel · Anderlecht',
+    'sans attendre.': 'zonder wachten.',
+    'Six terrains couverts à Anderlecht. Réservez en ligne, partagez le prix entre joueurs et entrez avec votre QR code.':
+        'Zes overdekte terreinen in Anderlecht. Reserveer online, deel de prijs met je medespelers en kom binnen met je QR-code.',
+    'Six terrains de padel couverts à Anderlecht. Réservation en ligne, prix partagé entre joueurs, accès par QR code.':
+        'Zes overdekte padelterreinen in Anderlecht. Online reserveren, prijs gedeeld tussen spelers, toegang met QR-code.',
+    'Voir les tarifs': 'De tarieven bekijken',
+    '24 h': '24 u',
+    'annulation gratuite avant le match': 'gratis annuleren voor de match',
 };
 
 export default nl;
