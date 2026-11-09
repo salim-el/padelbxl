@@ -9,7 +9,7 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { CalendarDays, Clock, FileText, Users } from 'lucide-react';
 
 type Props = {
-    booking: { id: string; court: string; is_arena: boolean; date: string; time: string; status: string };
+    booking: { id: string; court: string; date: string; time: string; status: string };
     organizer: string;
     share_cents: number;
     share_status: string;

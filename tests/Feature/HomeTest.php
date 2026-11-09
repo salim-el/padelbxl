@@ -17,8 +17,8 @@ class HomeTest extends TestCase
 
         $this->get('/')->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('home')
-            ->has('prices', 4)
+            ->has('prices', 2)
             ->where('prices.0.price_cents', 3360)
-            ->where('prices.3.is_arena', true));
+            ->where('prices.1.price_cents', 4800));
     }
 }

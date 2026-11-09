@@ -19,7 +19,7 @@ class TerminalController extends Controller
         $next = (clone $playing)->where('starts_at', '>', now())->orderBy('starts_at')->first();
 
         return response()->json([
-            'court' => ['id' => $court->id, 'name' => $court->name, 'is_arena' => $court->is_arena],
+            'court' => ['id' => $court->id, 'name' => $court->name],
             'current' => $this->slot($current),
             'next' => $this->slot($next),
         ]);
@@ -38,8 +38,6 @@ class TerminalController extends Controller
         return $b === null ? null : [
             'starts_at' => $b->starts_at->toIso8601String(),
             'ends_at' => $b->ends_at->toIso8601String(),
-            'is_arena' => $b->is_arena,
-            'game_mode' => $b->game_mode,
         ];
     }
 }

@@ -2,7 +2,6 @@ import InputError from '@/components/input-error';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
-import { GAME_MODES } from '@/lib/money';
 import { Head, useForm } from '@inertiajs/react';
 
 const field = 'bg-card mt-1 block w-full rounded-md border px-2 py-1.5';
@@ -15,7 +14,6 @@ export default function Counter({ courts, slots, today }: { courts: { id: number
         time: slots[0] ?? '',
         name: '',
         contact: '',
-        game_mode: 'classic',
         method: 'cash',
     });
     const errors = form.errors as Record<string, string>;
@@ -84,23 +82,6 @@ export default function Counter({ courts, slots, today }: { courts: { id: number
                         />
                         <InputError message={errors.contact} />
                     </label>
-
-                    <fieldset className="text-sm">
-                        <legend>Mode de jeu</legend>
-                        {Object.entries(GAME_MODES).map(([value, mode]) => (
-                            <label key={value} className="mt-1 flex items-center gap-2">
-                                <input
-                                    type="radio"
-                                    name="game_mode"
-                                    value={value}
-                                    checked={form.data.game_mode === value}
-                                    onChange={() => form.setData('game_mode', value)}
-                                />
-                                {mode.label}
-                                {value !== 'classic' && <span className="text-muted-foreground">(+14 €)</span>}
-                            </label>
-                        ))}
-                    </fieldset>
                     <fieldset className="text-sm">
                         <legend>Paiement sur place</legend>
                         {[

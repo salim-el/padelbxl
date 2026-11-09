@@ -10,9 +10,7 @@ class Booking extends Model
 {
     public const ACTIVE = ['pending_payment', 'confirmed', 'used', 'frozen'];
 
-    public const GAME_MODES = ['arcade'];
-
-    protected $fillable = ['public_id', 'court_id', 'organizer_id', 'pricing_rule_id', 'starts_at', 'ends_at', 'status', 'price_cents', 'vat_rate', 'is_arena', 'hold_expires_at', 'cancelled_at', 'game_mode', 'walk_in_name', 'walk_in_contact'];
+    protected $fillable = ['public_id', 'court_id', 'organizer_id', 'pricing_rule_id', 'starts_at', 'ends_at', 'status', 'price_cents', 'vat_rate', 'hold_expires_at', 'cancelled_at', 'walk_in_name', 'walk_in_contact'];
 
     protected function casts(): array
     {
@@ -21,7 +19,6 @@ class Booking extends Model
             'ends_at' => 'immutable_datetime',
             'hold_expires_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
-            'is_arena' => 'boolean',
             'vat_rate' => 'decimal:2',
         ];
     }

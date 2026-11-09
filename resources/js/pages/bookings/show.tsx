@@ -2,15 +2,13 @@ import { BackButton } from '@/components/back-button';
 import { StatusBadge } from '@/components/status-badge';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
-import { euros, GAME_MODES, SHARE_LABELS, ucfirst } from '@/lib/money';
+import { euros, SHARE_LABELS, ucfirst } from '@/lib/money';
 import { Head, router, usePage } from '@inertiajs/react';
 import { CalendarDays, Clock, FileText, RotateCcw, Users } from 'lucide-react';
 
 type Booking = {
     id: string;
     court: string;
-    is_arena: boolean;
-    game_mode: string | null;
     date: string;
     time: string;
     status: string;
@@ -55,20 +53,13 @@ export default function Show({ booking, qr, qr_window, items, invoices, players 
                 {/* Billet : en-tête marine, QR code au centre, facture en pied. */}
                 <article className="overflow-hidden rounded-2xl border bg-white text-[#0E1B2C] shadow-lg">
                     <header className="relative overflow-hidden bg-[#0E1B2C] px-6 py-5 text-[#F7F6F1]">
-                        <img src="/images/arena-800.webp" alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-20" />
+                        <img src="/images/hero-800.webp" alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-20" />
                         <div className="relative">
                             <div className="flex items-center justify-between gap-3">
-                                <p className="font-mono text-xs tracking-widest text-[#C8E64A] uppercase">
-                                    {t(booking.is_arena ? 'Partie arcade' : 'Partie classique')}
-                                </p>
+                                <p className="font-mono text-xs tracking-widest text-[#C8E64A] uppercase">{t('Partie classique')}</p>
                                 <StatusBadge status={booking.status} />
                             </div>
                             <h1 className="mt-1 text-3xl font-extrabold uppercase">{booking.court}</h1>
-                            {booking.game_mode && (
-                                <p className="mt-2 inline-flex rounded-full bg-[#C8E64A] px-3 py-1 text-xs font-bold text-[#0E1B2C] uppercase">
-                                    {t('Mode :mode', { mode: t(GAME_MODES[booking.game_mode]?.label ?? booking.game_mode) })}
-                                </p>
-                            )}
                             <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                                 <span className="flex items-center gap-1.5">
                                     <CalendarDays className="size-4" aria-hidden /> {ucfirst(booking.date)}

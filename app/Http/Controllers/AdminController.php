@@ -45,13 +45,12 @@ class AdminController extends Controller
                 'time' => Clock::local($b->starts_at)->format('H:i').' – '.Clock::local($b->ends_at)->format('H:i'),
                 'player' => $b->walk_in_name ? $b->walk_in_name.' (comptoir)' : $b->organizer->name,
                 'status' => $b->status,
-                'game_mode' => $b->game_mode,
             ])->all(),
             'search' => $search,
             'courts' => Court::orderBy('id')->get(['id', 'name'])->all(),
-            'rules' => PricingRule::orderBy('is_arena')->orderBy('start_time')->get()->map(fn (PricingRule $r) => [
+            'rules' => PricingRule::orderBy('start_time')->get()->map(fn (PricingRule $r) => [
                 'id' => $r->id, 'name' => $r->name, 'start' => substr($r->start_time, 0, 5), 'end' => substr($r->end_time, 0, 5),
-                'price_cents' => $r->price_cents, 'is_arena' => $r->is_arena,
+                'price_cents' => $r->price_cents,
             ])->all(),
             'closures' => CourtClosure::with('court')->where('ends_at', '>', now())->orderBy('starts_at')->get()->map(fn (CourtClosure $c) => [
                 'id' => $c->id, 'court' => $c->court->name, 'reason' => $c->reason,
@@ -151,14 +150,6 @@ class AdminController extends Controller
     {
         $this->ensureStaff($request);
         $data = $request->validate(['price_cents' => ['required', 'integer', 'min:100', 'max:100000']]);
-        $classic = PricingRule::where('is_arena', false)->where('start_time', $rule->start_time)->value('price_cents');
-        $arcade = PricingRule::where('is_arena', true)->where('start_time', $rule->start_time)->value('price_cents');
-        $classic = $rule->is_arena ? $classic : $data['price_cents'];
-        $arcade = $rule->is_arena ? $data['price_cents'] : $arcade;
-        // Le mode arcade ne peut pas coûter moins que le mode classique sur la même plage.
-        if ($classic !== null && $arcade !== null && $arcade < $classic) {
-            return back()->withErrors(['price_cents' => 'Le tarif arcade doit rester au moins égal au tarif classique.']);
-        }
         $old = $rule->price_cents;
         $rule->update(['price_cents' => $data['price_cents']]);
         activity('staff')->performedOn($rule)->event('price-updated')

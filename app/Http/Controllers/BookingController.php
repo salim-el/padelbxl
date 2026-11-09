@@ -11,7 +11,6 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Services\BookingService;
 use App\Services\Clock;
-use App\Services\SlotService;
 use App\Services\UblInvoice;
 use Carbon\CarbonImmutable;
 use chillerlan\QRCode\QRCode;
@@ -70,7 +69,6 @@ class BookingController extends Controller
         $this->ensureOwner($request, $booking);
         $data = $request->validate([
             'accept_terms' => ['accepted'],
-            'game_mode' => ['nullable', 'in:classic,'.implode(',', Booking::GAME_MODES)],
             'items' => ['nullable', 'array'], 'items.*' => ['integer', 'min:0', 'max:4'],
             'guests' => ['nullable', 'array', 'max:'.(BookingService::MAX_PLAYERS - 1)], 'guests.*' => ['nullable', 'email:rfc', 'max:255', 'distinct:ignore_case'],
             'open_spots' => ['nullable', 'integer', 'min:0', 'max:'.(BookingService::MAX_PLAYERS - 1)],
@@ -82,7 +80,7 @@ class BookingController extends Controller
             return back()->withErrors(['accept_guarantee' => __('Acceptez la garantie pour partager le prix.')]);
         }
         try {
-            $this->bookings->confirmPayment($booking, $request->user(), $data['game_mode'] ?? null, $data['items'] ?? [], 'card', $guests, $open);
+            $this->bookings->confirmPayment($booking, $request->user(), $data['items'] ?? [], 'card', $guests, $open);
         } catch (BookingException $e) {
             return back()->withErrors(['booking' => $e->getMessage()]);
         }
@@ -232,7 +230,6 @@ class BookingController extends Controller
         return [
             'id' => $b->public_id,
             'court' => $b->court->name,
-            'is_arena' => $b->is_arena,
             'date' => $start->locale(app()->getLocale())->isoFormat(__('dddd D MMMM YYYY')),
             'time' => $start->format('H:i').' – '.Clock::local($b->ends_at)->format('H:i'),
             'status' => $b->status,
@@ -243,8 +240,6 @@ class BookingController extends Controller
             'refundable' => now()->lte($b->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS)),
             'free_cancellation_until' => Clock::local($b->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS))->locale(app()->getLocale())->isoFormat(__('dddd D MMMM [à] HH:mm')),
             'cancellable' => $b->status === 'confirmed' && $b->starts_at->isFuture(),
-            'game_mode' => $b->game_mode,
-            'arcade_price_cents' => ($supplement = app(SlotService::class)->arcadeSupplement($b->starts_at)) === null ? null : $b->price_cents + $supplement,
         ];
     }
 }

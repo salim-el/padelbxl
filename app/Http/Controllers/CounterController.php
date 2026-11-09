@@ -39,13 +39,12 @@ class CounterController extends Controller
             'name' => ['required', 'string', 'max:120'],
             // Un e-mail ou un numéro de téléphone, pour prévenir le client en cas de fermeture du terrain.
             'contact' => ['required', 'string', 'max:190', 'regex:/^([^@\s]+@[^@\s]+\.[^@\s]+|\+?[0-9 .\/-]{8,20})$/'],
-            'game_mode' => ['required', 'in:classic,'.implode(',', Booking::GAME_MODES)],
             'method' => ['required', 'in:cash,terminal'],
         ], ['contact.regex' => 'Indiquez un e-mail ou un numéro de téléphone.']);
         try {
             $booking = $this->bookings->counter(
                 $request->user(), Court::findOrFail($data['court_id']), Clock::slotStart($data['date'], $data['time']),
-                $data['name'], $data['contact'], $data['game_mode'], $data['method'],
+                $data['name'], $data['contact'], $data['method'],
             );
         } catch (BookingException $e) {
             return back()->withErrors(['booking' => $e->getMessage()]);
@@ -72,7 +71,6 @@ class CounterController extends Controller
                 'name' => $booking->walk_in_name,
                 'contact' => $booking->walk_in_contact,
                 'status' => $booking->status,
-                'game_mode' => $booking->game_mode,
                 'price_cents' => $booking->price_cents,
                 'invoice' => $booking->invoices->first()?->number,
                 'cancellable' => $booking->status === 'confirmed' && $booking->starts_at->isFuture(),
