@@ -40,7 +40,7 @@ class UblExportTest extends TestCase
         $racket = Product::where('name', 'Location de raquette')->firstOrFail();
         $hold = $service->hold($user, Court::where('name', 'Terrain 1')->firstOrFail(), Clock::slotStart('2026-10-23', '19:30'));
 
-        return $service->confirmPayment($hold, $user, null, [$racket->id => 2]);
+        return $service->confirmPayment($hold, $user, [$racket->id => 2]);
     }
 
     private function ubl(Booking $booking): SimpleXMLElement

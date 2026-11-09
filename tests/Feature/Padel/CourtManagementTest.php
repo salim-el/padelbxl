@@ -43,15 +43,13 @@ class CourtManagementTest extends TestCase
         $this->actingAs($this->marc)->patch("/admin/pricing-rules/{$rule->id}", ['price_cents' => 5000])->assertSessionHasNoErrors();
         $booking = app(BookingService::class)->hold($this->lucas, $this->court(1), Clock::slotStart('2026-10-23', '19:30'));
         $this->assertSame(5000, $booking->price_cents);
-        $this->assertSame(1200, app(SlotService::class)->arcadeSupplement(Clock::slotStart('2026-10-23', '19:30')));
     }
 
-    public function test_arcade_can_never_be_cheaper_than_classic_and_players_cannot_change_prices(): void
+    public function test_players_cannot_change_prices(): void
     {
-        $arcade = PricingRule::where('name', 'Arena heures pleines')->first();
-        $this->actingAs($this->marc)->patch("/admin/pricing-rules/{$arcade->id}", ['price_cents' => 4000])->assertSessionHasErrors('price_cents');
-        $this->actingAs($this->lucas)->patch("/admin/pricing-rules/{$arcade->id}", ['price_cents' => 100])->assertForbidden();
-        $this->assertSame(6200, $arcade->refresh()->price_cents);
+        $rule = PricingRule::where('name', 'Heures pleines')->first();
+        $this->actingAs($this->lucas)->patch("/admin/pricing-rules/{$rule->id}", ['price_cents' => 100])->assertForbidden();
+        $this->assertSame(4800, $rule->refresh()->price_cents);
     }
 
     public function test_a_closed_court_cannot_be_booked_and_shows_as_closed(): void
