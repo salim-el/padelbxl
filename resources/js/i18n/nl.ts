@@ -231,6 +231,29 @@ const nl: Record<string, string> = {
     'Prix partagé': 'Gedeelde prijs',
     vous: 'jij',
     'Parties où l’on vous invite': 'Matchen waarvoor je uitgenodigd bent',
+    'Parties ouvertes': 'Open matchen',
+    'Compléter une partie': 'Een match aanvullen',
+    'Des membres cherchent des joueurs. Vous payez votre part et recevez votre propre QR code.':
+        'Leden zoeken spelers. Je betaalt je aandeel en krijgt je eigen QR-code.',
+    'Aucune partie ouverte pour le moment.': 'Er zijn momenteel geen open matchen.',
+    Complet: 'Volzet',
+    '1 place libre': '1 plaats vrij',
+    ':n places libres': ':n plaatsen vrij',
+    'votre part, TVA comprise': 'jouw aandeel, btw inbegrepen',
+    'Vous jouez dans cette partie. Voir mon QR code': 'Je speelt mee in deze match. Mijn QR-code bekijken',
+    'Prendre la place et payer :amount': 'De plaats nemen en :amount betalen',
+    'Quitter la liste d’attente': 'De wachtlijst verlaten',
+    'M’inscrire sur la liste d’attente': 'Me op de wachtlijst zetten',
+    'Places ouvertes au club': 'Plaatsen open voor de club',
+    'Un autre membre peut prendre la place et payer sa part.': 'Een ander lid kan de plaats nemen en zijn aandeel betalen.',
+    'Une place ouverte de moins': 'Eén open plaats minder',
+    'Une place ouverte de plus': 'Eén open plaats meer',
+    'Invitez au plus trois autres joueurs, sans vous compter.': 'Nodig hoogstens drie andere spelers uit, jezelf niet meegerekend.',
+    'Place ouverte, prise par un membre': 'Open plaats, ingenomen door een lid',
+    'Place ouverte, encore libre': 'Open plaats, nog vrij',
+    'Refuser l’invitation ? Votre place sera proposée aux autres membres du club.':
+        'De uitnodiging weigeren? Je plaats wordt aan de andere clubleden aangeboden.',
+    'Je ne peux pas venir': 'Ik kan niet komen',
 };
 
 export default nl;

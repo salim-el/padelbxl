@@ -36,7 +36,7 @@ class BookingController extends Controller
 
         return Inertia::render('bookings/index', [
             'bookings' => $items->map(fn ($b) => $this->present($b))->all(),
-            'invitations' => $invited->map(fn ($p) => [...$this->present($p->booking), 'organizer' => $p->booking->organizer->name, 'share_cents' => $p->share_cents, 'share_status' => $p->status])->all(),
+            'invitations' => $invited->map(fn ($p) => [...$this->present($p->booking), 'organizer' => $p->guest_email === null ? strtok($p->booking->organizer->name, ' ') : $p->booking->organizer->name, 'share_cents' => $p->share_cents, 'share_status' => $p->status])->all(),
         ]);
     }
 
@@ -73,14 +73,16 @@ class BookingController extends Controller
             'game_mode' => ['nullable', 'in:classic,'.implode(',', Booking::GAME_MODES)],
             'items' => ['nullable', 'array'], 'items.*' => ['integer', 'min:0', 'max:4'],
             'guests' => ['nullable', 'array', 'max:'.(BookingService::MAX_PLAYERS - 1)], 'guests.*' => ['nullable', 'email:rfc', 'max:255', 'distinct:ignore_case'],
+            'open_spots' => ['nullable', 'integer', 'min:0', 'max:'.(BookingService::MAX_PLAYERS - 1)],
         ]);
         $guests = array_values(array_filter($data['guests'] ?? []));
+        $open = (int) ($data['open_spots'] ?? 0);
         // Partager le prix engage l'organisateur à payer les parts restées impayées à 24 h du match.
-        if ($guests !== [] && ! $request->boolean('accept_guarantee')) {
+        if (($guests !== [] || $open > 0) && ! $request->boolean('accept_guarantee')) {
             return back()->withErrors(['accept_guarantee' => __('Acceptez la garantie pour partager le prix.')]);
         }
         try {
-            $this->bookings->confirmPayment($booking, $request->user(), $data['game_mode'] ?? null, $data['items'] ?? [], 'card', $guests);
+            $this->bookings->confirmPayment($booking, $request->user(), $data['game_mode'] ?? null, $data['items'] ?? [], 'card', $guests, $open);
         } catch (BookingException $e) {
             return back()->withErrors(['booking' => $e->getMessage()]);
         }
@@ -103,10 +105,12 @@ class BookingController extends Controller
 
         return Inertia::render('bookings/share', [
             'booking' => $this->present($booking),
-            'organizer' => $booking->organizer->name,
+            // Un inconnu venu par une place ouverte ne voit que le prénom : l'organisateur ne l'a pas choisi.
+            'organizer' => $player->guest_email === null ? strtok($booking->organizer->name, ' ') : $booking->organizer->name,
             'share_cents' => $player->share_cents,
             'share_status' => $player->status,
             'payable' => $player->status === 'invited' && $booking->status === 'confirmed' && $booking->starts_at->isFuture(),
+            'declinable' => $player->status === 'invited' && $booking->status === 'confirmed' && now()->lte($booking->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS)),
             'qr' => $qr,
             'qr_window' => $pass ? Clock::local($pass->valid_from)->format('H:i').' – '.Clock::local($pass->valid_until)->format('H:i') : null,
             'invoices' => $booking->invoices()->whereIn('payment_id', Payment::where('booking_player_id', $player->id)->where('payer_id', $request->user()->id)->select('id'))->get()
@@ -125,6 +129,18 @@ class BookingController extends Controller
         }
 
         return to_route('bookings.share', $booking)->with('success', __('Part réglée. Votre QR code est prêt.'));
+    }
+
+    public function declineShare(Request $request, Booking $booking): RedirectResponse
+    {
+        abort_if(BookingService::invitedPlayer($booking, $request->user()) === null, 404);
+        try {
+            $this->bookings->declineShare($booking, $request->user());
+        } catch (BookingException $e) {
+            return back()->withErrors(['booking' => $e->getMessage()]);
+        }
+
+        return to_route('bookings.index')->with('success', __('Invitation refusée. Votre place est proposée aux autres membres du club.'));
     }
 
     public function show(Request $request, Booking $booking): Response
@@ -147,7 +163,9 @@ class BookingController extends Controller
             // Liste vide quand l'organisateur a tout payé seul : l'écran n'affiche alors pas le partage.
             'players' => $booking->players->count() < 2 ? [] : $booking->players->sortByDesc('is_organizer')->values()->map(fn ($p) => [
                 // L'organisateur revoit l'adresse qu'il a tapée, jamais le nom du compte : il n'apprend pas qui est inscrit au club.
-                'name' => $p->is_organizer ? $request->user()->name : $p->guest_email, 'is_organizer' => $p->is_organizer, 'share_cents' => $p->share_cents, 'status' => $p->status,
+                // Une place ouverte n'a pas d'adresse : null, l'écran affiche « place ouverte ».
+                'name' => $p->is_organizer ? $request->user()->name : $p->guest_email,
+                'open' => ! $p->is_organizer && $p->guest_email === null, 'taken' => $p->user_id !== null, 'is_organizer' => $p->is_organizer, 'share_cents' => $p->share_cents, 'status' => $p->status,
             ])->all(),
             'invoices' => $booking->invoices->map(fn ($i) => [
                 'number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents,
