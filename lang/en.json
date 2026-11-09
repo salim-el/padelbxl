@@ -32,5 +32,18 @@
     "Votre part : :amount.": "Your share: :amount.",
     "Payer ma part": "Pay my share",
     "Sans paiement 24 h avant le match, l’organisateur règle votre part.": "If you have not paid 24 hours before the match, the organiser pays your share.",
-    "Vous avez envoyé trop d’invitations aujourd’hui. Réessayez demain.": "You have sent too many invitations today. Try again tomorrow."
+    "Vous avez envoyé trop d’invitations aujourd’hui. Réessayez demain.": "You have sent too many invitations today. Try again tomorrow.",
+    "Cette partie est complète. Inscrivez-vous sur la liste d’attente.": "This game is full. Join the waiting list.",
+    "Une place est encore libre : prenez-la directement.": "A spot is still free. Take it straight away.",
+    "Cette invitation ne peut plus être refusée.": "This invitation can no longer be declined.",
+    "Cette partie n’accepte plus de joueurs.": "This game no longer takes players.",
+    "Vous faites déjà partie de cette partie.": "You are already part of this game.",
+    "Place réservée et part réglée. Votre QR code est prêt.": "Spot booked and share paid. Your QR code is ready.",
+    "Vous êtes sur la liste d’attente. Un e-mail vous prévient si une place se libère.": "You are on the waiting list. An email lets you know if a spot opens up.",
+    "Vous avez quitté la liste d’attente.": "You left the waiting list.",
+    "Invitation refusée. Votre place est proposée aux autres membres du club.": "Invitation declined. Your spot is offered to the other club members.",
+    "Une place s’est libérée dans une partie de padel": "A spot opened up in a padel game",
+    "Une place est libre sur le :court le :date à :time.": "A spot is free on :court on :date at :time.",
+    "Voir les parties ouvertes": "See the open games",
+    "La place revient au premier joueur qui paie sa part.": "The spot goes to the first player who pays their share."
 }

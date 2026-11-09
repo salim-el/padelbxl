@@ -48,5 +48,18 @@
     "Votre part : :amount.": "Jouw aandeel: :amount.",
     "Payer ma part": "Mijn aandeel betalen",
     "Sans paiement 24 h avant le match, l’organisateur règle votre part.": "Heb je 24 uur voor de match nog niet betaald, dan betaalt de organisator jouw aandeel.",
-    "Vous avez envoyé trop d’invitations aujourd’hui. Réessayez demain.": "Je hebt vandaag te veel uitnodigingen verstuurd. Probeer het morgen opnieuw."
+    "Vous avez envoyé trop d’invitations aujourd’hui. Réessayez demain.": "Je hebt vandaag te veel uitnodigingen verstuurd. Probeer het morgen opnieuw.",
+    "Cette partie est complète. Inscrivez-vous sur la liste d’attente.": "Deze match is volzet. Zet je op de wachtlijst.",
+    "Une place est encore libre : prenez-la directement.": "Er is nog een plaats vrij. Neem ze meteen.",
+    "Cette invitation ne peut plus être refusée.": "Deze uitnodiging kan niet meer geweigerd worden.",
+    "Cette partie n’accepte plus de joueurs.": "Deze match neemt geen spelers meer aan.",
+    "Vous faites déjà partie de cette partie.": "Je maakt al deel uit van deze match.",
+    "Place réservée et part réglée. Votre QR code est prêt.": "Plaats gereserveerd en aandeel betaald. Je QR-code is klaar.",
+    "Vous êtes sur la liste d’attente. Un e-mail vous prévient si une place se libère.": "Je staat op de wachtlijst. Je krijgt een e-mail als er een plaats vrijkomt.",
+    "Vous avez quitté la liste d’attente.": "Je hebt de wachtlijst verlaten.",
+    "Invitation refusée. Votre place est proposée aux autres membres du club.": "Uitnodiging geweigerd. Je plaats wordt aan de andere clubleden aangeboden.",
+    "Une place s’est libérée dans une partie de padel": "Er is een plaats vrijgekomen in een padelmatch",
+    "Une place est libre sur le :court le :date à :time.": "Er is een plaats vrij op :court op :date om :time.",
+    "Voir les parties ouvertes": "De open matchen bekijken",
+    "La place revient au premier joueur qui paie sa part.": "De plaats gaat naar de eerste speler die zijn aandeel betaalt."
 }
