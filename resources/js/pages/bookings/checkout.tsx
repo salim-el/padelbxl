@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
-import { euros, GAME_MODES, ucfirst } from '@/lib/money';
+import { euros, ucfirst } from '@/lib/money';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { CalendarDays, Clock, ShieldAlert, ShieldCheck, Timer } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -11,7 +11,6 @@ import { useEffect, useState } from 'react';
 type Booking = {
     id: string;
     court: string;
-    is_arena: boolean;
     date: string;
     time: string;
     price_cents: number;
@@ -19,7 +18,6 @@ type Booking = {
     hold_expires_at: string | null;
     free_cancellation_until: string;
     refundable: boolean;
-    arcade_price_cents: number | null;
 };
 
 type Product = { id: number; name: string; kind: 'rental' | 'sale'; price_cents: number };
@@ -28,14 +26,12 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
     const t = useT();
     const { data, setData, post, processing, errors } = useForm<{
         accept_terms: boolean;
-        game_mode: string | null;
         items: Record<number, number>;
         guests: string[];
         open_spots: number;
         accept_guarantee: boolean;
     }>({
         accept_terms: false,
-        game_mode: 'classic',
         items: {},
         guests: ['', '', ''],
         open_spots: 0,
@@ -43,8 +39,7 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
     });
     const pageErrors = usePage<{ errors: Record<string, string> }>().props.errors;
     const [left, setLeft] = useState(0);
-    const arcade = data.game_mode !== 'classic' && booking.arcade_price_cents !== null;
-    const court = arcade ? (booking.arcade_price_cents as number) : booking.price_cents;
+    const court = booking.price_cents;
     const extras = products.reduce((sum, p) => sum + (data.items[p.id] ?? 0) * p.price_cents, 0);
     // Même calcul que le serveur : part égale, les centimes restants à l'organisateur.
     const emails = data.guests.filter((g) => g.trim() !== '').length;
@@ -123,42 +118,6 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                     }}
                     className="flex flex-col gap-3"
                 >
-                    {booking.arcade_price_cents !== null && (
-                        <fieldset className="flex flex-col gap-2">
-                            <legend className="mb-2 font-bold">{t('Choisissez votre mode de jeu')}</legend>
-                            <div className="grid gap-2 sm:grid-cols-2">
-                                {Object.entries(GAME_MODES).map(([value, mode]) => (
-                                    <label
-                                        key={value}
-                                        className={`cursor-pointer rounded-xl border-2 p-3 text-sm transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#1D5C7A] ${
-                                            data.game_mode === value
-                                                ? 'border-[#C8E64A] bg-[#0E1B2C] text-[#F7F6F1]'
-                                                : 'bg-card border-[#DAD7CC] hover:border-[#C8E64A]'
-                                        }`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="game_mode"
-                                            value={value}
-                                            checked={data.game_mode === value}
-                                            onChange={() => setData('game_mode', value)}
-                                            className="sr-only"
-                                        />
-                                        <span className={`flex justify-between gap-2 font-bold ${data.game_mode === value ? 'text-[#C8E64A]' : ''}`}>
-                                            {t(mode.label)}
-                                            <span className="text-xs">
-                                                {value === 'classic' || booking.arcade_price_cents === null
-                                                    ? t('inclus')
-                                                    : `+${euros(booking.arcade_price_cents - booking.price_cents)}`}
-                                            </span>
-                                        </span>
-                                        <span className="mt-1 block text-xs opacity-80">{t(mode.text)}</span>
-                                    </label>
-                                ))}
-                            </div>
-                            {errors.game_mode && <p className="text-sm text-[#9E2833]">{t('Choisissez un des modes de jeu proposés.')}</p>}
-                        </fieldset>
-                    )}
                     {products.length > 0 && (
                         <fieldset className="flex flex-col gap-2">
                             <legend className="mb-2 font-bold">{t('Matériel')}</legend>

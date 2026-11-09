@@ -6,7 +6,7 @@ import { euros, SHARE_LABELS, shortMonth, ucfirst } from '@/lib/money';
 import { Head, Link } from '@inertiajs/react';
 import { ChevronRight, Ticket, Users } from 'lucide-react';
 
-type Booking = { id: string; court: string; is_arena: boolean; date: string; time: string; status: string; price_cents: number };
+type Booking = { id: string; court: string; date: string; time: string; status: string; price_cents: number };
 type Invitation = Booking & { organizer: string; share_cents: number; share_status: string };
 
 export default function Index({ bookings, invitations }: { bookings: Booking[]; invitations: Invitation[] }) {
@@ -79,7 +79,7 @@ export default function Index({ bookings, invitations }: { bookings: Booking[]; 
                                         className="bg-card group flex items-center gap-4 rounded-2xl border p-4 shadow-sm transition hover:border-[#C8E64A] hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#1D5C7A] focus-visible:outline-none"
                                     >
                                         <span
-                                            className={`flex size-16 shrink-0 flex-col items-center justify-center rounded-xl ${b.is_arena ? 'bg-[#0E1B2C] text-[#C8E64A]' : 'bg-[#E3F0F7] text-[#1D5C7A]'}`}
+                                            className={`flex size-16 shrink-0 flex-col items-center justify-center rounded-xl bg-[#E3F0F7] text-[#1D5C7A]`}
                                         >
                                             <span className="text-2xl leading-none font-extrabold">{day}</span>
                                             <span className="text-[11px] font-semibold uppercase">{shortMonth(month)}</span>
@@ -87,11 +87,6 @@ export default function Index({ bookings, invitations }: { bookings: Booking[]; 
                                         <span className="min-w-0 flex-1">
                                             <span className="flex flex-wrap items-center gap-2">
                                                 <span className="font-bold">{b.court}</span>
-                                                {b.is_arena && (
-                                                    <span className="rounded-full bg-[#C8E64A] px-2 py-0.5 text-[10px] font-bold text-[#0E1B2C] uppercase">
-                                                        Arena
-                                                    </span>
-                                                )}
                                             </span>
                                             <span className="block text-sm text-[#5F6B78]">
                                                 {ucfirst(b.date)} · {b.time}

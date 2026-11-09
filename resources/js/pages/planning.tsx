@@ -8,13 +8,13 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type Cell = { court_id: number; available: boolean; price_cents: number | null; past: boolean; off_peak: boolean; flash: boolean; closed: boolean };
 type Row = { time: string; end: string; starts_at: string; cells: Cell[] };
-type Court = { id: number; name: string; is_arena: boolean };
-type Props = { date: string; today: string; max: string; courts: Court[]; rows: Row[]; arcade_supplement_cents: number | null };
+type Court = { id: number; name: string };
+type Props = { date: string; today: string; max: string; courts: Court[]; rows: Row[] };
 
 const NAV =
     'inline-flex size-9 items-center justify-center rounded-lg border border-[#F7F6F1]/30 text-[#F7F6F1] transition hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent';
 
-export default function Planning({ date, today, max, courts, rows, arcade_supplement_cents }: Props) {
+export default function Planning({ date, today, max, courts, rows }: Props) {
     const t = useT();
     const { auth, errors, locale } = usePage<SharedData & { errors: Record<string, string> }>().props;
     const label = new Date(`${date}T12:00:00`).toLocaleDateString(`${locale}-BE`, { weekday: 'long', day: 'numeric', month: 'long' });
@@ -146,10 +146,6 @@ export default function Planning({ date, today, max, courts, rows, arcade_supple
                     <span className="flex items-center gap-2">
                         <span className="size-3 rounded-sm bg-[#FCE6E8] ring-1 ring-[#CC3342]/40" aria-hidden />{' '}
                         {t('Flash : −20 % à moins de 3 h du début')}
-                    </span>
-                    <span className="flex items-center gap-2">
-                        <span className="size-3 rounded-sm bg-[#0E1B2C] ring-1 ring-[#C8E64A]" aria-hidden />{' '}
-                        {t('Mode arcade sur tous les terrains : +:price au paiement', { price: euros(arcade_supplement_cents) })}
                     </span>
                     <span>{t('Prix TTC par créneau de 90 minutes, TVA de 6 % comprise. Annulation remboursée jusqu’à 24 h avant.')}</span>
                 </div>

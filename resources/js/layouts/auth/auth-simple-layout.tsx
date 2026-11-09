@@ -10,7 +10,7 @@ interface AuthLayoutProps {
     description?: string;
 }
 
-// Formulaire sur fond crème, photo du terrain arcade à droite (en bandeau sur mobile).
+// Formulaire sur fond crème, photo du terrain à droite (en bandeau sur mobile).
 export default function AuthSimpleLayout({ children, title, description }: AuthLayoutProps) {
     const t = useT();
 
@@ -30,7 +30,7 @@ export default function AuthSimpleLayout({ children, title, description }: AuthL
                     <p className="mt-2 text-2xl leading-tight font-extrabold uppercase lg:text-4xl">
                         {t('Le padel,')}
                         <br />
-                        <span className="text-[#C8E64A]">{t('version arcade.')}</span>
+                        <span className="text-[#C8E64A]">{t('sans attendre.')}</span>
                     </p>
                 </div>
             </aside>
