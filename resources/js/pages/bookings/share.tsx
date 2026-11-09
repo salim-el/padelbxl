@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
 import { euros, SHARE_LABELS, ucfirst } from '@/lib/money';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { CalendarDays, Clock, FileText, Users } from 'lucide-react';
 
 type Props = {
@@ -14,12 +14,13 @@ type Props = {
     share_cents: number;
     share_status: string;
     payable: boolean;
+    declinable: boolean;
     qr: string | null;
     qr_window: string | null;
     invoices: { number: string; total_cents: number; vat_cents: number }[];
 };
 
-export default function Share({ booking, organizer, share_cents, share_status, payable, qr, qr_window, invoices }: Props) {
+export default function Share({ booking, organizer, share_cents, share_status, payable, declinable, qr, qr_window, invoices }: Props) {
     const t = useT();
     const { data, setData, post, processing, errors } = useForm<{ accept_terms: boolean }>({ accept_terms: false });
     const pageErrors = usePage<{ errors: Record<string, string> }>().props.errors;
@@ -88,6 +89,20 @@ export default function Share({ booking, organizer, share_cents, share_status, p
                         </Button>
                         <p className="text-sm text-[#5F6B78]">{t('Sans paiement 24 h avant le match, l’organisateur règle votre part.')}</p>
                     </form>
+                )}
+
+                {declinable && (
+                    <Button
+                        variant="outline"
+                        disabled={processing}
+                        onClick={() => {
+                            if (window.confirm(t('Refuser l’invitation ? Votre place sera proposée aux autres membres du club.'))) {
+                                router.post(`/bookings/${booking.id}/share/decline`);
+                            }
+                        }}
+                    >
+                        {t('Je ne peux pas venir')}
+                    </Button>
                 )}
 
                 {qr && (
