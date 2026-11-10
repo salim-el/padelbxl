@@ -7,9 +7,9 @@ use Illuminate\Console\Command;
 
 class PartnerToken extends Command
 {
-    protected $signature = 'api:partner-token {email : e-mail du gérant responsable de l’appareil} {name : nom de l’appareil, par exemple « LED terrain 1 »}';
+    protected $signature = 'api:partner-token {email : e-mail du gérant responsable de l’appareil} {name : nom de l’appareil, par exemple « écran terrain 1 »}';
 
-    protected $description = 'Crée le jeton d’un appareil du club (borne, contrôleur LED), valable un an, révocable depuis la base';
+    protected $description = 'Crée le jeton d’un appareil du club (borne, écran de terrain), valable un an, révocable depuis la base';
 
     public function handle(): int
     {

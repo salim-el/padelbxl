@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\V1\TokenController;
 use App\Http\Middleware\EnsureAccountIsActive;
 use Illuminate\Support\Facades\Route;
 
-// API v1 : la porte d'entrée des logiciels partenaires (borne d'accès, contrôleur LED, application mobile).
+// API v1 : la porte d'entrée des logiciels partenaires (borne d'accès, écran de terrain, application mobile).
 Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Route::get('courts', [CourtController::class, 'index'])->name('courts.index');

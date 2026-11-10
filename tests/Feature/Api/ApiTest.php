@@ -145,11 +145,11 @@ class ApiTest extends TestCase
         $this->withToken($token)->getJson("/api/v1/terminal/courts/{$this->court(1)->id}/current")->assertForbidden();
     }
 
-    public function test_the_led_controller_reads_the_current_game_without_personal_data(): void
+    public function test_the_court_screen_reads_the_current_game_without_personal_data(): void
     {
         $booking = $this->confirmedBooking($this->lucas, 1, '2026-10-23', '19:30');
-        $this->artisan('api:partner-token', ['email' => 'marc.dumont@example.test', 'name' => 'LED terrain 1'])->assertSuccessful();
-        $token = User::where('email', 'marc.dumont@example.test')->firstOrFail()->createToken('LED terrain 1', ['terminal'])->plainTextToken;
+        $this->artisan('api:partner-token', ['email' => 'marc.dumont@example.test', 'name' => 'Écran terrain 1'])->assertSuccessful();
+        $token = User::where('email', 'marc.dumont@example.test')->firstOrFail()->createToken('Écran terrain 1', ['terminal'])->plainTextToken;
 
         $this->travelTo($booking->starts_at->addMinutes(5));
         $response = $this->withToken($token)->getJson("/api/v1/terminal/courts/{$this->court(1)->id}/current")
@@ -157,7 +157,7 @@ class ApiTest extends TestCase
         $this->assertStringNotContainsString('Lucas', $response->getContent());
 
         // Un joueur qui n'est pas gérant ne reçoit pas de jeton d'appareil.
-        $this->artisan('api:partner-token', ['email' => 'lucas.martin@example.test', 'name' => 'LED'])->assertFailed();
+        $this->artisan('api:partner-token', ['email' => 'lucas.martin@example.test', 'name' => 'Écran'])->assertFailed();
     }
 
     public function test_the_qr_reader_opens_once_through_the_api(): void
