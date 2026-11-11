@@ -229,12 +229,18 @@ export default function Home({ prices }: { prices: Price[] }) {
                 <footer className="bg-[#0A1420] py-8 text-sm text-[#F7F6F1]/70">
                     <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-4 px-4">
                         <p>{t('Arena Padel Club · Anderlecht, Bruxelles')}</p>
-                        <nav aria-label={t('Liens du pied de page')} className="flex gap-4">
+                        <nav aria-label={t('Liens du pied de page')} className="flex flex-wrap gap-4">
                             <Link href="/planning" className="hover:text-[#C8E64A]">
                                 {t('Planning')}
                             </Link>
                             <Link href={auth.user ? '/bookings' : '/login'} className="hover:text-[#C8E64A]">
                                 {auth.user ? t('Mes réservations') : t('Connexion')}
+                            </Link>
+                            <Link href="/conditions-generales" className="hover:text-[#C8E64A]">
+                                {t('Conditions générales')}
+                            </Link>
+                            <Link href="/confidentialite" className="hover:text-[#C8E64A]">
+                                {t('Confidentialité')}
                             </Link>
                         </nav>
                     </div>

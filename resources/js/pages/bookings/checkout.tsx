@@ -1,5 +1,6 @@
 import { BackButton } from '@/components/back-button';
 import { PageHeader } from '@/components/page-header';
+import TermsLink from '@/components/terms-link';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
@@ -243,6 +244,7 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                         />
                         {t('J’accepte les conditions générales et la règle d’annulation de 24 heures.')}
                     </label>
+                    <TermsLink />
                     {errors.accept_terms && <p className="text-sm text-[#9E2833]">{t('Vous devez accepter les conditions pour réserver.')}</p>}
                     <Button type="submit" size="lg" className="h-12 text-base font-bold" disabled={processing || left === 0}>
                         {t('Payer :amount', { amount: euros(total) })}
