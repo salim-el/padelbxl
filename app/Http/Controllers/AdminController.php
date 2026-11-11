@@ -199,7 +199,7 @@ class AdminController extends Controller
 
     private function ensureStaff(Request $request): void
     {
-        abort_unless(in_array($request->user()->role, ['manager', 'admin'], true), 403);
+        abort_unless($request->user()->can('manage-club'), 403);
     }
 
     // Le personnel ne gère que les comptes joueurs : pas de suspension d'un collègue ni de soi-même.

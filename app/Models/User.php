@@ -19,6 +19,14 @@ class User extends Authenticatable implements MustVerifyEmail
     // Désinscription en soft delete : la colonne prévue par le schéma (T08) marque le compte désactivé.
     public const DELETED_AT = 'deactivated_at';
 
+    /** Le personnel du club. La Gate « manage-club » (AppServiceProvider) s'appuie sur cette seule liste. */
+    public const STAFF_ROLES = ['manager', 'admin'];
+
+    public function isStaff(): bool
+    {
+        return in_array($this->role, self::STAFF_ROLES, true);
+    }
+
     // Mêmes valeurs par défaut que la base, pour un modèle tout juste créé.
     protected $attributes = ['role' => 'player', 'status' => 'active'];
 

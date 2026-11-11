@@ -18,7 +18,7 @@ class RequireStaffTwoFactor
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if (! $user || ! in_array($user->role, ['manager', 'admin'], true) || $request->routeIs(...self::OPEN)) {
+        if (! $user || ! $user->isStaff() || $request->routeIs(...self::OPEN)) {
             return $next($request);
         }
         // Session ouverte sans le code (« rester connecté », ou ouverte avant l'activation) : on redemande le code.
