@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 
 class TerminalController extends Controller
 {
-    /** Pour le contrôleur LED du terrain : la partie en cours et la suivante, sans nom de joueur. */
+    /** Pour l’écran du terrain : la partie en cours et la suivante, sans nom de joueur. */
     public function current(Court $court): JsonResponse
     {
         $playing = Booking::where('court_id', $court->id)->whereIn('status', ['confirmed', 'used']);
