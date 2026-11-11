@@ -230,6 +230,143 @@ const nl: Record<string, string> = {
     'Voir les tarifs': 'De tarieven bekijken',
     '24 h': '24 u',
     'annulation gratuite avant le match': 'gratis annuleren voor de match',
+    // Conditions générales et politique de confidentialité
+    'Version du :date': 'Versie van :date',
+    Accueil: 'Startpagina',
+    'Conditions générales': 'Algemene voorwaarden',
+    Confidentialité: 'Privacy',
+    'Lire les conditions générales': 'Lees de algemene voorwaarden',
+    'Politique de confidentialité': 'Privacybeleid',
+    'Le club': 'De club',
+    ':name exploite six terrains de padel couverts à Anderlecht.': ':name baat zes overdekte padelterreinen uit in Anderlecht.',
+    'Adresse : :address.': 'Adres: :address.',
+    'Numéro de TVA : :vat.': 'Btw-nummer: :vat.',
+    'Ces conditions valent pour toute réservation faite sur PadelBxl ou à l’accueil du club.':
+        'Deze voorwaarden gelden voor elke reservering via PadelBxl of aan het onthaal van de club.',
+    'Le compte': 'Het account',
+    'Pour réserver, il faut un compte actif et une adresse e-mail confirmée.':
+        'Om te reserveren heb je een actief account en een bevestigd e-mailadres nodig.',
+    'Un joueur a au plus trois réservations à venir.': 'Je hebt hoogstens drie komende reserveringen.',
+    'Le club peut suspendre un compte. Un compte suspendu ne peut plus réserver ni payer. Cette décision est toujours prise par une personne du club.':
+        'De club kan een account schorsen. Met een geschorst account kun je niet meer reserveren of betalen. Die beslissing neemt altijd een medewerker van de club.',
+    'Les créneaux et les prix': 'Tijdsloten en prijzen',
+    'Un créneau dure 90 minutes. Le premier commence à 9 h, le dernier à 21 h.':
+        'Een tijdslot duurt 90 minuten. Het eerste begint om 9 uur, het laatste om 21 uur.',
+    'On réserve jusqu’à 30 jours à l’avance.': 'Je reserveert tot 30 dagen vooraf.',
+    'Les prix sont affichés TVA comprise. La TVA est de 6 % sur l’accès au terrain et de 21 % sur le matériel loué ou vendu.':
+        'De prijzen zijn inclusief btw. De btw bedraagt 6 % op de toegang tot het terrein en 21 % op gehuurd of gekocht materiaal.',
+    'Une réservation garde le prix affiché au moment où elle est faite, même si le tarif change ensuite.':
+        'Een reservering behoudt de prijs van het moment waarop ze gemaakt werd, ook als het tarief daarna verandert.',
+    'La réservation et le paiement': 'Reservering en betaling',
+    'Le créneau choisi est bloqué 10 minutes pendant le paiement. Sans paiement dans ce délai, il est libéré et rien n’est débité.':
+        'Het gekozen tijdslot wordt 10 minuten vastgehouden tijdens de betaling. Betaal je niet binnen die tijd, dan komt het weer vrij en wordt er niets aangerekend.',
+    'Le paiement se fait par carte en ligne, ou en espèces et par terminal à l’accueil.':
+        'Je betaalt online met je kaart, of aan het onthaal contant of met de betaalterminal.',
+    'Chaque paiement donne une facture au nom de celui qui paie. Une entreprise reçoit aussi sa facture au format électronique UBL.':
+        'Elke betaling geeft een factuur op naam van wie betaalt. Een onderneming krijgt haar factuur ook in het elektronische UBL-formaat.',
+    'Le partage du prix': 'De prijs delen',
+    'Pour un match dans plus de 24 h, l’organisateur peut partager le prix avec trois autres joueurs au plus. Il les invite par e-mail ou ouvre des places aux membres du club.':
+        'Voor een match over meer dan 24 uur kan de organisator de prijs delen met hoogstens drie andere spelers. Hij nodigt hen uit per e-mail of stelt plaatsen open voor de leden van de club.',
+    'Le prix est divisé en parts égales. Les centimes qui restent sont à la charge de l’organisateur.':
+        'De prijs wordt in gelijke delen verdeeld. De overblijvende centen betaalt de organisator.',
+    'Chaque joueur paie sa part et reçoit sa propre facture et son propre QR code.':
+        'Elke speler betaalt zijn deel en krijgt een eigen factuur en een eigen QR-code.',
+    'L’organisateur se porte garant : 24 h avant le match, il paie les parts encore impayées.':
+        'De organisator staat borg: 24 uur voor de match betaalt hij de delen die nog openstaan.',
+    'Un invité peut refuser jusqu’à 24 h avant le match. Sa place est alors proposée aux membres du club.':
+        'Een genodigde kan weigeren tot 24 uur voor de match. Zijn plaats wordt dan aangeboden aan de leden van de club.',
+    'Une place ouverte revient au premier membre qui paie sa part. Quand la partie est complète, un membre peut s’inscrire sur la liste d’attente. Si une place se libère, chaque inscrit reçoit un e-mail et le premier qui paie prend la place.':
+        'Een open plaats gaat naar het eerste lid dat zijn deel betaalt. Is het spel volzet, dan kun je je op de wachtlijst zetten. Komt er een plaats vrij, dan krijgt iedereen op de lijst een e-mail en wie eerst betaalt, krijgt de plaats.',
+    'L’annulation': 'Annuleren',
+    'L’organisateur annule depuis son espace.': 'De organisator annuleert in zijn ruimte.',
+    'Jusqu’à 24 h avant le début, chaque paiement de la partie est remboursé en entier. Une note de crédit renvoie à la facture d’origine.':
+        'Tot 24 uur voor het begin wordt elke betaling van het spel volledig terugbetaald. Een creditnota verwijst naar de oorspronkelijke factuur.',
+    'Moins de 24 h avant le début, rien n’est remboursé. Les parts encore impayées sont payées par l’organisateur.':
+        'Minder dan 24 uur voor het begin wordt niets terugbetaald. De organisator betaalt de delen die nog openstaan.',
+    'Une fois le créneau commencé, la réservation ne s’annule plus.': 'Is het tijdslot begonnen, dan kun je de reservering niet meer annuleren.',
+    'À l’annulation, les QR codes de la partie sont désactivés.': 'Bij annulering worden de QR-codes van het spel uitgeschakeld.',
+    'Une réservation faite à l’accueil suit les mêmes règles.': 'Een reservering aan het onthaal volgt dezelfde regels.',
+    'Pas de droit de rétractation': 'Geen herroepingsrecht',
+    'Une réservation de terrain est un service de loisir à une date précise. Le droit de rétractation de 14 jours ne s’applique donc pas (Code de droit économique, article VI.53, 12°).':
+        'Een terreinreservering is een vrijetijdsdienst op een vaste datum. Het herroepingsrecht van 14 dagen geldt dus niet (Wetboek van economisch recht, artikel VI.53, 12°).',
+    'Le remboursement jusqu’à 24 h avant le match est un geste du club, pas une obligation.':
+        'De terugbetaling tot 24 uur voor de match is een gebaar van de club, geen verplichting.',
+    'L’accès au terrain': 'Toegang tot het terrein',
+    'Chaque joueur de la partie a son propre QR code.': 'Elke speler van het spel heeft een eigen QR-code.',
+    'Il ouvre ce terrain seulement, de 15 minutes avant le début jusqu’à la fin du créneau. Il ne sert qu’une fois.':
+        'Hij opent alleen dit terrein, van 15 minuten voor het begin tot het einde van het tijdslot. Hij werkt maar één keer.',
+    'Chaque passage à la borne est enregistré, qu’il soit accepté ou refusé.':
+        'Elke doorgang aan de toegangszuil wordt geregistreerd, toegelaten of geweigerd.',
+    'Le club ne peut pas fermer un terrain sur un créneau réservé : la fermeture est refusée tant que la réservation est active.':
+        'De club kan een terrein niet sluiten op een gereserveerd tijdslot: de sluiting wordt geweigerd zolang de reservering actief is.',
+    'Questions et litiges': 'Vragen en geschillen',
+    'Une question ou une réclamation se pose à l’accueil du club.': 'Met een vraag of klacht kun je terecht aan het onthaal van de club.',
+    'En cas de litige, le joueur peut aussi s’adresser au Service de médiation pour le consommateur.':
+        'Bij een geschil kun je ook terecht bij de Consumentenombudsdienst.',
+    'Qui traite vos données': 'Wie verwerkt je gegevens',
+    ':name est responsable du traitement des données de ses joueurs. PadelBxl est son logiciel de réservation.':
+        ':name is verwerkingsverantwoordelijke voor de gegevens van zijn spelers. PadelBxl is zijn reserveringssoftware.',
+    'L’hébergeur et le service d’envoi des e-mails traitent les données pour le club, sous contrat.':
+        'De hostingprovider en de e-maildienst verwerken de gegevens voor de club, onder contract.',
+    'Les données gardées': 'De bewaarde gegevens',
+    'Votre compte : nom, e-mail, langue choisie et mot de passe, gardé sous forme d’empreinte, jamais en clair. Pour une entreprise, aussi son nom et son numéro de TVA.':
+        'Je account: naam, e-mail, gekozen taal en wachtwoord, bewaard als hash, nooit leesbaar. Voor een onderneming ook haar naam en btw-nummer.',
+    'Vos réservations, vos paiements, vos factures et vos notes de crédit.': 'Je reserveringen, betalingen, facturen en creditnota’s.',
+    'L’adresse e-mail d’un partenaire que vous invitez.': 'Het e-mailadres van een partner die je uitnodigt.',
+    'Pour un client de l’accueil : son nom et un e-mail ou un numéro de téléphone.':
+        'Voor een klant aan het onthaal: zijn naam en een e-mail of telefoonnummer.',
+    'Votre QR code : seule son empreinte est stockée.': 'Je QR-code: alleen de hash ervan wordt bewaard.',
+    'Les passages à la borne : terrain, heure et résultat.': 'De doorgangen aan de toegangszuil: terrein, uur en resultaat.',
+    'Les actions sensibles du personnel, dans un journal.': 'De gevoelige handelingen van het personeel, in een logboek.',
+    Pourquoi: 'Waarom',
+    'Le compte, les réservations et le QR code servent à exécuter le contrat de réservation.':
+        'Het account, de reserveringen en de QR-code dienen om het reserveringscontract uit te voeren.',
+    'Les factures et les notes de crédit sont une obligation légale.': 'Facturen en creditnota’s zijn een wettelijke verplichting.',
+    'Le journal de la borne et celui du personnel servent la sécurité et le traitement des litiges. C’est l’intérêt légitime du club.':
+        'Het logboek van de toegangszuil en dat van het personeel dienen de veiligheid en de behandeling van geschillen. Dat is het gerechtvaardigd belang van de club.',
+    'Combien de temps': 'Hoe lang',
+    'Le compte reste tant qu’il est actif.': 'Het account blijft bestaan zolang het actief is.',
+    'Vous pouvez désactiver votre compte dans vos paramètres. Vos réservations à venir doivent d’abord être annulées.':
+        'Je kunt je account uitschakelen in je instellingen. Je komende reserveringen moet je eerst annuleren.',
+    'Un compte désactivé est caché. Trente jours plus tard, le nom, l’e-mail et les données d’entreprise sont remplacés et le mot de passe est effacé.':
+        'Een uitgeschakeld account wordt verborgen. Dertig dagen later worden de naam, het e-mailadres en de ondernemingsgegevens vervangen en wordt het wachtwoord gewist.',
+    'Les factures et les notes de crédit gardent le nom du client. Elles sont conservées 7 ans, comme le demande le Code de la TVA.':
+        'Facturen en creditnota’s behouden de naam van de klant. Ze worden 7 jaar bewaard, zoals het Btw-wetboek vraagt.',
+    'Le journal des actions du personnel est effacé après un an.': 'Het logboek van de handelingen van het personeel wordt na een jaar gewist.',
+    'Qui voit vos données': 'Wie ziet je gegevens',
+    'Le personnel du club, pour gérer les réservations.': 'Het personeel van de club, om de reserveringen te beheren.',
+    'L’organisateur revoit l’adresse e-mail qu’il a tapée pour un invité, jamais le nom de son compte.':
+        'De organisator ziet het e-mailadres dat hij voor een genodigde intikte, nooit de naam van diens account.',
+    'Un membre qui prend une place ouverte ne voit que le prénom de l’organisateur.':
+        'Een lid dat een open plaats neemt, ziet alleen de voornaam van de organisator.',
+    'La borne n’affiche que le prénom du joueur qui entre.': 'De toegangszuil toont alleen de voornaam van de speler die binnenkomt.',
+    'Les données ouvertes du club ne montrent que les créneaux libres, jamais qui joue.':
+        'De open data van de club tonen alleen de vrije tijdsloten, nooit wie speelt.',
+    'La sécurité': 'Beveiliging',
+    'Un mot de passe compte au moins 15 caractères. Un mot de passe déjà paru dans une fuite connue est refusé.':
+        'Een wachtwoord telt minstens 15 tekens. Een wachtwoord dat al in een bekend datalek opdook, wordt geweigerd.',
+    'Le personnel du club se connecte avec une double authentification.': 'Het personeel van de club logt in met tweestapsverificatie.',
+    'Le nombre d’essais est limité sur les formulaires sensibles.': 'Het aantal pogingen op gevoelige formulieren is beperkt.',
+    'Vos droits': 'Je rechten',
+    'Vous voyez et corrigez votre nom et votre e-mail dans vos paramètres.': 'Je bekijkt en verbetert je naam en e-mailadres in je instellingen.',
+    'Vous pouvez désactiver votre compte. Il est anonymisé trente jours plus tard.':
+        'Je kunt je account uitschakelen. Het wordt dertig dagen later geanonimiseerd.',
+    'Pour toute autre demande sur vos données, adressez-vous à l’accueil du club.':
+        'Voor elke andere vraag over je gegevens kun je terecht aan het onthaal van de club.',
+    'Vous pouvez porter plainte auprès de l’Autorité de protection des données.':
+        'Je kunt een klacht indienen bij de Gegevensbeschermingsautoriteit.',
+    'Les cookies': 'Cookies',
+    'PadelBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun bandeau à accepter.':
+        'PadelBxl gebruikt alleen noodzakelijke cookies. Er is geen bezoekersmeting en geen reclame, dus ook geen banner om te aanvaarden.',
+    'Le cookie de session garde votre connexion. Il expire après deux heures sans activité.':
+        'Het sessiecookie houdt je ingelogd. Het vervalt na twee uur zonder activiteit.',
+    'Le cookie XSRF-TOKEN protège vos formulaires contre une requête envoyée à votre insu.':
+        'Het cookie XSRF-TOKEN beschermt je formulieren tegen een verzoek dat zonder jouw medeweten wordt verstuurd.',
+    'Le cookie « Rester connecté » n’existe que si vous cochez cette case à la connexion.':
+        'Het cookie „Ingelogd blijven” bestaat alleen als je dat vakje aanvinkt bij het inloggen.',
+    'Le cookie sidebar:state retient si le menu latéral est ouvert, pendant 7 jours.':
+        'Het cookie sidebar:state onthoudt 7 dagen lang of het zijmenu open staat.',
+    'La langue choisie est gardée dans la session et dans votre compte.': 'De gekozen taal wordt bewaard in de sessie en in je account.',
 };
 
 export default nl;

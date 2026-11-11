@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, LayoutDashboard, QrCode, ScrollText, Store, Ticket, Users } from 'lucide-react';
+import { CalendarDays, FileText, LayoutDashboard, QrCode, ScrollText, Shield, Store, Ticket, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -20,7 +20,11 @@ const staffNavItems: NavItem[] = [
     { title: 'Borne d’accès', url: '/kiosk', icon: QrCode },
 ];
 
-const footerNavItems: NavItem[] = [];
+// Ouvertes dans un nouvel onglet (NavFooter) : on garde l'écran en cours.
+const footerNavItems: NavItem[] = [
+    { title: 'Conditions générales', url: '/conditions-generales', icon: FileText },
+    { title: 'Confidentialité', url: '/confidentialite', icon: Shield },
+];
 
 export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
