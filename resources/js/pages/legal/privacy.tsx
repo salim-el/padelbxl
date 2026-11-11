@@ -49,11 +49,12 @@ export default function Privacy({ club }: { club: Club }) {
                         t('Le compte reste tant qu’il est actif.'),
                         t('Vous pouvez désactiver votre compte dans vos paramètres. Vos réservations à venir doivent d’abord être annulées.'),
                         t(
-                            'Un compte désactivé est caché. Trente jours plus tard, le nom, l’e-mail et les données d’entreprise sont remplacés et le mot de passe est effacé.',
+                            'Un compte désactivé est caché. Trente jours plus tard, le nom, l’e-mail et les données d’entreprise sont remplacés. Le mot de passe, la double authentification et les jetons d’accès sont effacés.',
                         ),
                         t(
                             'Les factures et les notes de crédit gardent le nom du client. Elles sont conservées 7 ans, comme le demande le Code de la TVA.',
                         ),
+                        t('Les passages à la borne sont effacés après trois mois.'),
                         t('Le journal des actions du personnel est effacé après un an.'),
                     ],
                 },
