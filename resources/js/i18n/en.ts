@@ -360,8 +360,6 @@ const en: Record<string, string> = {
     'Téléchargez une copie de vos données personnelles, dans un fichier JSON lisible par une machine.':
         'Download a copy of your personal data, as a machine-readable JSON file.',
     'Télécharger mes données': 'Download my data',
-    'Vous pouvez désactiver votre compte. Il est anonymisé trente jours plus tard.':
-        'You can deactivate your account. It is anonymised thirty days later.',
     'Pour toute autre demande sur vos données, adressez-vous à l’accueil du club.':
         'For any other request about your data, contact the club reception.',
     'Vous pouvez porter plainte auprès de l’Autorité de protection des données.':
@@ -399,6 +397,10 @@ const en: Record<string, string> = {
     Envoyer: 'Send',
     'Un message écrit au club par le formulaire de contact part par e-mail. Il n’est pas gardé dans l’application.':
         'A message sent with the contact form goes to the club by email. It is not kept in the application.',
+    'Vous pouvez désactiver votre compte. Il est anonymisé trente jours plus tard, ou tout de suite si vous le demandez.':
+        'You can deactivate your account. It is anonymised thirty days later, or right away if you ask.',
+    'Effacer mes données tout de suite. Sans cette case, elles le sont trente jours plus tard.':
+        'Erase my data right away. Without this box, it is erased thirty days later.',
 };
 
 export default en;

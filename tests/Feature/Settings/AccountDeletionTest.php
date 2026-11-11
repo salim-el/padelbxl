@@ -42,6 +42,26 @@ class AccountDeletionTest extends TestCase
         $this->assertTrue(DB::table('invoices')->where('booking_id', $booking->id)->exists());
     }
 
+    public function test_a_member_can_ask_for_immediate_erasure(): void
+    {
+        [$player, $booking] = $this->playerWithBooking('2026-10-23');
+        $player->createToken('Application mobile', ['bookings']);
+        $this->travelTo(CarbonImmutable::parse('2026-10-25 10:00', Clock::ZONE));
+        $name = DB::table('invoices')->where('booking_id', $booking->id)->value('customer_name');
+
+        $this->actingAs($player)->delete('/settings/profile', ['password' => DatabaseSeeder::DEMO_PASSWORD, 'erase_now' => true])->assertRedirect('/');
+
+        // Pas d'attente de trente jours : les données personnelles sont remplacées dans la même requête.
+        $erased = User::withTrashed()->find($player->id);
+        $this->assertSame('anonymized', $erased->status);
+        $this->assertSame("supprime-{$player->id}@padelbxl.invalid", $erased->email);
+        $this->assertNotNull($erased->anonymized_at);
+        $this->assertSame(0, $erased->tokens()->count());
+        $this->assertSame($name, DB::table('invoices')->where('booking_id', $booking->id)->value('customer_name'));
+        // L'adresse est libérée : la même personne peut recréer un compte.
+        $this->assertDatabaseMissing('users', ['email' => 'lucas.martin@example.test']);
+    }
+
     public function test_a_member_must_cancel_upcoming_bookings_first(): void
     {
         [$player] = $this->playerWithBooking('2026-10-23');

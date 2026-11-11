@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use PragmaRX\Google2FA\Google2FA;
 
@@ -92,5 +93,30 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->two_factor_last_counter = $counter;
 
         return $won;
+    }
+
+    /**
+     * Remplace les données personnelles du compte (RGPD, art. 17). Les factures gardent leur copie du nom :
+     * le Code de la TVA impose de les conserver sept ans.
+     */
+    public function anonymize(): void
+    {
+        $this->forceFill([
+            'name' => 'Compte supprimé',
+            'email' => "supprime-{$this->id}@padelbxl.invalid",
+            'phone' => null,
+            'account_type' => 'individual',
+            'company_name' => null,
+            'vat_number' => null,
+            'password' => Str::random(64),
+            'remember_token' => null,
+            'two_factor_secret' => null,
+            'two_factor_confirmed_at' => null,
+            'two_factor_last_counter' => null,
+            'status' => 'anonymized',
+            'anonymized_at' => now(),
+        ])->saveQuietly();
+        // Plus aucun jeton d'API ne doit ouvrir ce compte.
+        $this->tokens()->delete();
     }
 }
