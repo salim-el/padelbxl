@@ -32,6 +32,7 @@ export default function Privacy({ club }: { club: Club }) {
                         t('Votre QR code : seule son empreinte est stockée.'),
                         t('Les passages à la borne : terrain, heure et résultat.'),
                         t('Les actions sensibles du personnel, dans un journal.'),
+                        t('Un message écrit au club par le formulaire de contact part par e-mail. Il n’est pas gardé dans l’application.'),
                     ],
                 },
                 {

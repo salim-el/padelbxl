@@ -385,6 +385,20 @@ const en: Record<string, string> = {
     'En savoir plus': 'Learn more',
     'J’ai compris': 'Got it',
     'La langue choisie est gardée dans la session et dans votre compte.': 'The chosen language is kept in the session and in your account.',
+    Contact: 'Contact',
+    'Écrire au club': 'Write to the club',
+    'Le formulaire n’est pas disponible pour le moment. Adressez-vous à l’accueil du club.':
+        'The form is not available right now. Please ask at the club’s front desk.',
+    'Une question sur une réservation, une facture ou vos données ? Le club vous répond par e-mail.':
+        'A question about a booking, an invoice or your data? The club answers you by email.',
+    'Message envoyé. Le club vous répondra par e-mail.': 'Message sent. The club will answer you by email.',
+    Nom: 'Name',
+    Message: 'Message',
+    'Votre nom, votre e-mail et votre message partent par e-mail au club. L’application ne les garde pas.':
+        'Your name, email and message are sent to the club by email. The application does not keep them.',
+    Envoyer: 'Send',
+    'Un message écrit au club par le formulaire de contact part par e-mail. Il n’est pas gardé dans l’application.':
+        'A message sent with the contact form goes to the club by email. It is not kept in the application.',
 };
 
 export default en;

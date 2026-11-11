@@ -242,6 +242,9 @@ export default function Home({ prices }: { prices: Price[] }) {
                             <Link href="/confidentialite" className="hover:text-[#C8E64A]">
                                 {t('Confidentialité')}
                             </Link>
+                            <Link href="/contact" className="hover:text-[#C8E64A]">
+                                {t('Contact')}
+                            </Link>
                         </nav>
                     </div>
                 </footer>
