@@ -26,9 +26,14 @@ class AnonymizeAccounts extends Command
                     'vat_number' => null,
                     'password' => Str::random(64),
                     'remember_token' => null,
+                    'two_factor_secret' => null,
+                    'two_factor_confirmed_at' => null,
+                    'two_factor_last_counter' => null,
                     'status' => 'anonymized',
                     'anonymized_at' => now(),
                 ])->saveQuietly();
+                // Plus aucun jeton d'API ne doit ouvrir ce compte.
+                $user->tokens()->delete();
                 $count++;
             });
         $this->info("$count compte(s) anonymisé(s).");

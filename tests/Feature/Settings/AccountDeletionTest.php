@@ -66,6 +66,8 @@ class AccountDeletionTest extends TestCase
     public function test_accounts_are_anonymized_thirty_days_after_deletion_only(): void
     {
         [$player, $booking] = $this->playerWithBooking('2026-10-23');
+        $player->createToken('Application mobile', ['bookings']);
+        $player->forceFill(['two_factor_secret' => 'JBSWY3DPEHPK3PXP', 'two_factor_confirmed_at' => now()])->save();
         $this->travelTo(CarbonImmutable::parse('2026-10-25 10:00', Clock::ZONE));
         $this->actingAs($player)->delete('/settings/profile', ['password' => DatabaseSeeder::DEMO_PASSWORD]);
         $name = DB::table('invoices')->where('booking_id', $booking->id)->value('customer_name');
@@ -80,6 +82,8 @@ class AccountDeletionTest extends TestCase
         $this->assertSame('anonymized', $anonymized->status);
         $this->assertSame("supprime-{$player->id}@padelbxl.invalid", $anonymized->email);
         $this->assertNull($anonymized->phone);
+        $this->assertNull($anonymized->two_factor_secret);
+        $this->assertSame(0, $anonymized->tokens()->count());
         // La facture garde le nom du client : obligation de conservation pendant sept ans.
         $this->assertSame($name, DB::table('invoices')->where('booking_id', $booking->id)->value('customer_name'));
     }

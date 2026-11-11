@@ -330,10 +330,11 @@ const nl: Record<string, string> = {
     'Le compte reste tant qu’il est actif.': 'Het account blijft bestaan zolang het actief is.',
     'Vous pouvez désactiver votre compte dans vos paramètres. Vos réservations à venir doivent d’abord être annulées.':
         'Je kunt je account uitschakelen in je instellingen. Je komende reserveringen moet je eerst annuleren.',
-    'Un compte désactivé est caché. Trente jours plus tard, le nom, l’e-mail et les données d’entreprise sont remplacés et le mot de passe est effacé.':
-        'Een uitgeschakeld account wordt verborgen. Dertig dagen later worden de naam, het e-mailadres en de ondernemingsgegevens vervangen en wordt het wachtwoord gewist.',
+    'Un compte désactivé est caché. Trente jours plus tard, le nom, l’e-mail et les données d’entreprise sont remplacés. Le mot de passe, la double authentification et les jetons d’accès sont effacés.':
+        'Een uitgeschakeld account wordt verborgen. Dertig dagen later worden de naam, het e-mailadres en de ondernemingsgegevens vervangen. Het wachtwoord, de tweestapsverificatie en de toegangstokens worden gewist.',
     'Les factures et les notes de crédit gardent le nom du client. Elles sont conservées 7 ans, comme le demande le Code de la TVA.':
         'Facturen en creditnota’s behouden de naam van de klant. Ze worden 7 jaar bewaard, zoals het Btw-wetboek vraagt.',
+    'Les passages à la borne sont effacés après trois mois.': 'De doorgangen aan de toegangszuil worden na drie maanden gewist.',
     'Le journal des actions du personnel est effacé après un an.': 'Het logboek van de handelingen van het personeel wordt na een jaar gewist.',
     'Qui voit vos données': 'Wie ziet je gegevens',
     'Le personnel du club, pour gérer les réservations.': 'Het personeel van de club, om de reserveringen te beheren.',
