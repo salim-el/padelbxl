@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
+use Illuminate\Support\Arr;
 use XMLWriter;
 
 /**
@@ -20,7 +21,7 @@ class UblInvoice
 
     public static function sellerIsConfigured(): bool
     {
-        return ! in_array(null, config('invoicing.seller'), true) && preg_match('/^BE[01]\d{9}$/', (string) config('invoicing.seller.vat')) === 1;
+        return ! in_array(null, Arr::except(config('invoicing.seller'), 'email'), true) && preg_match('/^BE[01]\d{9}$/', (string) config('invoicing.seller.vat')) === 1;
     }
 
     public function toXml(Invoice $invoice, string $buyerReference): string
@@ -84,7 +85,7 @@ class UblInvoice
         return $this->x->outputMemory();
     }
 
-    /** @param array{street: string, postcode: string, city: string}|null $address */
+    /** @param array{street: string, postcode: string, city: string, email?: string|null}|null $address */
     private function party(string $role, string $name, string $vat, ?array $address): void
     {
         $this->cac($role, fn () => $this->cac('Party', function () use ($name, $vat, $address) {
@@ -103,6 +104,10 @@ class UblInvoice
                 $this->cac('TaxScheme', fn () => $this->cbc('ID', 'VAT'));
             });
             $this->cac('PartyLegalEntity', fn () => $this->cbc('RegistrationName', $name));
+            // Peppol BIS 3.0, BT-43 : e-mail de contact du vendeur, facultatif.
+            if (! empty($address['email'])) {
+                $this->cac('Contact', fn () => $this->cbc('ElectronicMail', $address['email']));
+            }
         }));
     }
 

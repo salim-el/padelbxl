@@ -302,6 +302,9 @@ const nl: Record<string, string> = {
     'Le club ne peut pas fermer un terrain sur un créneau réservé : la fermeture est refusée tant que la réservation est active.':
         'De club kan een terrein niet sluiten op een gereserveerd tijdslot: de sluiting wordt geweigerd zolang de reservering actief is.',
     'Questions et litiges': 'Vragen en geschillen',
+    'E-mail : :email.': 'E-mail: :email.',
+    'Vous pouvez aussi écrire au club : :email.': 'Je kunt de club ook mailen: :email.',
+    'Pour exercer vos droits, écrivez à :email.': 'Om je rechten uit te oefenen, mail je naar :email.',
     'Une question ou une réclamation se pose à l’accueil du club.': 'Met een vraag of klacht kun je terecht aan het onthaal van de club.',
     'En cas de litige, le joueur peut aussi s’adresser au Service de médiation pour le consommateur.':
         'Bij een geschil kun je ook terecht bij de Consumentenombudsdienst.',

@@ -16,6 +16,7 @@ export default function Privacy({ club }: { club: Club }) {
                     lines: [
                         t(':name est responsable du traitement des données de ses joueurs. PadelBxl est son logiciel de réservation.', { name }),
                         address !== null && t('Adresse : :address.', { address }),
+                        !!club.email && t('E-mail : :email.', { email: club.email }),
                         t('L’hébergeur et le service d’envoi des e-mails traitent les données pour le club, sous contrat.'),
                     ],
                 },
@@ -82,6 +83,7 @@ export default function Privacy({ club }: { club: Club }) {
                         t('Vous voyez et corrigez votre nom et votre e-mail dans vos paramètres.'),
                         t('Vous téléchargez une copie de vos données, dans un fichier JSON, depuis vos paramètres.'),
                         t('Vous pouvez désactiver votre compte. Il est anonymisé trente jours plus tard.'),
+                        !!club.email && t('Pour exercer vos droits, écrivez à :email.', { email: club.email }),
                         t('Pour toute autre demande sur vos données, adressez-vous à l’accueil du club.'),
                         t('Vous pouvez porter plainte auprès de l’Autorité de protection des données.'),
                     ],

@@ -16,6 +16,7 @@ export default function Terms({ club }: { club: Club }) {
                     lines: [
                         t(':name exploite six terrains de padel couverts à Anderlecht.', { name }),
                         address !== null && t('Adresse : :address.', { address }),
+                        !!club.email && t('E-mail : :email.', { email: club.email }),
                         club.vat !== null && t('Numéro de TVA : :vat.', { vat: club.vat }),
                         t('Ces conditions valent pour toute réservation faite sur PadelBxl ou à l’accueil du club.'),
                     ],
@@ -104,6 +105,7 @@ export default function Terms({ club }: { club: Club }) {
                     title: t('Questions et litiges'),
                     lines: [
                         t('Une question ou une réclamation se pose à l’accueil du club.'),
+                        !!club.email && t('Vous pouvez aussi écrire au club : :email.', { email: club.email }),
                         t('En cas de litige, le joueur peut aussi s’adresser au Service de médiation pour le consommateur.'),
                     ],
                 },
