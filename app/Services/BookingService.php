@@ -463,6 +463,10 @@ class BookingService
                     Refund::create(['payment_id' => $payment->id, 'amount_cents' => $payment->amount_cents, 'reason' => 'cancellation_24h', 'status' => 'succeeded', 'credit_note_id' => $note->id]);
                     $payment->update(['status' => 'refunded']);
                 }
+                // Remboursés avant le match, les articles vendus n'ont pas été remis : ils reviennent en stock.
+                foreach ($booking->items()->whereHas('product', fn ($q) => $q->where('kind', 'sale'))->get() as $item) {
+                    Product::whereKey($item->product_id)->increment('stock', $item->quantity);
+                }
             }
             if (! $refundable) {
                 // Annulée trop tard : la garantie encaisse ici les parts impayées, sans attendre la tâche planifiée.
@@ -499,6 +503,13 @@ class BookingService
                 ->sum('quantity');
             if ($product->kind === 'rental' && $used + $quantity > $product->stock) {
                 throw new BookingException(__('Plus assez de « :product » sur ce créneau : il en reste :left.', ['product' => $product->name, 'left' => max(0, $product->stock - $used)]));
+            }
+            // Un article vendu quitte le stock pour de bon (la ligne est déjà verrouillée plus haut).
+            if ($product->kind === 'sale') {
+                if ($quantity > $product->stock) {
+                    throw new BookingException(__('Plus assez de « :product » en stock : il en reste :left.', ['product' => $product->name, 'left' => $product->stock]));
+                }
+                $product->decrement('stock', $quantity);
             }
             $reserved[] = BookingItem::create(['booking_id' => $booking->id, 'product_id' => $product->id, 'quantity' => $quantity, 'unit_price_cents' => $product->price_cents, 'vat_rate' => $product->vat_rate])->setRelation('product', $product);
         }

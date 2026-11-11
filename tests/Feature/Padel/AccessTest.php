@@ -46,6 +46,7 @@ class AccessTest extends TestCase
         $this->assertSame('granted', $access->validate($this->token, $this->court(2))['result']);
         $this->assertSame('already_used', $access->validate($this->token, $this->court(2))['reason']);
         $this->assertSame(2, DB::table('access_logs')->count());
+        $this->assertSame(1, DB::table('booking_status_histories')->where('to_status', 'used')->count());
     }
 
     public function test_wrong_court_too_early_and_unknown_are_refused(): void

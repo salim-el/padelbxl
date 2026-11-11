@@ -68,6 +68,21 @@ class EquipmentRentalTest extends TestCase
         $this->assertSame(0, DB::table('booking_items')->where('booking_id', $second->id)->count());
     }
 
+    public function test_sold_items_leave_the_stock_and_come_back_on_a_refunded_cancellation(): void
+    {
+        $this->balls->update(['stock' => 3]);
+        [$booking] = $this->book($this->lucas, 1, [$this->balls->id => 2]);
+        $this->assertSame(1, $this->balls->refresh()->stock);
+
+        $ines = User::where('email', 'ines.laurent@example.test')->first();
+        [, $response] = $this->book($ines, 2, [$this->balls->id => 2]);
+        $response->assertSessionHasErrors('booking');
+        $this->assertSame(1, $this->balls->refresh()->stock);
+
+        app(BookingService::class)->cancel($booking, $this->lucas);
+        $this->assertSame(3, $this->balls->refresh()->stock);
+    }
+
     public function test_more_than_four_of_an_item_is_refused(): void
     {
         [$booking, $response] = $this->book($this->lucas, 1, [$this->racket->id => 5]);
