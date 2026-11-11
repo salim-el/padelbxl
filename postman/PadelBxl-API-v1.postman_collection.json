@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "PadelBxl API v1",
-    "description": "API des logiciels partenaires de PadelBxl. Lancer « Connexion joueur » d'abord : le jeton est gardé dans la variable token. Le jeton d'appareil (terminalToken) se crée avec php artisan api:partner-token <e-mail du gérant> \"LED terrain 1\".",
+    "description": "API des logiciels partenaires de PadelBxl. Lancer « Connexion joueur » d'abord : le jeton est gardé dans la variable token. Le jeton d'appareil (terminalToken) se crée avec php artisan api:partner-token <e-mail du gérant> \"Écran terrain 1\".",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -66,7 +66,7 @@
     {
       "name": "Appareils du club",
       "item": [
-        { "name": "Partie en cours (contrôleur LED)", "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{terminalToken}}" }] }, "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/terminal/courts/{{courtId}}/current" } },
+        { "name": "Partie en cours (écran du terrain)", "request": { "method": "GET", "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{terminalToken}}" }] }, "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/terminal/courts/{{courtId}}/current" } },
         {
           "name": "Valider un QR (lecteur d'entrée)",
           "request": {
