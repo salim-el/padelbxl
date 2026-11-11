@@ -364,8 +364,8 @@ const en: Record<string, string> = {
     'Vous pouvez porter plainte auprès de l’Autorité de protection des données.':
         'You can lodge a complaint with the Belgian Data Protection Authority.',
     'Les cookies': 'Cookies',
-    'PadelBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun bandeau à accepter.':
-        'PadelBxl only uses necessary cookies. There is no audience measurement and no advertising, so there is no banner to accept.',
+    'PadelBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun consentement à donner. Un bandeau vous en informe à la première visite.':
+        'PadelBxl only uses necessary cookies. There is no audience measurement and no advertising, so there is no consent to give. A banner tells you so on your first visit.',
     'Le cookie de session garde votre connexion. Il expire après deux heures sans activité.':
         'The session cookie keeps you logged in. It expires after two hours of inactivity.',
     'Le cookie XSRF-TOKEN protège vos formulaires contre une requête envoyée à votre insu.':
@@ -374,6 +374,13 @@ const en: Record<string, string> = {
         'The “Stay logged in” cookie only exists if you tick that box when logging in.',
     'Le cookie sidebar:state retient si le menu latéral est ouvert, pendant 7 jours.':
         'The sidebar:state cookie remembers for 7 days whether the side menu is open.',
+    'Quand vous fermez le bandeau, votre navigateur le note dans son stockage local pendant six mois. Cette note ne quitte pas votre appareil.':
+        'When you close the banner, your browser notes it in its local storage for six months. This note never leaves your device.',
+    Cookies: 'Cookies',
+    'PadelBxl n’utilise que des cookies nécessaires : connexion, sécurité des formulaires et menu. Ni mesure d’audience ni publicité, il n’y a donc rien à accepter.':
+        'PadelBxl only uses necessary cookies: login, form security and the menu. No audience measurement and no advertising, so there is nothing to accept.',
+    'En savoir plus': 'Learn more',
+    'J’ai compris': 'Got it',
     'La langue choisie est gardée dans la session et dans votre compte.': 'The chosen language is kept in the session and in your account.',
 };
 
