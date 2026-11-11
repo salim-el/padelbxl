@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Invoice extends Model
 {
@@ -13,5 +14,11 @@ class Invoice extends Model
     protected function casts(): array
     {
         return ['issued_at' => 'immutable_datetime', 'vat_rate' => 'decimal:2'];
+    }
+
+    // Le remboursement est toujours total : une facture a au plus une note de crédit.
+    public function creditNote(): HasOne
+    {
+        return $this->hasOne(CreditNote::class);
     }
 }

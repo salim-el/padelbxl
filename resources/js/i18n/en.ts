@@ -261,8 +261,10 @@ const en: Record<string, string> = {
         'The chosen slot is held for 10 minutes during payment. Without payment in that time, it is released and nothing is charged.',
     'Le paiement se fait par carte en ligne, ou en espèces et par terminal à l’accueil.':
         'You pay by card online, or in cash or by card terminal at the reception.',
-    'Chaque paiement donne une facture au nom de celui qui paie. Une entreprise reçoit aussi sa facture au format électronique UBL.':
-        'Each payment gives an invoice in the name of the payer. A company also receives its invoice in the electronic UBL format.',
+    'Chaque paiement donne une facture en PDF au nom de celui qui paie. Un remboursement donne une note de crédit en PDF. Une entreprise reçoit aussi sa facture au format électronique UBL.':
+        'Each payment gives a PDF invoice in the name of the payer. A refund gives a PDF credit note. A company also receives its invoice in the electronic UBL format.',
+    'Télécharger le PDF': 'Download the PDF',
+    'Note de crédit :number (PDF)': 'Credit note :number (PDF)',
     'Le partage du prix': 'Sharing the price',
     'Pour un match dans plus de 24 h, l’organisateur peut partager le prix avec trois autres joueurs au plus. Il les invite par e-mail ou ouvre des places aux membres du club.':
         'For a match more than 24 hours away, the organiser can share the price with up to three other players. They invite them by e-mail or open spots to club members.',
