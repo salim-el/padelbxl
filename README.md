@@ -1,7 +1,7 @@
 # PadelBxl
 
 Application de réservation de terrains pour l'Arena Padel Club (6 terrains, Anderlecht).
-Épreuve intégrée, Bachelier en informatique de gestion, ICC Bruxelles, 2026-2027.
+Épreuve intégrée, Bachelier en informatique, orientation développement d'applications, ICC Bruxelles, 2026-2027.
 Auteur : EL GHALBZOURI Salim.
 
 ## Ce que fait la version alpha
