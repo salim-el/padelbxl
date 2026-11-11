@@ -48,7 +48,7 @@ export default function Terms({ club }: { club: Club }) {
                         t('Le paiement se fait par carte en ligne, ou en espèces et par terminal à l’accueil.'),
                         t('Version alpha : le paiement est simulé. Aucune carte n’est débitée.'),
                         t(
-                            'Chaque paiement donne une facture au nom de celui qui paie. Une entreprise reçoit aussi sa facture au format électronique UBL.',
+                            'Chaque paiement donne une facture en PDF au nom de celui qui paie. Un remboursement donne une note de crédit en PDF. Une entreprise reçoit aussi sa facture au format électronique UBL.',
                         ),
                     ],
                 },

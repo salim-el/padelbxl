@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Services\BookingService;
 use App\Services\Clock;
+use App\Services\InvoicePdf;
 use App\Services\UblInvoice;
 use Carbon\CarbonImmutable;
 use chillerlan\QRCode\QRCode;
@@ -111,8 +112,8 @@ class BookingController extends Controller
             'declinable' => $player->status === 'invited' && $booking->status === 'confirmed' && now()->lte($booking->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS)),
             'qr' => $qr,
             'qr_window' => $pass ? Clock::local($pass->valid_from)->format('H:i').' – '.Clock::local($pass->valid_until)->format('H:i') : null,
-            'invoices' => $booking->invoices()->whereIn('payment_id', Payment::where('booking_player_id', $player->id)->where('payer_id', $request->user()->id)->select('id'))->get()
-                ->map(fn ($i) => ['number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents])->all(),
+            'invoices' => $booking->invoices()->whereIn('payment_id', Payment::where('booking_player_id', $player->id)->where('payer_id', $request->user()->id)->select('id'))->with('creditNote')->get()
+                ->map(fn ($i) => ['number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents, 'credit_note' => $i->creditNote?->number])->all(),
         ]);
     }
 
@@ -146,7 +147,7 @@ class BookingController extends Controller
         $this->ensureOwner($request, $booking);
         // Seules les factures payées par l'organisateur : celles d'un partenaire sont à son nom et ne regardent que lui.
         $booking->load(['court', 'players.accessPass', 'players.user', 'items.product',
-            'invoices' => fn ($q) => $q->whereIn('payment_id', Payment::where('payer_id', $request->user()->id)->select('id'))]);
+            'invoices' => fn ($q) => $q->with('creditNote')->whereIn('payment_id', Payment::where('payer_id', $request->user()->id)->select('id'))]);
         $player = $booking->players->firstWhere('is_organizer', true);
         $pass = $player?->accessPass;
         $qr = $pass && $pass->revoked_at === null && in_array($booking->status, ['confirmed', 'used'], true)
@@ -166,7 +167,7 @@ class BookingController extends Controller
                 'open' => ! $p->is_organizer && $p->guest_email === null, 'taken' => $p->user_id !== null, 'is_organizer' => $p->is_organizer, 'share_cents' => $p->share_cents, 'status' => $p->status,
             ])->all(),
             'invoices' => $booking->invoices->map(fn ($i) => [
-                'number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents,
+                'number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents, 'credit_note' => $i->creditNote?->number,
                 'ubl' => $i->customer_vat !== null && UblInvoice::sellerIsConfigured(),
             ])->all(),
         ]);
@@ -183,6 +184,39 @@ class BookingController extends Controller
         return response((new UblInvoice)->toXml($invoice, $booking->public_id), 200, [
             'Content-Type' => 'application/xml; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="'.$invoice->number.'.xml"',
+        ]);
+    }
+
+    /** Facture PDF, au nom de celui qui a payé. */
+    public function pdf(Request $request, Booking $booking, Invoice $invoice): HttpResponse
+    {
+        $this->ensurePayerOrStaff($request, $invoice);
+
+        return $this->pdfResponse((new InvoicePdf)->render($invoice), $invoice->number);
+    }
+
+    /** Note de crédit PDF, émise au remboursement de cette facture. */
+    public function creditNotePdf(Request $request, Booking $booking, Invoice $invoice): HttpResponse
+    {
+        $this->ensurePayerOrStaff($request, $invoice);
+        $note = $invoice->creditNote ?? abort(404);
+
+        return $this->pdfResponse((new InvoicePdf)->render($invoice, $note), $note->number);
+    }
+
+    // Une facture ne regarde que celui qui l'a payée (organisateur ou partenaire) et le personnel du club.
+    private function ensurePayerOrStaff(Request $request, Invoice $invoice): void
+    {
+        abort_unless(Payment::whereKey($invoice->payment_id)->where('payer_id', $request->user()->id)->exists() || $request->user()->can('manage-club'), 403);
+        // Sans les coordonnées du club, le document n'aurait pas les mentions obligatoires du vendeur.
+        abort_unless(UblInvoice::sellerIsConfigured(), 503, 'Les coordonnées du club (CLUB_* dans .env) ne sont pas complètes.');
+    }
+
+    private function pdfResponse(string $pdf, string $number): HttpResponse
+    {
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$number.'.pdf"',
         ]);
     }
 

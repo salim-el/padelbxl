@@ -17,6 +17,7 @@ type Ticket = {
     status: string;
     price_cents: number;
     invoice: string | null;
+    credit_note: string | null;
     cancellable: boolean;
     refundable: boolean;
 };
@@ -75,6 +76,16 @@ export default function CounterTicket({ booking, qr, qr_window }: { booking: Tic
 
                 <div className="mx-auto flex flex-wrap items-center gap-3 print:hidden">
                     <span className="text-muted-foreground text-sm">Contact : {booking.contact}</span>
+                    {booking.invoice && (
+                        <a href={`/bookings/${booking.id}/invoices/${booking.invoice}/pdf`} download className="text-sm underline">
+                            Facture PDF
+                        </a>
+                    )}
+                    {booking.invoice && booking.credit_note && (
+                        <a href={`/bookings/${booking.id}/invoices/${booking.invoice}/credit-note/pdf`} download className="text-sm underline">
+                            Note de crédit PDF
+                        </a>
+                    )}
                     {booking.cancellable && (
                         <Button variant="outline" className="border-[#CC3342]/40 text-[#9E2833] hover:bg-[#FCE6E8]" onClick={cancel}>
                             Annuler la réservation

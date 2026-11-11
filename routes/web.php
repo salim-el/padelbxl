@@ -49,6 +49,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('open-matches/{booking}/waitlist', [OpenMatchController::class, 'wait'])->middleware('throttle:10,1')->name('open-matches.wait');
     Route::delete('open-matches/{booking}/waitlist', [OpenMatchController::class, 'leave'])->name('open-matches.leave');
     Route::get('bookings/{booking}/invoices/{invoice:number}/ubl', [BookingController::class, 'ubl'])->scopeBindings()->name('bookings.invoices.ubl');
+    Route::get('bookings/{booking}/invoices/{invoice:number}/pdf', [BookingController::class, 'pdf'])->scopeBindings()->name('bookings.invoices.pdf');
+    Route::get('bookings/{booking}/invoices/{invoice:number}/credit-note/pdf', [BookingController::class, 'creditNotePdf'])->scopeBindings()->name('bookings.invoices.credit-note.pdf');
     Route::post('bookings/{booking}/rematch', [BookingController::class, 'rematch'])->middleware('throttle:10,1')->name('bookings.rematch');
     Route::get('kiosk', [KioskController::class, 'show'])->name('kiosk');
     Route::post('kiosk', [KioskController::class, 'validateToken'])->middleware('throttle:30,1')->name('kiosk.validate');

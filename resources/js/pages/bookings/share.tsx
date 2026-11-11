@@ -1,4 +1,5 @@
 import { BackButton } from '@/components/back-button';
+import InvoiceLinks from '@/components/invoice-links';
 import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import TermsLink from '@/components/terms-link';
@@ -18,7 +19,7 @@ type Props = {
     declinable: boolean;
     qr: string | null;
     qr_window: string | null;
-    invoices: { number: string; total_cents: number; vat_cents: number }[];
+    invoices: { number: string; total_cents: number; vat_cents: number; credit_note: string | null }[];
 };
 
 export default function Share({ booking, organizer, share_cents, share_status, payable, declinable, qr, qr_window, invoices }: Props) {
@@ -117,8 +118,9 @@ export default function Share({ booking, organizer, share_cents, share_status, p
 
                 {invoices.map((i) => (
                     <p key={i.number} className="bg-card flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
-                        <span className="flex items-center gap-2">
+                        <span className="flex flex-wrap items-center gap-2">
                             <FileText className="size-4 text-[#1D5C7A]" aria-hidden /> {t('Facture :number', { number: i.number })}
+                            <InvoiceLinks booking={booking.id} invoice={i.number} creditNote={i.credit_note} />
                         </span>
                         <span>
                             <strong>{euros(i.total_cents)}</strong>{' '}

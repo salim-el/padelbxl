@@ -262,8 +262,10 @@ const nl: Record<string, string> = {
         'Het gekozen tijdslot wordt 10 minuten vastgehouden tijdens de betaling. Betaal je niet binnen die tijd, dan komt het weer vrij en wordt er niets aangerekend.',
     'Le paiement se fait par carte en ligne, ou en espèces et par terminal à l’accueil.':
         'Je betaalt online met je kaart, of aan het onthaal contant of met de betaalterminal.',
-    'Chaque paiement donne une facture au nom de celui qui paie. Une entreprise reçoit aussi sa facture au format électronique UBL.':
-        'Elke betaling geeft een factuur op naam van wie betaalt. Een onderneming krijgt haar factuur ook in het elektronische UBL-formaat.',
+    'Chaque paiement donne une facture en PDF au nom de celui qui paie. Un remboursement donne une note de crédit en PDF. Une entreprise reçoit aussi sa facture au format électronique UBL.':
+        'Elke betaling geeft een pdf-factuur op naam van wie betaalt. Een terugbetaling geeft een pdf-creditnota. Een onderneming krijgt haar factuur ook in het elektronische UBL-formaat.',
+    'Télécharger le PDF': 'Pdf downloaden',
+    'Note de crédit :number (PDF)': 'Creditnota :number (pdf)',
     'Le partage du prix': 'De prijs delen',
     'Pour un match dans plus de 24 h, l’organisateur peut partager le prix avec trois autres joueurs au plus. Il les invite par e-mail ou ouvre des places aux membres du club.':
         'Voor een match over meer dan 24 uur kan de organisator de prijs delen met hoogstens drie andere spelers. Hij nodigt hen uit per e-mail of stelt plaatsen open voor de leden van de club.',

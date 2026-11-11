@@ -1,4 +1,5 @@
 import { BackButton } from '@/components/back-button';
+import InvoiceLinks from '@/components/invoice-links';
 import { StatusBadge } from '@/components/status-badge';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
@@ -22,7 +23,7 @@ type Props = {
     qr: string | null;
     qr_window: string | null;
     items: { name: string; quantity: number; total_cents: number }[];
-    invoices: { number: string; total_cents: number; vat_cents: number; ubl: boolean }[];
+    invoices: { number: string; total_cents: number; vat_cents: number; ubl: boolean; credit_note: string | null }[];
     players: { name: string | null; is_organizer: boolean; open: boolean; taken: boolean; share_cents: number; status: string }[];
 };
 
@@ -101,8 +102,9 @@ export default function Show({ booking, qr, qr_window, items, invoices, players 
                         {invoices.length > 0 ? (
                             invoices.map((i) => (
                                 <p key={i.number} className="flex items-center justify-between gap-3">
-                                    <span className="flex items-center gap-2">
+                                    <span className="flex flex-wrap items-center gap-2">
                                         <FileText className="size-4 text-[#1D5C7A]" aria-hidden /> {t('Facture :number', { number: i.number })}
+                                        <InvoiceLinks booking={booking.id} invoice={i.number} creditNote={i.credit_note} />
                                         {i.ubl && (
                                             <a
                                                 href={`/bookings/${booking.id}/invoices/${i.number}/ubl`}
