@@ -84,7 +84,7 @@ class ActivityLogTest extends TestCase
 
     public function test_a_device_token_is_logged_with_the_manager_in_charge(): void
     {
-        $this->artisan('api:partner-token', ['email' => 'marc.dumont@example.test', 'name' => 'LED terrain 1'])->assertSuccessful();
+        $this->artisan('api:partner-token', ['email' => 'marc.dumont@example.test', 'name' => 'Écran terrain 1'])->assertSuccessful();
 
         $entry = Activity::where('event', 'device-token-created')->sole();
         $this->assertTrue($entry->causer->is($this->marc));
