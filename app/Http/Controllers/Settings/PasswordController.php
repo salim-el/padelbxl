@@ -37,6 +37,8 @@ class PasswordController extends Controller
         $request->user()->update([
             'password' => Hash::make($validated['password']),
         ]);
+        // Un nouveau mot de passe ferme aussi les accès API ouverts avec l'ancien.
+        $request->user()->tokens()->delete();
 
         return back();
     }

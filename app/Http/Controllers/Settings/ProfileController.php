@@ -53,7 +53,10 @@ class ProfileController extends Controller
         $user = $request->user();
 
         // Une réservation à venir doit d'abord être annulée, pour que les règles de remboursement s'appliquent.
-        $upcoming = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->exists();
+        // Organisateur ou invité qui a pris sa place : dans les deux cas, la partie à venir le concerne.
+        $upcoming = Booking::whereNull('walk_in_name')->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())
+            ->where(fn ($q) => $q->where('organizer_id', $user->id)->orWhereHas('players', fn ($p) => $p->where('user_id', $user->id)))
+            ->exists();
         if ($upcoming) {
             return back()->withErrors(['password' => __('Annulez d’abord vos réservations à venir.')]);
         }
