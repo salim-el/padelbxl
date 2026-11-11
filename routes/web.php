@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CounterController;
 use App\Http\Controllers\KioskController;
 use App\Http\Controllers\LocaleController;
@@ -31,6 +32,8 @@ Route::get('planning', PlanningController::class)->name('planning');
 // Pages publiques : le joueur lit les conditions avant de les accepter, sans devoir créer un compte.
 Route::get('conditions-generales', fn () => Inertia::render('legal/terms', ['club' => config('invoicing.seller')]))->name('legal.terms');
 Route::get('confidentialite', fn () => Inertia::render('legal/privacy', ['club' => config('invoicing.seller')]))->name('legal.privacy');
+Route::get('contact', [ContactController::class, 'create'])->name('contact');
+Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:3,1')->name('contact.store');
 Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
 
 Route::middleware(['auth', 'verified'])->group(function () {

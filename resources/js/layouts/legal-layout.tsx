@@ -1,6 +1,7 @@
 import LanguageSwitcher from '@/components/language-switcher';
 import { useT } from '@/lib/i18n';
 import { Head, Link } from '@inertiajs/react';
+import { type ReactNode } from 'react';
 
 /** Coordonnées du club, reprises du .env (CLUB_*). Une valeur absente vaut null. */
 export type Club = {
@@ -18,7 +19,8 @@ export type Section = { title: string; lines: (string | false)[] };
 const VERSION = '11/11/2026';
 
 // Pages publiques : lisibles sans compte, depuis la case « conditions » du paiement ou le pied de page.
-export default function LegalLayout({ title, sections }: { title: string; sections: Section[] }) {
+// La page de contact réutilise le même cadre, avec un formulaire à la place des sections.
+export default function LegalLayout({ title, sections = [], children }: { title: string; sections?: Section[]; children?: ReactNode }) {
     const t = useT();
 
     return (
@@ -35,7 +37,7 @@ export default function LegalLayout({ title, sections }: { title: string; sectio
                 </header>
                 <main id="contenu" className="mx-auto max-w-3xl px-4 py-12">
                     <h1 className="text-3xl font-extrabold uppercase">{title}</h1>
-                    <p className="mt-2 text-sm text-[#5F6B78]">{t('Version du :date', { date: VERSION })}</p>
+                    {sections.length > 0 && <p className="mt-2 text-sm text-[#5F6B78]">{t('Version du :date', { date: VERSION })}</p>}
                     {sections.map((s) => (
                         <section key={s.title} className="mt-8">
                             <h2 className="text-xl font-bold">{s.title}</h2>
@@ -46,6 +48,7 @@ export default function LegalLayout({ title, sections }: { title: string; sectio
                             </ul>
                         </section>
                     ))}
+                    {children}
                 </main>
                 <footer className="bg-[#0A1420] py-8 text-sm text-[#F7F6F1]/70">
                     <nav aria-label={t('Liens du pied de page')} className="mx-auto flex max-w-3xl flex-wrap gap-4 px-4">
@@ -57,6 +60,9 @@ export default function LegalLayout({ title, sections }: { title: string; sectio
                         </Link>
                         <Link href="/confidentialite" className="hover:text-[#C8E64A]">
                             {t('Confidentialité')}
+                        </Link>
+                        <Link href="/contact" className="hover:text-[#C8E64A]">
+                            {t('Contact')}
                         </Link>
                     </nav>
                 </footer>

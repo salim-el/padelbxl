@@ -386,6 +386,20 @@ const nl: Record<string, string> = {
     'En savoir plus': 'Meer weten',
     'J’ai compris': 'Begrepen',
     'La langue choisie est gardée dans la session et dans votre compte.': 'De gekozen taal wordt bewaard in de sessie en in je account.',
+    Contact: 'Contact',
+    'Écrire au club': 'Schrijf naar de club',
+    'Le formulaire n’est pas disponible pour le moment. Adressez-vous à l’accueil du club.':
+        'Het formulier is momenteel niet beschikbaar. Wend je tot het onthaal van de club.',
+    'Une question sur une réservation, une facture ou vos données ? Le club vous répond par e-mail.':
+        'Een vraag over een reservatie, een factuur of je gegevens? De club antwoordt je per e-mail.',
+    'Message envoyé. Le club vous répondra par e-mail.': 'Bericht verzonden. De club antwoordt je per e-mail.',
+    Nom: 'Naam',
+    Message: 'Bericht',
+    'Votre nom, votre e-mail et votre message partent par e-mail au club. L’application ne les garde pas.':
+        'Je naam, je e-mailadres en je bericht gaan per e-mail naar de club. De applicatie bewaart ze niet.',
+    Envoyer: 'Verzenden',
+    'Un message écrit au club par le formulaire de contact part par e-mail. Il n’est pas gardé dans l’application.':
+        'Een bericht via het contactformulier gaat per e-mail naar de club. Het wordt niet in de applicatie bewaard.',
 };
 
 export default nl;
