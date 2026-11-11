@@ -120,9 +120,11 @@ class OpenMatchTest extends TestCase
         $booking = $this->open(1, ['ines.laurent@example.test']);
         $unverified = User::factory()->create(['email_verified_at' => null]);
 
-        foreach ([$this->lucas, $this->ines, $unverified] as $user) {
+        foreach ([$this->lucas, $this->ines] as $user) {
             $this->actingAs($user)->post("/open-matches/{$booking->public_id}/join", ['accept_terms' => '1'])->assertSessionHasErrors('booking');
         }
+        // Un compte sans adresse confirmée est arrêté avant le contrôleur et renvoyé vers la confirmation.
+        $this->actingAs($unverified)->post("/open-matches/{$booking->public_id}/join", ['accept_terms' => '1'])->assertRedirect(route('verification.notice'));
         $this->assertSame(1, $booking->players()->whereNull('user_id')->whereNull('guest_email')->count());
     }
 
