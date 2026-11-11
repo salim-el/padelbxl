@@ -110,4 +110,15 @@ class UblExportTest extends TestCase
 
         $this->actingAs($this->lucas)->get("/bookings/{$booking->public_id}/invoices/{$number}/ubl")->assertStatus(503);
     }
+
+    public function test_the_club_email_is_the_seller_contact_but_stays_optional(): void
+    {
+        $booking = $this->paidBooking($this->lucas);
+        $this->assertSame([], $this->ubl($booking)->xpath('cac:AccountingSupplierParty//cbc:ElectronicMail'));
+
+        config(['invoicing.seller.email' => 'contact@club.example.test']);
+        $xml = $this->ubl($booking);
+        $this->assertSame('contact@club.example.test', (string) $xml->xpath('cac:AccountingSupplierParty/cac:Party/cac:Contact/cbc:ElectronicMail')[0]);
+        $this->assertSame([], $xml->xpath('cac:AccountingCustomerParty//cbc:ElectronicMail'));
+    }
 }
