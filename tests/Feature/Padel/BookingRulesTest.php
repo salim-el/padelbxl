@@ -112,6 +112,27 @@ class BookingRulesTest extends TestCase
         $this->service->confirmPayment($booking, $this->lucas);
     }
 
+    public function test_a_slot_that_has_already_started_cannot_be_held(): void
+    {
+        $this->travelTo($this->slot()->addMinutes(5));
+
+        $this->expectException(BookingException::class);
+        $this->service->hold($this->lucas, $this->court(1), $this->slot());
+    }
+
+    public function test_a_game_that_has_started_cannot_be_cancelled(): void
+    {
+        $booking = $this->service->confirmPayment($this->service->hold($this->lucas, $this->court(1), $this->slot()), $this->lucas);
+        $this->travelTo($booking->starts_at->addMinutes(5));
+
+        try {
+            $this->service->cancel($booking, $this->lucas);
+            $this->fail('Une partie commencée ne doit pas pouvoir être annulée.');
+        } catch (BookingException) {
+            $this->assertSame('confirmed', $booking->refresh()->status);
+        }
+    }
+
     public function test_cancellation_24_hours_before_is_refunded_with_a_credit_note(): void
     {
         $booking = $this->service->confirmPayment($this->service->hold($this->lucas, $this->court(1), $this->slot()), $this->lucas);
