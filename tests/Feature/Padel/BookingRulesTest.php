@@ -112,6 +112,24 @@ class BookingRulesTest extends TestCase
         $this->service->confirmPayment($booking, $this->lucas);
     }
 
+    public function test_a_payment_that_lands_during_the_expiry_sweep_is_not_overwritten(): void
+    {
+        $booking = $this->service->hold($this->lucas, $this->court(1), $this->slot());
+        $this->travel(11)->minutes();
+
+        // Simule un paiement confirmé par une autre connexion juste après la recherche des blocages expirés.
+        $paid = false;
+        DB::listen(function ($query) use ($booking, &$paid) {
+            if (! $paid && str_contains($query->sql, '"hold_expires_at" <')) {
+                $paid = true;
+                DB::table('bookings')->where('id', $booking->id)->update(['status' => 'confirmed']);
+            }
+        });
+
+        $this->assertSame(0, $this->service->expireHolds());
+        $this->assertSame('confirmed', $booking->refresh()->status);
+    }
+
     public function test_a_slot_that_has_already_started_cannot_be_held(): void
     {
         $this->travelTo($this->slot()->addMinutes(5));

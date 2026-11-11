@@ -39,17 +39,38 @@ class BookingService
     /** Invitations par organisateur et par jour : quatre parties partagées, pas un relais d'e-mails. */
     public const MAX_INVITATIONS_PER_DAY = 12;
 
+    /** Espaces des verrous PostgreSQL de transaction (pg_advisory_xact_lock), libérés au commit. */
+    private const LOCK_COURT = 1;
+
+    private const LOCK_PLAYER = 2;
+
     public function __construct(private SlotService $slots) {}
+
+    /** Sérialise ce qui touche au planning d'un terrain : réservations et fermetures. À appeler dans une transaction. */
+    public static function lockCourt(int $courtId): void
+    {
+        DB::select('select pg_advisory_xact_lock(?::int, ?::int)', [self::LOCK_COURT, $courtId]);
+    }
 
     /** Libère les créneaux bloqués dont les dix minutes sont écoulées. */
     public function expireHolds(): int
     {
         $ids = Booking::where('status', 'pending_payment')->where('hold_expires_at', '<', now())->pluck('id');
+        $expired = 0;
         foreach ($ids as $id) {
-            $this->transition(Booking::find($id), 'expired', 'Dix minutes sans paiement.');
+            // Un paiement a pu se terminer entre la recherche et ici : on relit la ligne sous verrou avant d'expirer.
+            $expired += DB::transaction(function () use ($id) {
+                $booking = Booking::whereKey($id)->lockForUpdate()->first();
+                if ($booking === null || $booking->status !== 'pending_payment' || ! $booking->hold_expires_at?->isPast()) {
+                    return 0;
+                }
+                $this->transition($booking, 'expired', 'Dix minutes sans paiement.');
+
+                return 1;
+            });
         }
 
-        return $ids->count();
+        return $expired;
     }
 
     /** @param array{walk_in_name: string, walk_in_contact: string}|null $walkIn client du comptoir, sans compte */
@@ -66,13 +87,17 @@ class BookingService
             throw new BookingException(__('Ce terrain n’est pas réservable à cette heure.'));
         }
         $end = $startUtc->addMinutes(Clock::SLOT_MINUTES);
-        if (CourtClosure::where('court_id', $court->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc)->exists()) {
-            throw new BookingException(__('Ce terrain est fermé sur ce créneau.'));
-        }
 
         $this->expireHolds();
 
-        return DB::transaction(function () use ($user, $court, $startUtc, $rule, $walkIn) {
+        return DB::transaction(function () use ($user, $court, $startUtc, $end, $rule, $walkIn) {
+            // Verrous dans un ordre fixe (terrain puis joueur) : une fermeture et une réservation du même terrain,
+            // ou deux réservations du même joueur, passent l'une après l'autre.
+            self::lockCourt($court->id);
+            DB::select('select pg_advisory_xact_lock(?::int, ?::int)', [self::LOCK_PLAYER, $user->id]);
+            if (CourtClosure::where('court_id', $court->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc)->exists()) {
+                throw new BookingException(__('Ce terrain est fermé sur ce créneau.'));
+            }
             // La limite de trois réservations vise un joueur, pas le gérant qui encode pour des clients au comptoir.
             $active = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->count();
             if ($walkIn === null && $active >= self::MAX_ACTIVE) {
