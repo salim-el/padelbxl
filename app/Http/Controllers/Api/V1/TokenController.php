@@ -30,6 +30,10 @@ class TokenController extends Controller
         if ($user->status !== 'active' || $user->email_verified_at === null) {
             return response()->json(['message' => 'Votre compte doit être actif et votre e-mail confirmé.'], 403);
         }
+        // L'API ne sait pas demander le code de double authentification : le personnel passe par l'application web.
+        if (in_array($user->role, ['manager', 'admin'], true)) {
+            return response()->json(['message' => 'Le personnel se connecte par l’application web, avec la double authentification.'], 403);
+        }
         $expires = now()->addDays(self::PLAYER_TOKEN_DAYS);
         $token = $user->createToken($data['device_name'], ['bookings'], $expires);
         activity('api')->causedBy($user)->performedOn($token->accessToken)->event('token-created')->log('Jeton API créé');

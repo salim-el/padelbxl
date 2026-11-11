@@ -178,6 +178,16 @@ class SplitPaymentTest extends TestCase
         $this->assertSame('pending_payment', $booking->refresh()->status);
     }
 
+    public function test_an_invited_player_who_paid_cannot_delete_the_account_before_the_game(): void
+    {
+        [$booking] = $this->share(['ines.laurent@example.test']);
+        $this->actingAs($this->ines)->post("/bookings/{$booking->public_id}/share", ['accept_terms' => '1'])->assertSessionHasNoErrors();
+
+        $this->actingAs($this->ines)->delete('/settings/profile', ['password' => DatabaseSeeder::DEMO_PASSWORD])
+            ->assertSessionHasErrors('password');
+        $this->assertNotSoftDeleted($this->ines, deletedAtColumn: 'deactivated_at');
+    }
+
     public function test_an_unconfirmed_account_cannot_claim_an_invitation_sent_to_its_address(): void
     {
         [$booking] = $this->share(['nouveau@example.test']);
