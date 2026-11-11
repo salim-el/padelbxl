@@ -158,6 +158,7 @@ const nl: Record<string, string> = {
     'Changer de mot de passe': 'Wachtwoord wijzigen',
     'Choisissez un mot de passe long et unique pour protéger votre compte': 'Kies een lang en uniek wachtwoord om je account te beschermen',
     'Mot de passe actuel': 'Huidig wachtwoord',
+    'Pour changer d’adresse e-mail, confirmez votre mot de passe.': 'Bevestig je wachtwoord om je e-mailadres te wijzigen.',
     'Nouveau mot de passe': 'Nieuw wachtwoord',
     'Enregistrer le mot de passe': 'Wachtwoord opslaan',
     'Mot de passe oublié': 'Wachtwoord vergeten',

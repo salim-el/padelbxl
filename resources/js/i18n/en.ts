@@ -158,6 +158,7 @@ const en: Record<string, string> = {
     'Changer de mot de passe': 'Change password',
     'Choisissez un mot de passe long et unique pour protéger votre compte': 'Choose a long, unique password to protect your account',
     'Mot de passe actuel': 'Current password',
+    'Pour changer d’adresse e-mail, confirmez votre mot de passe.': 'Confirm your password to change your email address.',
     'Nouveau mot de passe': 'New password',
     'Enregistrer le mot de passe': 'Save password',
     'Mot de passe oublié': 'Forgot password',
