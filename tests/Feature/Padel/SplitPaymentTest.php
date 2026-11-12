@@ -187,7 +187,7 @@ class SplitPaymentTest extends TestCase
 
         $this->assertNull($booking->players()->where('is_organizer', false)->value('user_id'));
         $this->assertSame(0, DB::table('payments')->where('payer_id', $impostor->id)->count());
-        $this->actingAs($impostor)->get('/bookings')->assertInertia(fn ($page) => $page->has('invitations', 0));
+        $this->actingAs($impostor)->get('/bookings')->assertRedirect(route('verification.notice'));
     }
 
     public function test_an_invitation_is_not_linked_to_an_account_whose_email_is_not_confirmed(): void
