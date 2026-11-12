@@ -27,6 +27,13 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+
+            // Changer d'adresse, c'est changer l'identifiant du compte : on redemande le mot de passe.
+            'current_password' => [
+                Rule::requiredIf(fn () => mb_strtolower((string) $this->input('email')) !== mb_strtolower($this->user()->email)),
+                'nullable',
+                'current_password',
+            ],
         ];
     }
 }
