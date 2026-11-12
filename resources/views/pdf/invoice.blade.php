@@ -4,13 +4,14 @@
     $date = fn ($at) => \App\Services\Clock::local($at)->format('d/m/Y');
     $rate = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, ',', ''), '0'), ',').' %';
     $doc = $note ?? $invoice;
-    $methods = ['card' => 'carte', 'cash' => 'espèces', 'terminal' => 'terminal de paiement'];
+    $methods = ['card' => __('carte'), 'cash' => __('espèces'), 'terminal' => __('terminal de paiement')];
+    $title = $note ? __('Note de crédit') : __('Facture');
 @endphp
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="utf-8">
-    <title>{{ $note ? 'Note de crédit' : 'Facture' }} {{ $doc->number }}</title>
+    <title>{{ $title }} {{ $doc->number }}</title>
     {{-- Document rendu par Dompdf, jamais servi comme page : la CSP du site ne s'y applique pas, et il n'y a aucun script. --}}
     <style>
         body { font-family: 'DejaVu Sans', sans-serif; font-size: 10pt; color: #0E1B2C; }
@@ -33,27 +34,27 @@
                 <strong>{{ $seller['name'] }}</strong><br>
                 {{ $seller['street'] }}<br>
                 {{ $seller['postcode'] }} {{ $seller['city'] }}<br>
-                TVA {{ $seller['vat'] }}
+                {{ __('TVA :vat', ['vat' => $seller['vat']]) }}
                 @if (! empty($seller['email']))
                     <br>{{ $seller['email'] }}
                 @endif
             </td>
             <td>
-                <h1>{{ $note ? 'Note de crédit' : 'Facture' }}</h1>
-                N° {{ $doc->number }}<br>
-                Date : {{ $date($doc->issued_at) }}
+                <h1>{{ $title }}</h1>
+                {{ __('N° :number', ['number' => $doc->number]) }}<br>
+                {{ __('Date : :date', ['date' => $date($doc->issued_at)]) }}
                 @if ($note)
-                    <br>Se rapporte à la facture {{ $invoice->number }} du {{ $date($invoice->issued_at) }}
+                    <br>{{ __('Se rapporte à la facture :number du :date', ['number' => $invoice->number, 'date' => $date($invoice->issued_at)]) }}
                 @endif
             </td>
         </tr>
         <tr>
             <td colspan="2">
-                <span class="muted">Client</span><br>
+                <span class="muted">{{ __('Client') }}</span><br>
                 @if ($invoice->customer_company)
                     <strong>{{ $invoice->customer_company }}</strong><br>
                     {{ $invoice->customer_name }}<br>
-                    TVA {{ $invoice->customer_vat }}
+                    {{ __('TVA :vat', ['vat' => $invoice->customer_vat]) }}
                 @else
                     <strong>{{ $invoice->customer_name }}</strong>
                 @endif
@@ -62,19 +63,19 @@
     </table>
 
     @if ($note)
-        <p>Motif : {{ $note->reason }}</p>
+        <p>{{ __('Motif : :reason', ['reason' => $note->reason]) }}</p>
     @endif
 
     <table class="lines">
         <thead>
             <tr>
-                <th>Description</th>
-                <th class="num">Quantité</th>
-                <th class="num">Prix unitaire TTC</th>
-                <th class="num">TVA</th>
-                <th class="num">Hors TVA</th>
-                <th class="num">Montant TVA</th>
-                <th class="num">TTC</th>
+                <th>{{ __('Description') }}</th>
+                <th class="num">{{ __('Quantité') }}</th>
+                <th class="num">{{ __('Prix unitaire TTC') }}</th>
+                <th class="num">{{ __('TVA') }}</th>
+                <th class="num">{{ __('Hors TVA') }}</th>
+                <th class="num">{{ __('Montant TVA') }}</th>
+                <th class="num">{{ __('TTC') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -95,29 +96,29 @@
     <table class="totals">
         @foreach ($rates as $value => $amounts)
             <tr>
-                <td>TVA {{ $rate($value) }} sur {{ $eur($amounts['net']) }}</td>
+                <td>{{ __('TVA :rate sur :net', ['rate' => $rate($value), 'net' => $eur($amounts['net'])]) }}</td>
                 <td class="num">{{ $eur($amounts['vat']) }}</td>
             </tr>
         @endforeach
         <tr>
-            <td>Total hors TVA</td>
+            <td>{{ __('Total hors TVA') }}</td>
             <td class="num">{{ $eur($doc->net_cents) }}</td>
         </tr>
         <tr>
-            <td>Total TVA</td>
+            <td>{{ __('Total TVA') }}</td>
             <td class="num">{{ $eur($doc->vat_cents) }}</td>
         </tr>
         <tr class="grand">
-            <td>{{ $note ? 'Total remboursé TTC' : 'Total TTC' }}</td>
+            <td>{{ $note ? __('Total remboursé TTC') : __('Total TTC') }}</td>
             <td class="num">{{ $eur($doc->total_cents) }}</td>
         </tr>
     </table>
 
     <p class="muted">
         @if ($note)
-            Montant remboursé au client. Cette note de crédit annule la facture {{ $invoice->number }}.
+            {{ __('Montant remboursé au client. Cette note de crédit annule la facture :number.', ['number' => $invoice->number]) }}
         @else
-            Payée le {{ $date($payment->paid_at) }} par {{ $methods[$payment->method] ?? $payment->method }}. Reste à payer : {{ $eur(0) }}.
+            {{ __('Payée le :date par :method. Reste à payer : :rest.', ['date' => $date($payment->paid_at), 'method' => $methods[$payment->method] ?? $payment->method, 'rest' => $eur(0)]) }}
         @endif
     </p>
 </body>

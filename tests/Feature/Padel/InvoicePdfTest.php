@@ -5,10 +5,12 @@ namespace Tests\Feature\Padel;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\Invoice;
+use App\Models\InvoiceLine;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\BookingService;
 use App\Services\Clock;
+use App\Services\InvoicePdf;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,6 +52,27 @@ class InvoicePdfTest extends TestCase
 
         $this->actingAs(User::where('email', 'marc.dumont@example.test')->firstOrFail())->get($this->pdfUrl())->assertOk();
         $this->actingAs(User::where('email', 'ines.laurent@example.test')->firstOrFail())->get($this->pdfUrl())->assertForbidden();
+    }
+
+    public function test_the_invoice_follows_the_language_of_the_player(): void
+    {
+        $invoice = Invoice::where('booking_id', $this->booking->id)->sole();
+
+        app()->setLocale('nl');
+        $nl = (new InvoicePdf)->html($invoice);
+        $this->assertStringContainsString('<html lang="nl">', $nl);
+        $this->assertStringContainsString('Factuur', $nl);
+        $this->assertStringContainsString('Totaal incl. btw', $nl);
+        $this->assertStringContainsString('met kaart', $nl);
+
+        app()->setLocale('en');
+        $this->assertStringContainsString('Total incl. VAT', (new InvoicePdf)->html($invoice));
+
+        app()->setLocale('fr');
+        $this->assertStringContainsString('Total TTC', (new InvoicePdf)->html($invoice));
+        // Le libellé de la ligne reste celui figé à l'émission, quelle que soit la langue.
+        $line = InvoiceLine::where('invoice_id', $invoice->id)->orderBy('id')->value('label');
+        $this->assertStringContainsString(e($line), $nl);
     }
 
     public function test_the_credit_note_exists_only_after_a_refunded_cancellation(): void
