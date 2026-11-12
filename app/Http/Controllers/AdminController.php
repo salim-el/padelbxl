@@ -7,6 +7,7 @@ use App\Models\Court;
 use App\Models\CourtClosure;
 use App\Models\PricingRule;
 use App\Models\User;
+use App\Services\BookingService;
 use App\Services\Clock;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -170,12 +171,17 @@ class AdminController extends Controller
         $from = CarbonImmutable::createFromFormat('Y-m-d\TH:i', $data['from'], Clock::ZONE)->utc();
         $to = CarbonImmutable::createFromFormat('Y-m-d\TH:i', $data['to'], Clock::ZONE)->utc();
         // Une fermeture ne doit jamais faire disparaître une réservation payée sans que le gérant l'annule d'abord.
-        $conflicts = Booking::where('court_id', $data['court_id'])->whereIn('status', Booking::ACTIVE)
-            ->where('starts_at', '<', $to)->where('ends_at', '>', $from)->count();
-        if ($conflicts > 0) {
-            return back()->withErrors(['closure' => "$conflicts réservation(s) active(s) sur cette période. Annulez-les d’abord."]);
+        // Même verrou que la réservation : aucune partie ne peut se glisser entre le contrôle et la création.
+        $closure = DB::transaction(function () use ($data, $from, $to, $request) {
+            BookingService::lockCourt((int) $data['court_id']);
+            $conflicts = Booking::where('court_id', $data['court_id'])->whereIn('status', Booking::ACTIVE)
+                ->where('starts_at', '<', $to)->where('ends_at', '>', $from)->count();
+
+            return $conflicts > 0 ? $conflicts : CourtClosure::create(['court_id' => $data['court_id'], 'starts_at' => $from, 'ends_at' => $to, 'reason' => $data['reason'], 'created_by' => $request->user()->id]);
+        });
+        if (is_int($closure)) {
+            return back()->withErrors(['closure' => "$closure réservation(s) active(s) sur cette période. Annulez-les d’abord."]);
         }
-        $closure = CourtClosure::create(['court_id' => $data['court_id'], 'starts_at' => $from, 'ends_at' => $to, 'reason' => $data['reason'], 'created_by' => $request->user()->id]);
         activity('staff')->performedOn($closure)->event('closure-created')->log('Fermeture de terrain ajoutée');
 
         return back()->with('success', 'Fermeture enregistrée. Le planning n’affiche plus ces créneaux.');
