@@ -52,6 +52,12 @@ class BookingService
         DB::select('select pg_advisory_xact_lock(?::int, ?::int)', [self::LOCK_COURT, $courtId]);
     }
 
+    /** Sérialise les réservations d'un même joueur (plafond de trois). À appeler dans une transaction, après lockCourt. */
+    public static function lockPlayer(int $userId): void
+    {
+        DB::select('select pg_advisory_xact_lock(?::int, ?::int)', [self::LOCK_PLAYER, $userId]);
+    }
+
     /** Libère les créneaux bloqués dont les dix minutes sont écoulées. */
     public function expireHolds(): int
     {
@@ -94,7 +100,7 @@ class BookingService
             // Verrous dans un ordre fixe (terrain puis joueur) : une fermeture et une réservation du même terrain,
             // ou deux réservations du même joueur, passent l'une après l'autre.
             self::lockCourt($court->id);
-            DB::select('select pg_advisory_xact_lock(?::int, ?::int)', [self::LOCK_PLAYER, $user->id]);
+            self::lockPlayer($user->id);
             if (CourtClosure::where('court_id', $court->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc)->exists()) {
                 throw new BookingException(__('Ce terrain est fermé sur ce créneau.'));
             }
