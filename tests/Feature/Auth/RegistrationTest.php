@@ -2,7 +2,10 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
@@ -26,6 +29,23 @@ class RegistrationTest extends TestCase
         ])->assertSessionHasErrors('password');
 
         $this->assertGuest();
+    }
+
+    public function test_a_new_account_receives_the_confirmation_email_it_needs_to_book()
+    {
+        Notification::fake();
+
+        $this->post('/register', [
+            'name' => 'Nouveau Joueur',
+            'email' => 'nouveau.joueur@example.test',
+            'account_type' => 'individual',
+            'password' => 'mot-de-passe-long-2026',
+            'password_confirmation' => 'mot-de-passe-long-2026',
+        ]);
+
+        $user = User::where('email', 'nouveau.joueur@example.test')->firstOrFail();
+        Notification::assertSentTo($user, VerifyEmail::class);
+        $this->actingAs($user)->get('/bookings')->assertRedirect(route('verification.notice'));
     }
 
     public function test_new_users_can_register()
