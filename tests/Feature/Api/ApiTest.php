@@ -76,6 +76,28 @@ class ApiTest extends TestCase
         $this->getJson('/api/v1/me')->assertUnauthorized();
     }
 
+    public function test_staff_cannot_get_an_api_token_without_two_factor(): void
+    {
+        $this->postJson('/api/v1/tokens', ['email' => 'marc.dumont@example.test', 'password' => DatabaseSeeder::DEMO_PASSWORD, 'device_name' => 'tests'])
+            ->assertForbidden();
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_a_new_password_revokes_the_api_tokens(): void
+    {
+        $token = $this->login();
+        $lucas = User::where('email', 'lucas.martin@example.test')->firstOrFail();
+
+        $this->actingAs($lucas)->put('/settings/password', [
+            'current_password' => DatabaseSeeder::DEMO_PASSWORD,
+            'password' => 'un-nouveau-mot-de-passe-2026',
+            'password_confirmation' => 'un-nouveau-mot-de-passe-2026',
+        ])->assertSessionHasNoErrors();
+
+        $this->app['auth']->forgetGuards();
+        $this->withToken($token)->getJson('/api/v1/bookings')->assertUnauthorized();
+    }
+
     public function test_token_requests_are_limited_to_five_per_minute(): void
     {
         foreach (range(1, 5) as $attempt) {
