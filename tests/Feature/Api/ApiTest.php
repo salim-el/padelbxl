@@ -76,6 +76,14 @@ class ApiTest extends TestCase
         $this->getJson('/api/v1/me')->assertUnauthorized();
     }
 
+    public function test_token_requests_are_limited_to_five_per_minute(): void
+    {
+        foreach (range(1, 5) as $attempt) {
+            $this->postJson('/api/v1/tokens', ['email' => 'lucas.martin@example.test', 'password' => 'mauvais', 'device_name' => 'tests'])->assertUnprocessable();
+        }
+        $this->postJson('/api/v1/tokens', ['email' => 'lucas.martin@example.test', 'password' => 'mauvais', 'device_name' => 'tests'])->assertTooManyRequests();
+    }
+
     public function test_wrong_password_gives_no_token(): void
     {
         $this->postJson('/api/v1/tokens', ['email' => 'lucas.martin@example.test', 'password' => 'mauvais', 'device_name' => 'tests'])
