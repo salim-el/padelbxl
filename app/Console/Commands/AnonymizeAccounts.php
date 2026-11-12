@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
 
 class AnonymizeAccounts extends Command
 {
@@ -17,23 +16,7 @@ class AnonymizeAccounts extends Command
         $count = 0;
         User::onlyTrashed()->whereNull('anonymized_at')->where('deactivated_at', '<=', now()->subDays(30))
             ->each(function (User $user) use (&$count) {
-                $user->forceFill([
-                    'name' => 'Compte supprimé',
-                    'email' => "supprime-{$user->id}@padelbxl.invalid",
-                    'phone' => null,
-                    'account_type' => 'individual',
-                    'company_name' => null,
-                    'vat_number' => null,
-                    'password' => Str::random(64),
-                    'remember_token' => null,
-                    'two_factor_secret' => null,
-                    'two_factor_confirmed_at' => null,
-                    'two_factor_last_counter' => null,
-                    'status' => 'anonymized',
-                    'anonymized_at' => now(),
-                ])->saveQuietly();
-                // Plus aucun jeton d'API ne doit ouvrir ce compte.
-                $user->tokens()->delete();
+                $user->anonymize();
                 $count++;
             });
         $this->info("$count compte(s) anonymisé(s).");

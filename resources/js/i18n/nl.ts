@@ -361,8 +361,6 @@ const nl: Record<string, string> = {
     'Téléchargez une copie de vos données personnelles, dans un fichier JSON lisible par une machine.':
         'Download een kopie van je persoonsgegevens, in een JSON-bestand dat een machine kan lezen.',
     'Télécharger mes données': 'Mijn gegevens downloaden',
-    'Vous pouvez désactiver votre compte. Il est anonymisé trente jours plus tard.':
-        'Je kunt je account uitschakelen. Het wordt dertig dagen later geanonimiseerd.',
     'Pour toute autre demande sur vos données, adressez-vous à l’accueil du club.':
         'Voor elke andere vraag over je gegevens kun je terecht aan het onthaal van de club.',
     'Vous pouvez porter plainte auprès de l’Autorité de protection des données.':
@@ -400,6 +398,10 @@ const nl: Record<string, string> = {
     Envoyer: 'Verzenden',
     'Un message écrit au club par le formulaire de contact part par e-mail. Il n’est pas gardé dans l’application.':
         'Een bericht via het contactformulier gaat per e-mail naar de club. Het wordt niet in de applicatie bewaard.',
+    'Vous pouvez désactiver votre compte. Il est anonymisé trente jours plus tard, ou tout de suite si vous le demandez.':
+        'Je kunt je account uitschakelen. Het wordt dertig dagen later geanonimiseerd, of meteen als je dat vraagt.',
+    'Effacer mes données tout de suite. Sans cette case, elles le sont trente jours plus tard.':
+        'Mijn gegevens meteen wissen. Zonder dit vakje gebeurt dat dertig dagen later.',
 };
 
 export default nl;

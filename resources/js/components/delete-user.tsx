@@ -5,6 +5,7 @@ import { FormEventHandler, useRef } from 'react';
 import InputError from '@/components/input-error';
 import { PasswordInput } from '@/components/password-input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import { Label } from '@/components/ui/label';
 
@@ -16,7 +17,15 @@ import { useT } from '@/lib/i18n';
 export default function DeleteUser() {
     const t = useT();
     const passwordInput = useRef<HTMLInputElement>(null);
-    const { data, setData, delete: destroy, processing, reset, errors, clearErrors } = useForm({ password: '' });
+    const {
+        data,
+        setData,
+        delete: destroy,
+        processing,
+        reset,
+        errors,
+        clearErrors,
+    } = useForm<{ password: string; erase_now: boolean }>({ password: '', erase_now: false });
 
     const deleteUser: FormEventHandler = (e) => {
         e.preventDefault();
@@ -71,6 +80,14 @@ export default function DeleteUser() {
                                 />
 
                                 <InputError message={errors.password} />
+                            </div>
+
+                            {/* Sans la case, le compte est caché puis anonymisé trente jours plus tard (accounts:anonymize). */}
+                            <div className="flex items-start gap-3">
+                                <Checkbox id="erase_now" checked={data.erase_now} onCheckedChange={(v) => setData('erase_now', v === true)} />
+                                <Label htmlFor="erase_now" className="leading-snug font-normal">
+                                    {t('Effacer mes données tout de suite. Sans cette case, elles le sont trente jours plus tard.')}
+                                </Label>
                             </div>
 
                             <DialogFooter>
