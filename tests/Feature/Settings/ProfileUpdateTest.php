@@ -30,6 +30,7 @@ class ProfileUpdateTest extends TestCase
             ->patch('/settings/profile', [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
+                'current_password' => 'password',
             ]);
 
         $response
@@ -41,6 +42,21 @@ class ProfileUpdateTest extends TestCase
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_the_email_address_cannot_change_without_the_current_password()
+    {
+        $user = User::factory()->create(['email' => 'avant@example.test']);
+
+        foreach (['', 'mauvais-mot-de-passe'] as $password) {
+            $this->actingAs($user)->patch('/settings/profile', [
+                'name' => $user->name,
+                'email' => 'apres@example.test',
+                'current_password' => $password,
+            ])->assertSessionHasErrors('current_password');
+        }
+
+        $this->assertSame('avant@example.test', $user->refresh()->email);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
