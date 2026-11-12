@@ -27,7 +27,9 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
         name: auth.user.name,
         email: auth.user.email,
+        current_password: '',
     });
+    const emailChanged = data.email.trim().toLowerCase() !== auth.user.email.toLowerCase();
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -76,6 +78,28 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
                             <InputError className="mt-2" message={errors.email} />
                         </div>
+
+                        {emailChanged && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="current_password">{t('Mot de passe actuel')}</Label>
+
+                                <Input
+                                    id="current_password"
+                                    type="password"
+                                    className="mt-1 block w-full"
+                                    value={data.current_password}
+                                    onChange={(e) => setData('current_password', e.target.value)}
+                                    required
+                                    autoComplete="current-password"
+                                    aria-describedby="current_password_hint"
+                                />
+                                <p id="current_password_hint" className="text-muted-foreground text-sm">
+                                    {t('Pour changer d’adresse e-mail, confirmez votre mot de passe.')}
+                                </p>
+
+                                <InputError className="mt-2" message={errors.current_password} />
+                            </div>
+                        )}
 
                         {mustVerifyEmail && auth.user.email_verified_at === null && (
                             <div>
