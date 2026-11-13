@@ -35,12 +35,23 @@ php artisan serve
 Régler `DB_DATABASE`, `DB_USERNAME` et `DB_PASSWORD` dans `.env` avant la migration.
 L'application répond sur http://localhost:8000.
 
+Pour la démonstration, une seconde commande remplit toutes les tables avec un historique réaliste :
+trois semaines passées et deux semaines à venir (parties payées, partagées et ouvertes, liste d'attente,
+annulations remboursées ou tardives, comptoir, fermeture de terrain, client entreprise, passages à la borne).
+Elle passe par les règles de l'application et se lance une fois, sur une base fraîche, après `migrate --seed` :
+
+```bash
+php artisan db:seed --class=DemoSeeder
+```
+
 ## Comptes de démonstration
 
 | Compte | Rôle |
 |---|---|
 | lucas.martin@example.test | Joueur |
 | marc.dumont@example.test | Gérant, accès à la borne |
+| sarah.janssens@example.test, mehdi.el.amrani@example.test, lotte.wouters@example.test… | Joueurs ajoutés par `DemoSeeder` |
+| pieter.claes@example.test | Client entreprise (`DemoSeeder`), factures avec numéro de TVA |
 
 Mot de passe : `Padeltfeicc2026#`. Réservé à la démonstration.
 
