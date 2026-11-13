@@ -34,6 +34,9 @@ class AdminTest extends TestCase
     {
         $this->actingAs($this->lucas)->get('/admin')->assertForbidden();
         $this->actingAs($this->marc)->get('/admin')->assertOk();
+        // La règle vient d'un seul endroit : la Gate « manage-club ».
+        $this->assertFalse($this->lucas->can('manage-club'));
+        $this->assertTrue($this->marc->can('manage-club'));
     }
 
     public function test_dashboard_counts_todays_bookings_and_revenue(): void

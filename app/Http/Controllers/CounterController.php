@@ -99,7 +99,7 @@ class CounterController extends Controller
 
     private function ensureStaff(Request $request): void
     {
-        abort_unless(in_array($request->user()->role, ['manager', 'admin'], true), 403);
+        abort_unless($request->user()->can('manage-club'), 403);
     }
 
     private function ensureCounterBooking(Request $request, Booking $booking): void

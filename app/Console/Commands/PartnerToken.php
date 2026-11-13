@@ -13,7 +13,7 @@ class PartnerToken extends Command
 
     public function handle(): int
     {
-        $owner = User::where('email', $this->argument('email'))->whereIn('role', ['manager', 'admin'])->where('status', 'active')->first();
+        $owner = User::where('email', $this->argument('email'))->whereIn('role', User::STAFF_ROLES)->where('status', 'active')->first();
         if ($owner === null) {
             $this->error('Aucun gérant actif avec cet e-mail.');
 
