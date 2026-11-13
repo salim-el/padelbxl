@@ -352,6 +352,12 @@ const nl: Record<string, string> = {
     'Le nombre d’essais est limité sur les formulaires sensibles.': 'Het aantal pogingen op gevoelige formulieren is beperkt.',
     'Vos droits': 'Je rechten',
     'Vous voyez et corrigez votre nom et votre e-mail dans vos paramètres.': 'Je bekijkt en verbetert je naam en e-mailadres in je instellingen.',
+    'Vous téléchargez une copie de vos données, dans un fichier JSON, depuis vos paramètres.':
+        'Je downloadt een kopie van je gegevens, in een JSON-bestand, via je instellingen.',
+    'Mes données': 'Mijn gegevens',
+    'Téléchargez une copie de vos données personnelles, dans un fichier JSON lisible par une machine.':
+        'Download een kopie van je persoonsgegevens, in een JSON-bestand dat een machine kan lezen.',
+    'Télécharger mes données': 'Mijn gegevens downloaden',
     'Vous pouvez désactiver votre compte. Il est anonymisé trente jours plus tard.':
         'Je kunt je account uitschakelen. Het wordt dertig dagen later geanonimiseerd.',
     'Pour toute autre demande sur vos données, adressez-vous à l’accueil du club.':

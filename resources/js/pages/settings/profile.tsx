@@ -139,6 +139,18 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                     </form>
                 </div>
 
+                <div className="space-y-6">
+                    <HeadingSmall
+                        title={t('Mes données')}
+                        description={t('Téléchargez une copie de vos données personnelles, dans un fichier JSON lisible par une machine.')}
+                    />
+                    <Button asChild variant="outline">
+                        <a href={route('profile.export')} download>
+                            {t('Télécharger mes données')}
+                        </a>
+                    </Button>
+                </div>
+
                 <DeleteUser />
             </SettingsLayout>
         </AppLayout>

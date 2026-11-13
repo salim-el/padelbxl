@@ -80,6 +80,7 @@ export default function Privacy({ club }: { club: Club }) {
                     title: t('Vos droits'),
                     lines: [
                         t('Vous voyez et corrigez votre nom et votre e-mail dans vos paramètres.'),
+                        t('Vous téléchargez une copie de vos données, dans un fichier JSON, depuis vos paramètres.'),
                         t('Vous pouvez désactiver votre compte. Il est anonymisé trente jours plus tard.'),
                         t('Pour toute autre demande sur vos données, adressez-vous à l’accueil du club.'),
                         t('Vous pouvez porter plainte auprès de l’Autorité de protection des données.'),
