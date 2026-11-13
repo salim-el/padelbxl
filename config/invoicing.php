@@ -8,5 +8,7 @@ return [
         'street' => env('CLUB_STREET'),
         'postcode' => env('CLUB_POSTCODE'),
         'city' => env('CLUB_CITY'),
+        // Contact du club : pages légales, exercice des droits RGPD, factures. Facultatif pour l'UBL.
+        'email' => env('CLUB_EMAIL'),
     ],
 ];

@@ -3,7 +3,14 @@ import { useT } from '@/lib/i18n';
 import { Head, Link } from '@inertiajs/react';
 
 /** Coordonnées du club, reprises du .env (CLUB_*). Une valeur absente vaut null. */
-export type Club = { name: string | null; vat: string | null; street: string | null; postcode: string | null; city: string | null };
+export type Club = {
+    name: string | null;
+    vat: string | null;
+    street: string | null;
+    postcode: string | null;
+    city: string | null;
+    email?: string | null;
+};
 
 export type Section = { title: string; lines: (string | false)[] };
 

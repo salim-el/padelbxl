@@ -301,6 +301,9 @@ const en: Record<string, string> = {
     'Le club ne peut pas fermer un terrain sur un créneau réservé : la fermeture est refusée tant que la réservation est active.':
         'The club cannot close a court on a booked slot: the closure is refused as long as the booking is active.',
     'Questions et litiges': 'Questions and disputes',
+    'E-mail : :email.': 'E-mail: :email.',
+    'Vous pouvez aussi écrire au club : :email.': 'You can also e-mail the club: :email.',
+    'Pour exercer vos droits, écrivez à :email.': 'To exercise your rights, write to :email.',
     'Une question ou une réclamation se pose à l’accueil du club.': 'Questions and complaints go to the club reception.',
     'En cas de litige, le joueur peut aussi s’adresser au Service de médiation pour le consommateur.':
         'In case of a dispute, the player can also contact the Consumer Mediation Service.',
