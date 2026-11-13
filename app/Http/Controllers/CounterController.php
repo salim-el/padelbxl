@@ -58,7 +58,7 @@ class CounterController extends Controller
     public function show(Request $request, Booking $booking): Response
     {
         $this->ensureCounterBooking($request, $booking);
-        $booking->load('court', 'players.accessPass', 'invoices');
+        $booking->load('court', 'players.accessPass', 'invoices.creditNote');
         $player = $booking->players->firstWhere('is_organizer', true);
         $pass = $player?->accessPass;
 
@@ -73,6 +73,7 @@ class CounterController extends Controller
                 'status' => $booking->status,
                 'price_cents' => $booking->price_cents,
                 'invoice' => $booking->invoices->first()?->number,
+                'credit_note' => $booking->invoices->first()?->creditNote?->number,
                 'cancellable' => $booking->status === 'confirmed' && $booking->starts_at->isFuture(),
                 'refundable' => now()->lte($booking->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS)),
             ],
