@@ -230,6 +230,142 @@ const en: Record<string, string> = {
     'Voir les tarifs': 'See the prices',
     '24 h': '24 h',
     'annulation gratuite avant le match': 'free cancellation before the game',
+    // Conditions générales et politique de confidentialité
+    'Version du :date': 'Version of :date',
+    Accueil: 'Home',
+    'Conditions générales': 'Terms and conditions',
+    Confidentialité: 'Privacy',
+    'Lire les conditions générales': 'Read the terms and conditions',
+    'Politique de confidentialité': 'Privacy policy',
+    'Le club': 'The club',
+    ':name exploite six terrains de padel couverts à Anderlecht.': ':name runs six indoor padel courts in Anderlecht.',
+    'Adresse : :address.': 'Address: :address.',
+    'Numéro de TVA : :vat.': 'VAT number: :vat.',
+    'Ces conditions valent pour toute réservation faite sur PadelBxl ou à l’accueil du club.':
+        'These terms apply to every booking made on PadelBxl or at the club reception.',
+    'Le compte': 'Your account',
+    'Pour réserver, il faut un compte actif et une adresse e-mail confirmée.': 'To book, you need an active account and a confirmed e-mail address.',
+    'Un joueur a au plus trois réservations à venir.': 'A player has at most three upcoming bookings.',
+    'Le club peut suspendre un compte. Un compte suspendu ne peut plus réserver ni payer. Cette décision est toujours prise par une personne du club.':
+        'The club can suspend an account. A suspended account can no longer book or pay. This decision is always taken by a member of the club staff.',
+    'Les créneaux et les prix': 'Slots and prices',
+    'Un créneau dure 90 minutes. Le premier commence à 9 h, le dernier à 21 h.':
+        'A slot lasts 90 minutes. The first one starts at 9 am, the last one at 9 pm.',
+    'On réserve jusqu’à 30 jours à l’avance.': 'You can book up to 30 days ahead.',
+    'Les prix sont affichés TVA comprise. La TVA est de 6 % sur l’accès au terrain et de 21 % sur le matériel loué ou vendu.':
+        'Prices include VAT. VAT is 6% on court access and 21% on equipment rented or sold.',
+    'Une réservation garde le prix affiché au moment où elle est faite, même si le tarif change ensuite.':
+        'A booking keeps the price shown when it was made, even if the rate changes later.',
+    'La réservation et le paiement': 'Booking and payment',
+    'Le créneau choisi est bloqué 10 minutes pendant le paiement. Sans paiement dans ce délai, il est libéré et rien n’est débité.':
+        'The chosen slot is held for 10 minutes during payment. Without payment in that time, it is released and nothing is charged.',
+    'Le paiement se fait par carte en ligne, ou en espèces et par terminal à l’accueil.':
+        'You pay by card online, or in cash or by card terminal at the reception.',
+    'Chaque paiement donne une facture au nom de celui qui paie. Une entreprise reçoit aussi sa facture au format électronique UBL.':
+        'Each payment gives an invoice in the name of the payer. A company also receives its invoice in the electronic UBL format.',
+    'Le partage du prix': 'Sharing the price',
+    'Pour un match dans plus de 24 h, l’organisateur peut partager le prix avec trois autres joueurs au plus. Il les invite par e-mail ou ouvre des places aux membres du club.':
+        'For a match more than 24 hours away, the organiser can share the price with up to three other players. They invite them by e-mail or open spots to club members.',
+    'Le prix est divisé en parts égales. Les centimes qui restent sont à la charge de l’organisateur.':
+        'The price is split into equal shares. The organiser pays any remaining cents.',
+    'Chaque joueur paie sa part et reçoit sa propre facture et son propre QR code.':
+        'Each player pays their share and gets their own invoice and their own QR code.',
+    'L’organisateur se porte garant : 24 h avant le match, il paie les parts encore impayées.':
+        'The organiser is the guarantor: 24 hours before the match, they pay the shares still unpaid.',
+    'Un invité peut refuser jusqu’à 24 h avant le match. Sa place est alors proposée aux membres du club.':
+        'A guest can decline up to 24 hours before the match. Their spot is then offered to club members.',
+    'Une place ouverte revient au premier membre qui paie sa part. Quand la partie est complète, un membre peut s’inscrire sur la liste d’attente. Si une place se libère, chaque inscrit reçoit un e-mail et le premier qui paie prend la place.':
+        'An open spot goes to the first member who pays their share. When the match is full, a member can join the waiting list. If a spot frees up, everyone on the list gets an e-mail and the first to pay takes the spot.',
+    'L’annulation': 'Cancellation',
+    'L’organisateur annule depuis son espace.': 'The organiser cancels from their account.',
+    'Jusqu’à 24 h avant le début, chaque paiement de la partie est remboursé en entier. Une note de crédit renvoie à la facture d’origine.':
+        'Up to 24 hours before the start, every payment for the match is refunded in full. A credit note refers to the original invoice.',
+    'Moins de 24 h avant le début, rien n’est remboursé. Les parts encore impayées sont payées par l’organisateur.':
+        'Less than 24 hours before the start, nothing is refunded. The organiser pays the shares still unpaid.',
+    'Une fois le créneau commencé, la réservation ne s’annule plus.': 'Once the slot has started, the booking can no longer be cancelled.',
+    'À l’annulation, les QR codes de la partie sont désactivés.': 'On cancellation, the QR codes of the match are disabled.',
+    'Une réservation faite à l’accueil suit les mêmes règles.': 'A booking made at the reception follows the same rules.',
+    'Pas de droit de rétractation': 'No right of withdrawal',
+    'Une réservation de terrain est un service de loisir à une date précise. Le droit de rétractation de 14 jours ne s’applique donc pas (Code de droit économique, article VI.53, 12°).':
+        'A court booking is a leisure service on a fixed date. The 14-day right of withdrawal therefore does not apply (Belgian Code of Economic Law, article VI.53, 12°).',
+    'Le remboursement jusqu’à 24 h avant le match est un geste du club, pas une obligation.':
+        'The refund up to 24 hours before the match is a goodwill gesture from the club, not an obligation.',
+    'L’accès au terrain': 'Court access',
+    'Chaque joueur de la partie a son propre QR code.': 'Each player in the match has their own QR code.',
+    'Il ouvre ce terrain seulement, de 15 minutes avant le début jusqu’à la fin du créneau. Il ne sert qu’une fois.':
+        'It opens that court only, from 15 minutes before the start until the end of the slot. It works only once.',
+    'Chaque passage à la borne est enregistré, qu’il soit accepté ou refusé.':
+        'Every scan at the access terminal is logged, whether granted or refused.',
+    'Le club ne peut pas fermer un terrain sur un créneau réservé : la fermeture est refusée tant que la réservation est active.':
+        'The club cannot close a court on a booked slot: the closure is refused as long as the booking is active.',
+    'Questions et litiges': 'Questions and disputes',
+    'Une question ou une réclamation se pose à l’accueil du club.': 'Questions and complaints go to the club reception.',
+    'En cas de litige, le joueur peut aussi s’adresser au Service de médiation pour le consommateur.':
+        'In case of a dispute, the player can also contact the Consumer Mediation Service.',
+    'Qui traite vos données': 'Who processes your data',
+    ':name est responsable du traitement des données de ses joueurs. PadelBxl est son logiciel de réservation.':
+        ':name is the controller of its players’ data. PadelBxl is its booking software.',
+    'L’hébergeur et le service d’envoi des e-mails traitent les données pour le club, sous contrat.':
+        'The hosting provider and the e-mail service process the data for the club, under contract.',
+    'Les données gardées': 'The data we keep',
+    'Votre compte : nom, e-mail, langue choisie et mot de passe, gardé sous forme d’empreinte, jamais en clair. Pour une entreprise, aussi son nom et son numéro de TVA.':
+        'Your account: name, e-mail, chosen language and password, stored as a hash, never in plain text. For a company, also its name and VAT number.',
+    'Vos réservations, vos paiements, vos factures et vos notes de crédit.': 'Your bookings, payments, invoices and credit notes.',
+    'L’adresse e-mail d’un partenaire que vous invitez.': 'The e-mail address of a partner you invite.',
+    'Pour un client de l’accueil : son nom et un e-mail ou un numéro de téléphone.':
+        'For a reception customer: their name and an e-mail or phone number.',
+    'Votre QR code : seule son empreinte est stockée.': 'Your QR code: only its hash is stored.',
+    'Les passages à la borne : terrain, heure et résultat.': 'Scans at the access terminal: court, time and result.',
+    'Les actions sensibles du personnel, dans un journal.': 'Sensitive staff actions, in a log.',
+    Pourquoi: 'Why',
+    'Le compte, les réservations et le QR code servent à exécuter le contrat de réservation.':
+        'The account, the bookings and the QR code are needed to perform the booking contract.',
+    'Les factures et les notes de crédit sont une obligation légale.': 'Invoices and credit notes are a legal obligation.',
+    'Le journal de la borne et celui du personnel servent la sécurité et le traitement des litiges. C’est l’intérêt légitime du club.':
+        'The terminal log and the staff log serve security and the handling of disputes. This is the club’s legitimate interest.',
+    'Combien de temps': 'How long',
+    'Le compte reste tant qu’il est actif.': 'The account is kept as long as it is active.',
+    'Vous pouvez désactiver votre compte dans vos paramètres. Vos réservations à venir doivent d’abord être annulées.':
+        'You can deactivate your account in your settings. Your upcoming bookings must be cancelled first.',
+    'Un compte désactivé est caché. Trente jours plus tard, le nom, l’e-mail et les données d’entreprise sont remplacés et le mot de passe est effacé.':
+        'A deactivated account is hidden. Thirty days later, the name, e-mail and company details are replaced and the password is erased.',
+    'Les factures et les notes de crédit gardent le nom du client. Elles sont conservées 7 ans, comme le demande le Code de la TVA.':
+        'Invoices and credit notes keep the customer’s name. They are kept for 7 years, as the Belgian VAT Code requires.',
+    'Le journal des actions du personnel est effacé après un an.': 'The staff action log is erased after one year.',
+    'Qui voit vos données': 'Who sees your data',
+    'Le personnel du club, pour gérer les réservations.': 'The club staff, to manage bookings.',
+    'L’organisateur revoit l’adresse e-mail qu’il a tapée pour un invité, jamais le nom de son compte.':
+        'The organiser sees the e-mail address they typed for a guest, never the name on the guest’s account.',
+    'Un membre qui prend une place ouverte ne voit que le prénom de l’organisateur.':
+        'A member who takes an open spot only sees the organiser’s first name.',
+    'La borne n’affiche que le prénom du joueur qui entre.': 'The access terminal only shows the first name of the player coming in.',
+    'Les données ouvertes du club ne montrent que les créneaux libres, jamais qui joue.':
+        'The club’s open data only show free slots, never who is playing.',
+    'La sécurité': 'Security',
+    'Un mot de passe compte au moins 15 caractères. Un mot de passe déjà paru dans une fuite connue est refusé.':
+        'A password has at least 15 characters. A password that already appeared in a known data breach is refused.',
+    'Le personnel du club se connecte avec une double authentification.': 'Club staff log in with two-factor authentication.',
+    'Le nombre d’essais est limité sur les formulaires sensibles.': 'The number of attempts is limited on sensitive forms.',
+    'Vos droits': 'Your rights',
+    'Vous voyez et corrigez votre nom et votre e-mail dans vos paramètres.': 'You can see and correct your name and e-mail in your settings.',
+    'Vous pouvez désactiver votre compte. Il est anonymisé trente jours plus tard.':
+        'You can deactivate your account. It is anonymised thirty days later.',
+    'Pour toute autre demande sur vos données, adressez-vous à l’accueil du club.':
+        'For any other request about your data, contact the club reception.',
+    'Vous pouvez porter plainte auprès de l’Autorité de protection des données.':
+        'You can lodge a complaint with the Belgian Data Protection Authority.',
+    'Les cookies': 'Cookies',
+    'PadelBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun bandeau à accepter.':
+        'PadelBxl only uses necessary cookies. There is no audience measurement and no advertising, so there is no banner to accept.',
+    'Le cookie de session garde votre connexion. Il expire après deux heures sans activité.':
+        'The session cookie keeps you logged in. It expires after two hours of inactivity.',
+    'Le cookie XSRF-TOKEN protège vos formulaires contre une requête envoyée à votre insu.':
+        'The XSRF-TOKEN cookie protects your forms against a request sent without your knowledge.',
+    'Le cookie « Rester connecté » n’existe que si vous cochez cette case à la connexion.':
+        'The “Stay logged in” cookie only exists if you tick that box when logging in.',
+    'Le cookie sidebar:state retient si le menu latéral est ouvert, pendant 7 jours.':
+        'The sidebar:state cookie remembers for 7 days whether the side menu is open.',
+    'La langue choisie est gardée dans la session et dans votre compte.': 'The chosen language is kept in the session and in your account.',
 };
 
 export default en;
