@@ -34,6 +34,9 @@
                 {{ $seller['street'] }}<br>
                 {{ $seller['postcode'] }} {{ $seller['city'] }}<br>
                 TVA {{ $seller['vat'] }}
+                @if (! empty($seller['email']))
+                    <br>{{ $seller['email'] }}
+                @endif
             </td>
             <td>
                 <h1>{{ $note ? 'Note de crédit' : 'Facture' }}</h1>
