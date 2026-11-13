@@ -47,7 +47,7 @@ Noms en anglais, en minuscules, mots séparés par des tirets.
 | `feature/company-accounts` | Inscription en particulier ou en entreprise ; numéro de TVA belge contrôlé et repris sur la facture |
 | `chore/ci-github-actions` | Intégration continue : Pint, Prettier, ESLint et PHPUnit sur PostgreSQL 16 |
 
-## Version bêta — v0.2.0-beta (prévue début décembre 2026)
+## Version bêta — v0.2.0-beta (livraison au plus tard le 30 novembre 2026)
 
 Déjà fusionné dans `develop` :
 
@@ -64,14 +64,26 @@ Déjà fusionné dans `develop` :
 | `feature/split-payment` | Partage du prix entre quatre joueurs au plus, invitation par e-mail, part payée par chacun avec sa facture et son QR code ; carte de garantie de l'organisateur débitée des parts impayées 24 h avant le match |
 | `feature/open-matches` | Places ouvertes aux membres du club au moment du paiement, place prise en payant sa part, liste d'attente prévenue par e-mail quand un invité refuse ; liste sans nom ni adresse des joueurs |
 | `refactor/remove-arcade` | Retrait du mode Arcade : terrains classiques seulement, tarifs et supplément Arena supprimés, accueil, planning, paiement, comptoir et API simplifiés ; les réservations déjà payées gardent leur prix et leurs factures |
+| `refactor/terminal-wording`, `docs/readme-degree` | L'appareil du terrain devient un écran ; intitulé officiel du bachelier |
+| `fix/email-verification`, `fix/email-change-password` | E-mail de confirmation à l'inscription ; mot de passe demandé pour changer d'adresse |
+| `test/untested-rules` | Tests du créneau commencé, de l'annulation d'une partie commencée et de la limite de l'API |
+| `fix/booking-concurrency` | Verrous sur l'expiration d'un blocage, la fermeture d'un terrain et le plafond de trois réservations |
+| `fix/account-safety`, `fix/deletion-paid-share` | Désinscription refusée à un invité qui a payé sa part ; jetons révoqués au changement de mot de passe ; pas de jeton d'API pour le personnel |
+| `fix/history-and-stock` | Passage à la borne dans l'historique ; stock des articles vendus |
+| `refactor/staff-policy` | Droits du personnel définis à un seul endroit (Gate `manage-club`) |
+| `feature/legal-pages` | Pages publiques des conditions générales et de la confidentialité |
+| `chore/demo-data` | Données de démonstration réalistes (`DemoSeeder`) |
+| `feature/invoice-pdf` | Factures et notes de crédit en PDF |
+| `feature/access-log-retention`, `feature/data-export`, `feature/cookie-notice`, `chore/club-email` | Purge du journal de la borne après trois mois ; export des données personnelles ; bandeau d'information sur les cookies ; e-mail de contact du club |
 
 Encore prévu. Dates cibles ; chaque branche est créée au moment où le travail commence.
 
 | Période | Branche | Objectif |
 |---|---|---|
-| 27/10 – 07/11 | `feature/stripe-payment` | Paiement réel en mode test Stripe, confirmation par notification signée |
-| 24/11 – 01/12 | `feature/accessibility-audit` | Contrôle WCAG 2.1 AA de tous les écrans, corrections |
-| 01/12 – 05/12 | `release/0.2.0-beta` | Tests de bout en bout, documentation, étiquette `v0.2.0-beta` |
+| 16/11 – 19/11 | `feature/accessibility-audit` | Contrôle WCAG 2.1 AA de tous les écrans, corrections |
+| 20/11 – 24/11 | `feature/stripe-payment` | Paiement réel en mode test Stripe, confirmation par notification signée (dépend du compte Stripe) |
+| 24/11 – 26/11 | `chore/deployment` | Mise en ligne de l'application pour le jury (dépend de l'hébergement) |
+| 27/11 – 30/11 | `release/0.2.0-beta` | Tests de bout en bout, documentation, étiquette `v0.2.0-beta` |
 
 ## Idées à étudier après la bêta
 
