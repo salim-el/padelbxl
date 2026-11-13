@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/page-header';
+import TermsLink from '@/components/terms-link';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
@@ -86,6 +87,7 @@ export default function OpenMatches({ matches }: { matches: Match[] }) {
                                             />
                                             {t('J’accepte les conditions générales et la règle d’annulation de 24 heures.')}
                                         </label>
+                                        <TermsLink />
                                         <Button
                                             disabled={busy || accepted !== m.id}
                                             onClick={() => send('post', `/open-matches/${m.id}/join`, { accept_terms: true })}
