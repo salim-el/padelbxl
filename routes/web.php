@@ -28,6 +28,9 @@ Route::get('/', fn () => Inertia::render('home', [
 // Le tableau de bord du kit mène au planning, cœur du produit.
 
 Route::get('planning', PlanningController::class)->name('planning');
+// Pages publiques : le joueur lit les conditions avant de les accepter, sans devoir créer un compte.
+Route::get('conditions-generales', fn () => Inertia::render('legal/terms', ['club' => config('invoicing.seller')]))->name('legal.terms');
+Route::get('confidentialite', fn () => Inertia::render('legal/privacy', ['club' => config('invoicing.seller')]))->name('legal.privacy');
 Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
 
 Route::middleware(['auth', 'verified'])->group(function () {
