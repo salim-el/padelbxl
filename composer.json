@@ -11,6 +11,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.4.27",
+        "barryvdh/laravel-dompdf": "^3.1",
         "chillerlan/php-qrcode": "^6.0",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^13.0",
