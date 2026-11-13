@@ -90,13 +90,16 @@ export default function Privacy({ club }: { club: Club }) {
                     title: t('Les cookies'),
                     lines: [
                         t(
-                            'PadelBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun bandeau à accepter.',
+                            'PadelBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun consentement à donner. Un bandeau vous en informe à la première visite.',
                         ),
                         t('Le cookie de session garde votre connexion. Il expire après deux heures sans activité.'),
                         t('Le cookie XSRF-TOKEN protège vos formulaires contre une requête envoyée à votre insu.'),
                         t('Le cookie « Rester connecté » n’existe que si vous cochez cette case à la connexion.'),
                         t('Le cookie sidebar:state retient si le menu latéral est ouvert, pendant 7 jours.'),
                         t('La langue choisie est gardée dans la session et dans votre compte.'),
+                        t(
+                            'Quand vous fermez le bandeau, votre navigateur le note dans son stockage local pendant six mois. Cette note ne quitte pas votre appareil.',
+                        ),
                     ],
                 },
             ]}

@@ -4,6 +4,7 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
+import CookieNotice from './components/cookie-notice';
 import { initializeTheme } from './hooks/use-appearance';
 
 declare global {
@@ -18,7 +19,17 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        root.render(<App {...props} />);
+        // Le bandeau cookies vit à côté de la page : il apparaît sur tous les écrans, connectés ou non.
+        root.render(
+            <App {...props}>
+                {({ Component, props: pageProps, key }) => (
+                    <>
+                        <Component key={key} {...pageProps} />
+                        <CookieNotice />
+                    </>
+                )}
+            </App>,
+        );
     },
     progress: {
         // Barre de chargement en vert balle, l'accent de la charte T10.
