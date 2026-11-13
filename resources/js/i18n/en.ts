@@ -351,6 +351,12 @@ const en: Record<string, string> = {
     'Le nombre d’essais est limité sur les formulaires sensibles.': 'The number of attempts is limited on sensitive forms.',
     'Vos droits': 'Your rights',
     'Vous voyez et corrigez votre nom et votre e-mail dans vos paramètres.': 'You can see and correct your name and e-mail in your settings.',
+    'Vous téléchargez une copie de vos données, dans un fichier JSON, depuis vos paramètres.':
+        'You can download a copy of your data, as a JSON file, from your settings.',
+    'Mes données': 'My data',
+    'Téléchargez une copie de vos données personnelles, dans un fichier JSON lisible par une machine.':
+        'Download a copy of your personal data, as a machine-readable JSON file.',
+    'Télécharger mes données': 'Download my data',
     'Vous pouvez désactiver votre compte. Il est anonymisé trente jours plus tard.':
         'You can deactivate your account. It is anonymised thirty days later.',
     'Pour toute autre demande sur vos données, adressez-vous à l’accueil du club.':
