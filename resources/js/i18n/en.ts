@@ -329,10 +329,11 @@ const en: Record<string, string> = {
     'Le compte reste tant qu’il est actif.': 'The account is kept as long as it is active.',
     'Vous pouvez désactiver votre compte dans vos paramètres. Vos réservations à venir doivent d’abord être annulées.':
         'You can deactivate your account in your settings. Your upcoming bookings must be cancelled first.',
-    'Un compte désactivé est caché. Trente jours plus tard, le nom, l’e-mail et les données d’entreprise sont remplacés et le mot de passe est effacé.':
-        'A deactivated account is hidden. Thirty days later, the name, e-mail and company details are replaced and the password is erased.',
+    'Un compte désactivé est caché. Trente jours plus tard, le nom, l’e-mail et les données d’entreprise sont remplacés. Le mot de passe, la double authentification et les jetons d’accès sont effacés.':
+        'A deactivated account is hidden. Thirty days later, the name, e-mail and company details are replaced. The password, two-factor authentication and access tokens are erased.',
     'Les factures et les notes de crédit gardent le nom du client. Elles sont conservées 7 ans, comme le demande le Code de la TVA.':
         'Invoices and credit notes keep the customer’s name. They are kept for 7 years, as the Belgian VAT Code requires.',
+    'Les passages à la borne sont effacés après trois mois.': 'Scans at the access terminal are erased after three months.',
     'Le journal des actions du personnel est effacé après un an.': 'The staff action log is erased after one year.',
     'Qui voit vos données': 'Who sees your data',
     'Le personnel du club, pour gérer les réservations.': 'The club staff, to manage bookings.',
