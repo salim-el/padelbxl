@@ -365,8 +365,8 @@ const nl: Record<string, string> = {
     'Vous pouvez porter plainte auprès de l’Autorité de protection des données.':
         'Je kunt een klacht indienen bij de Gegevensbeschermingsautoriteit.',
     'Les cookies': 'Cookies',
-    'PadelBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun bandeau à accepter.':
-        'PadelBxl gebruikt alleen noodzakelijke cookies. Er is geen bezoekersmeting en geen reclame, dus ook geen banner om te aanvaarden.',
+    'PadelBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun consentement à donner. Un bandeau vous en informe à la première visite.':
+        'PadelBxl gebruikt alleen noodzakelijke cookies. Er is geen bezoekersmeting en geen reclame, dus je hoeft niets toe te staan. Een banner meldt je dat bij je eerste bezoek.',
     'Le cookie de session garde votre connexion. Il expire après deux heures sans activité.':
         'Het sessiecookie houdt je ingelogd. Het vervalt na twee uur zonder activiteit.',
     'Le cookie XSRF-TOKEN protège vos formulaires contre une requête envoyée à votre insu.':
@@ -375,6 +375,13 @@ const nl: Record<string, string> = {
         'Het cookie „Ingelogd blijven” bestaat alleen als je dat vakje aanvinkt bij het inloggen.',
     'Le cookie sidebar:state retient si le menu latéral est ouvert, pendant 7 jours.':
         'Het cookie sidebar:state onthoudt 7 dagen lang of het zijmenu open staat.',
+    'Quand vous fermez le bandeau, votre navigateur le note dans son stockage local pendant six mois. Cette note ne quitte pas votre appareil.':
+        'Sluit je de banner, dan noteert je browser dat zes maanden lang in zijn lokale opslag. Die notitie verlaat je toestel niet.',
+    Cookies: 'Cookies',
+    'PadelBxl n’utilise que des cookies nécessaires : connexion, sécurité des formulaires et menu. Ni mesure d’audience ni publicité, il n’y a donc rien à accepter.':
+        'PadelBxl gebruikt alleen noodzakelijke cookies: inloggen, beveiliging van formulieren en het menu. Geen bezoekersmeting en geen reclame, je hoeft dus niets te aanvaarden.',
+    'En savoir plus': 'Meer weten',
+    'J’ai compris': 'Begrepen',
     'La langue choisie est gardée dans la session et dans votre compte.': 'De gekozen taal wordt bewaard in de sessie en in je account.',
 };
 
