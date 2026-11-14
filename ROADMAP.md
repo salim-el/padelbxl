@@ -86,31 +86,51 @@ Fusionné le 14 novembre 2026 :
 | `feature/close-sessions-on-password-change` | F3 : un nouveau mot de passe ferme les autres sessions |
 | `feature/exceptional-requests` | F17 et F27 : demande pour un imprévu grave, pièce privée, décision motivée, remboursement total ou partiel |
 
-## Plan jusqu'au 2 décembre 2026
+## Plan jusqu'à la remise du 26 novembre 2026
 
-Rythme prévu : 7 h par jour, environ 10 commits par lot. Les fonctions notées 4 ou 5 dans le T03 passent d'abord. Chaque lot a sa branche, des commits par couche, ses tests, puis une fusion dans `develop`. Le temps réel de chaque lot est relevé dans `VERIFICATION/estimation_temps_codage.md`.
+Le rapport écrit final (S1-B) est remis le **jeudi 26 novembre 2026**. Le dossier rassemble le rapport en PDF, l'archive ZIP du code avec le dump, le support de présentation et l'attestation anti-plagiat. La défense a lieu mi-décembre.
+
+Rythme : 7 h par jour, environ 10 commits par lot, et seulement le lot du jour. Chaque lot a sa branche, des commits par couche et ses tests, puis il est fusionné dans `develop`. Le temps réel de chaque lot est noté dans `VERIFICATION/estimation_temps_codage.md`.
 
 Déjà fusionnés : F4, F1/F7, F3, F17/F27, F28/F29, F25/F18, F21/F24, F24 horaires, F35 comptes du personnel et rôles, F11 appel aux joueurs d'un niveau proche (14/11, en avance d'un jour).
 
+### Code (15/11 au 22/11)
+
 | Jour | Branche | Objectif |
 |---|---|---|
-| Dim. 15/11 | `bugfix/refund-gaps` | Trous relevés par l'audit du 14/11 : remboursement partiel puis annulation, demande acceptée avant le match, annulation par le club, réservations d'un compte suspendu, invités qui ont payé, notes de crédit multiples, jetons d'API à la désactivation |
+| Dim. 15/11 | `bugfix/refund-gaps` | Trous de l'audit du 14/11 : remboursement partiel puis annulation, demande acceptée avant le match, annulation par le club, réservations d'un compte suspendu, invités qui ont payé, notes de crédit multiples, jetons d'API à la désactivation |
 | Lun. 16/11 | `feature/staff-i18n`, `chore/docker` | F23 : écrans du personnel en trois langues. Fichier Docker |
-| Mar. 17/11 – mer. 18/11 | `feature/store-credits` | F15 : avoirs déduits au paiement |
-| Mer. 18/11 – jeu. 19/11 | `feature/booking-change`, `feature/waitlist` | F14 : déplacer une réservation. F13 : créneau libéré proposé à la liste d'attente |
-| Ven. 20/11 – sam. 21/11 | `feature/stripe-payment` | F9 : paiement réel en mode test Stripe (clés de test nécessaires avant le 19/11) |
-| Sam. 21/11 – dim. 22/11 | `feature/stripe-webhooks` | Confirmation par notification signée ; F30 : contestation bancaire, réservation gelée |
-| Dim. 22/11 – lun. 23/11 | `chore/deployment` | Mise en ligne sur Render, e-mails par Brevo (comptes nécessaires avant le 21/11) |
-| Lun. 23/11 – mar. 24/11 | `feature/reminders` | F16 : rappel 24 h avant ; F21 : préférences de notification |
-| Mar. 24/11 – mer. 25/11 | `feature/emergency-codes` | F19 : code de secours de la borne |
-| Mer. 25/11 – jeu. 26/11 | `feature/no-shows` | F31 : absences comptées et signalées |
-| Jeu. 26/11 | `feature/accounting-export` | F33 : export mensuel pour le comptable |
-| Jeu. 26/11 – ven. 27/11 | `feature/dashboard-detail` | F34 : occupation par terrain et par heure, annulations |
-| Ven. 27/11 – sam. 28/11 | `feature/admin-content` | F35 (fin) : textes, traductions, documents légaux, clés d'API |
-| Sam. 28/11 – dim. 29/11 | `feature/localized-urls` | Référencement : adresses par langue, hreflang et plan du site (T17) |
-| Dim. 29/11 – lun. 30/11 | `feature/accessibility-audit` | Contrôle WCAG 2.1 AA |
-| Lun. 30/11 – mer. 02/12 | `test/end-to-end` | Tests de bout en bout des parcours principaux, corrections |
-| Mer. 02/12 | `release/1.0.0` | Documents mis à jour par les générateurs, version livrée au jury, étiquette `v1.0.0` |
+| Mar. 17/11 | `feature/store-credits` | F15 : avoirs déduits au paiement |
+| Mer. 18/11 | `feature/booking-change`, `feature/waitlist` | F14 : déplacer une réservation. F13 : créneau libéré proposé à la liste d'attente |
+| Jeu. 19/11 | `feature/stripe-payment` | F9 : paiement réel en mode test Stripe (clés de test nécessaires le 18/11) |
+| Ven. 20/11 | `feature/stripe-webhooks` | Confirmation par notification signée ; F30 : contestation bancaire, réservation gelée |
+| Sam. 21/11 | `chore/deployment` | Mise en ligne sur Render, e-mails par Brevo (comptes nécessaires le 20/11) |
+| Dim. 22/11 | `bugfix/*` | Corrections après la mise en ligne, parcours principaux testés sur l'adresse publique |
+
+Ces jours sont serrés. Si un lot déborde, F13 puis F30 passent après la remise, et le rapport l'indique.
+
+### Rapport (23/11 au 26/11)
+
+| Jour | Travail |
+|---|---|
+| Lun. 23/11 | Gel du code, étiquette `v1.0.0-rc.1`. T03, T06, T07, T08, T09, T14 et T18 réalignés sur le code par les générateurs. Les chiffres (tests, commits, tables) sont relevés le jour même |
+| Mar. 24/11 | Générateur du rapport final, qui rassemble T01 à T20 comme le S1-B de référence. Nouvelles parties : enquête, difficultés rencontrées, réalisation (alpha, bêta, ce qui reste à faire) |
+| Mer. 25/11 | Relecture complète, PDF, archive ZIP du code et du dump, support de présentation |
+| Jeu. 26/11 | Remise du dossier |
+
+### Après la remise (27/11 jusqu'à la défense)
+
+F16 rappels et F21 préférences, F19 codes de secours, F31 absences, F33 export comptable, F34 détail du tableau de bord, F35 (fin) contenus, référencement (T17), contrôle WCAG 2.1 AA, tests de bout en bout. Le rapport du 26/11 les présente comme « v1.1, après la remise », avec la raison. L'erratum remis au jury et la version `v1.0.0` arrivent avant la défense.
+
+### À faire par Salim
+
+| Pour le | Tâche |
+|---|---|
+| 18/11 | Clés de test Stripe dans `.env` |
+| 20/11 | Comptes Render et Brevo |
+| 22/11 | Enquête auprès des joueurs (réelle, au moins 20 réponses), résultats bruts transmis pour le rapport |
+| 22/11 | Publication GitHub relancée : le dépôt doit montrer un travail régulier |
+| 25/11 | Page de garde conforme au modèle officiel ; attestation anti-plagiat remplie et signée |
 
 ## Idées à étudier après la bêta
 
