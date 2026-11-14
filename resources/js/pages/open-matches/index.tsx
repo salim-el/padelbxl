@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
 import { euros, ucfirst } from '@/lib/money';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { CalendarDays, Clock, Users } from 'lucide-react';
+import { CalendarDays, Clock, Gauge, Users } from 'lucide-react';
 import { useState } from 'react';
 
 type Match = {
@@ -14,6 +14,7 @@ type Match = {
     date: string;
     time: string;
     share_cents: number;
+    level: string | null;
     free: number;
     joined: boolean;
     waiting: boolean;
@@ -59,6 +60,11 @@ export default function OpenMatches({ matches }: { matches: Match[] }) {
                                         <li className="flex items-center gap-2">
                                             <Clock className="size-4 text-[#1D5C7A]" aria-hidden /> {m.time}
                                         </li>
+                                        {m.level && (
+                                            <li className="flex items-center gap-2">
+                                                <Gauge className="size-4 text-[#1D5C7A]" aria-hidden /> {t('Niveau :level', { level: m.level })}
+                                            </li>
+                                        )}
                                         <li className="flex items-center gap-2">
                                             <Users className="size-4 text-[#1D5C7A]" aria-hidden />
                                             {m.free === 0 ? t('Complet') : m.free === 1 ? t('1 place libre') : t(':n places libres', { n: m.free })}
