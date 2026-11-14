@@ -39,7 +39,7 @@ class OpenMatchTest extends TestCase
     private function open(int $spots, array $guests = [], array $extra = ['accept_guarantee' => '1']): Booking
     {
         $booking = app(BookingService::class)->hold($this->lucas, Court::where('name', 'Terrain 1')->first(), Clock::slotStart('2026-10-23', '19:30'));
-        $this->actingAs($this->lucas)->post("/bookings/{$booking->public_id}/pay", ['accept_terms' => '1', 'guests' => $guests, 'open_spots' => $spots, ...$extra]);
+        $this->actingAs($this->lucas)->post("/bookings/{$booking->public_id}/pay", ['accept_terms' => '1', 'guests' => $guests, 'open_spots' => $spots, 'level_min' => 1, 'level_max' => 7, ...$extra]);
 
         return $booking->refresh();
     }
