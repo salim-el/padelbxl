@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminDisputeController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CounterController;
+use App\Http\Controllers\DisputeController;
 use App\Http\Controllers\KioskController;
 use App\Http\Controllers\LegalAcceptanceController;
 use App\Http\Controllers\LocaleController;
@@ -74,6 +76,14 @@ Route::middleware(['auth', 'verified', 'consented'])->group(function () {
     Route::post('admin/users/{user}/reactivate', [AdminController::class, 'reactivate'])->name('admin.users.reactivate');
     Route::patch('admin/pricing-rules/{rule}', [AdminController::class, 'updatePrice'])->name('admin.pricing-rules.update');
     Route::post('admin/closures', [AdminController::class, 'storeClosure'])->name('admin.closures.store');
+    // F17 et F27 : demandes exceptionnelles et décisions.
+    Route::get('disputes', [DisputeController::class, 'index'])->name('disputes.index');
+    Route::get('bookings/{booking}/dispute', [DisputeController::class, 'create'])->name('disputes.create');
+    Route::post('bookings/{booking}/dispute', [DisputeController::class, 'store'])->middleware('throttle:5,1')->name('disputes.store');
+    Route::get('admin/disputes', [AdminDisputeController::class, 'index'])->name('admin.disputes.index');
+    Route::get('admin/disputes/{dispute}', [AdminDisputeController::class, 'show'])->name('admin.disputes.show');
+    Route::post('admin/disputes/{dispute}/decision', [AdminDisputeController::class, 'decide'])->name('admin.disputes.decide');
+    Route::get('admin/disputes/{dispute}/attachment', [AdminDisputeController::class, 'attachment'])->name('admin.disputes.attachment');
     Route::delete('admin/closures/{closure}', [AdminController::class, 'destroyClosure'])->name('admin.closures.destroy');
 });
 
