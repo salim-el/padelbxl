@@ -101,6 +101,12 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function anonymize(): void
     {
+        // L'adresse tapée par l'organisateur reste dans booking_players : elle disparaît aussi.
+        BookingPlayer::whereNotNull('guest_email')
+            ->where(fn ($q) => $q->where('user_id', $this->id)
+                ->orWhere(fn ($q) => $q->whereNull('user_id')->whereRaw('lower(guest_email) = ?', [mb_strtolower($this->email)])))
+            ->update(['guest_email' => "supprime-{$this->id}@padelbxl.invalid"]);
+
         $this->forceFill([
             'name' => 'Compte supprimé',
             'email' => "supprime-{$this->id}@padelbxl.invalid",

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Settings;
 
 use App\Models\Booking;
+use App\Models\BookingPlayer;
 use App\Models\Court;
 use App\Models\User;
 use App\Services\BookingService;
@@ -60,6 +61,25 @@ class AccountDeletionTest extends TestCase
         $this->assertSame($name, DB::table('invoices')->where('booking_id', $booking->id)->value('customer_name'));
         // L'adresse est libérée : la même personne peut recréer un compte.
         $this->assertDatabaseMissing('users', ['email' => 'lucas.martin@example.test']);
+    }
+
+    public function test_erasure_also_removes_the_address_typed_by_an_organizer(): void
+    {
+        [$player] = $this->playerWithBooking('2026-10-23');
+        // Inès avait invité Lucas par son adresse : une place liée à son compte, une autre encore sans compte.
+        $ines = User::where('email', 'ines.laurent@example.test')->first();
+        $service = app(BookingService::class);
+        $court = Court::where('name', 'Terrain 2')->first();
+        $linked = $service->confirmPayment($service->hold($ines, $court, Clock::slotStart('2026-10-22', '18:00')), $ines);
+        $unlinked = $service->confirmPayment($service->hold($ines, $court, Clock::slotStart('2026-10-23', '18:00')), $ines);
+        BookingPlayer::create(['booking_id' => $linked->id, 'user_id' => $player->id, 'guest_email' => 'lucas.martin@example.test', 'is_organizer' => false, 'share_cents' => 0, 'status' => 'paid']);
+        BookingPlayer::create(['booking_id' => $unlinked->id, 'user_id' => null, 'guest_email' => 'Lucas.Martin@example.test', 'is_organizer' => false, 'share_cents' => 0, 'status' => 'withdrawn']);
+        $this->travelTo(CarbonImmutable::parse('2026-10-25 10:00', Clock::ZONE));
+
+        $this->actingAs($player)->delete('/settings/profile', ['password' => DatabaseSeeder::DEMO_PASSWORD, 'erase_now' => true])->assertRedirect('/');
+
+        $this->assertSame(0, BookingPlayer::whereRaw("lower(guest_email) = 'lucas.martin@example.test'")->count());
+        $this->assertSame(2, BookingPlayer::where('guest_email', "supprime-{$player->id}@padelbxl.invalid")->count());
     }
 
     public function test_a_member_must_cancel_upcoming_bookings_first(): void
