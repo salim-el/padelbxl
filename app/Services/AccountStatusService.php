@@ -66,9 +66,15 @@ class AccountStatusService
     {
         $count = 0;
         User::where('status', 'suspended')->whereNotNull('suspended_until')->where('suspended_until', '<=', now())
-            ->each(function (User $user) use (&$count) {
-                $this->reactivate($user, null, 'Fin de la durée de suspension.');
-                $count++;
+            ->lazyById()->each(function (User $user) use (&$count) {
+                // Relu sous verrou : le personnel a pu réactiver ou prolonger la suspension entre-temps.
+                DB::transaction(function () use ($user, &$count) {
+                    $user = User::whereKey($user->id)->lockForUpdate()->first();
+                    if ($user?->status === 'suspended' && $user->suspended_until !== null && $user->suspended_until->lte(now())) {
+                        $this->reactivate($user, null, 'Fin de la durée de suspension.');
+                        $count++;
+                    }
+                });
             });
 
         return $count;
@@ -77,7 +83,7 @@ class AccountStatusService
     /** F29 : le joueur suspendu répond au motif, une seule fois par suspension. */
     public function appeal(User $user, AccountStatusHistory $suspension, string $message): SuspensionAppeal
     {
-        if ($suspension->user_id !== $user->id || $suspension->to_status !== 'suspended' || $user->status !== 'suspended') {
+        if ($suspension->user_id !== $user->id || $user->status !== 'suspended' || ! $this->isCurrent($suspension)) {
             throw new BookingException(__('Cette suspension ne peut plus être contestée.'));
         }
         if ($suspension->appeal()->exists()) {
@@ -95,12 +101,17 @@ class AccountStatusService
             if ($appeal->status !== 'received') {
                 throw new BookingException(__('Cette contestation a déjà reçu une décision.'));
             }
+            // Le compte a pu être réactivé ou suspendu à nouveau : la contestation ne vaut que pour la suspension en vigueur.
+            $user = User::whereKey($appeal->user_id)->lockForUpdate()->firstOrFail();
+            if ($user->status !== 'suspended' || ! $this->isCurrent($appeal->suspension)) {
+                throw new BookingException(__('Cette suspension n’est plus en vigueur. La contestation est sans objet.'));
+            }
             if ($appeal->suspension->changed_by === $staff->id) {
                 throw new BookingException(__('La contestation est examinée par une autre personne que celle qui a suspendu le compte.'));
             }
             $appeal->update(['status' => $accepted ? 'accepted' : 'rejected', 'decision_note' => $note, 'decided_by' => $staff->id, 'decided_at' => now()]);
-            if ($accepted && $appeal->user->status === 'suspended') {
-                $this->reactivate($appeal->user, $staff, 'Contestation acceptée : '.$note);
+            if ($accepted) {
+                $this->reactivate($user, $staff, 'Contestation acceptée : '.$note);
             }
 
             return $appeal;
@@ -110,6 +121,13 @@ class AccountStatusService
         $appeal->user->notify(new SuspensionAppealDecided($appeal));
 
         return $appeal;
+    }
+
+    /** La suspension est le dernier changement d'état du compte, donc celle qui est en vigueur. */
+    private function isCurrent(AccountStatusHistory $suspension): bool
+    {
+        return $suspension->to_status === 'suspended'
+            && AccountStatusHistory::where('user_id', $suspension->user_id)->max('id') === $suspension->id;
     }
 
     private function change(User $user, string $to, string $reason, ?User $staff, mixed $until): AccountStatusHistory
