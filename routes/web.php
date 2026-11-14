@@ -87,6 +87,7 @@ Route::middleware(['auth', 'verified', 'consented'])->group(function () {
     Route::post('admin/appeals/{appeal}/decision', [AdminAppealController::class, 'decide'])->name('admin.appeals.decide');
     Route::patch('admin/pricing-rules/{rule}', [AdminController::class, 'updatePrice'])->name('admin.pricing-rules.update');
     Route::post('admin/pricing-rules', [AdminController::class, 'storePricingRule'])->name('admin.pricing-rules.store');
+    Route::put('admin/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
     Route::post('admin/pricing-rules/{rule}/close', [AdminController::class, 'closePricingRule'])->name('admin.pricing-rules.close');
     Route::post('admin/closures', [AdminController::class, 'storeClosure'])->name('admin.closures.store');
     // F17 et F27 : demandes exceptionnelles et décisions.
