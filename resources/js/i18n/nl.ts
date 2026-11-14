@@ -452,6 +452,11 @@ const nl: Record<string, string> = {
     'Votre contestation est déjà reçue. Le club vous répond par e-mail.': 'Uw bezwaar is al ontvangen. De club antwoordt per e-mail.',
     'Votre réponse': 'Uw antwoord',
     'Envoyer ma contestation': 'Mijn bezwaar versturen',
+    'Mon QR code': 'Mijn QR-code',
+    'Valable de :window, à présenter à la borne.': 'Geldig van :window, toon hem aan de toegangszuil.',
+    'Ce QR code a déjà été utilisé.': 'Deze QR-code is al gebruikt.',
+    'Cette réservation est annulée : ce QR code ne donne plus accès au terrain.':
+        'Deze reservering is geannuleerd: deze QR-code geeft geen toegang meer tot het terrein.',
 };
 
 export default nl;

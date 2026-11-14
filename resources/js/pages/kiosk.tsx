@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 
 type Result = { result: 'granted' | 'refused'; reason: string | null; first_name: string | null } | null;
 const REASONS: Record<string, string> = {
@@ -13,6 +14,44 @@ const REASONS: Record<string, string> = {
 
 export default function Kiosk({ courts, result }: { courts: { id: number; name: string }[]; result: Result }) {
     const { data, setData, post, processing } = useForm({ court_id: courts[0]?.id ?? 0, token: '' });
+    // F18 : la borne simulée lit le QR avec la caméra du téléphone ou de la tablette.
+    const video = useRef<HTMLVideoElement>(null);
+    const [camera, setCamera] = useState<'off' | 'on' | 'unavailable'>('off');
+    useEffect(() => {
+        if (camera !== 'on') return;
+        type Detector = { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string }[]> };
+        const Ctor = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => Detector }).BarcodeDetector;
+        if (!Ctor || !navigator.mediaDevices) {
+            setCamera('unavailable');
+            return;
+        }
+        const detector = new Ctor({ formats: ['qr_code'] });
+        let stream: MediaStream | null = null;
+        let timer = 0;
+        navigator.mediaDevices
+            .getUserMedia({ video: { facingMode: 'environment' } })
+            .then((s) => {
+                stream = s;
+                if (video.current) {
+                    video.current.srcObject = s;
+                    void video.current.play();
+                }
+                timer = window.setInterval(async () => {
+                    if (!video.current) return;
+                    const [code] = await detector.detect(video.current);
+                    if (code?.rawValue) {
+                        window.clearInterval(timer);
+                        setCamera('off');
+                        router.post('/kiosk', { court_id: data.court_id, token: code.rawValue });
+                    }
+                }, 400);
+            })
+            .catch(() => setCamera('unavailable'));
+        return () => {
+            window.clearInterval(timer);
+            stream?.getTracks().forEach((t) => t.stop());
+        };
+    }, [camera, data.court_id]);
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[#0E1B2C] p-6 text-[#F7F6F1]">
@@ -33,6 +72,18 @@ export default function Kiosk({ courts, result }: { courts: { id: number; name: 
                         : `Accès refusé : ${REASONS[result.reason ?? ''] ?? result.reason}`}
                 </div>
             )}
+            <div className="flex w-full max-w-md flex-col items-center gap-3">
+                {camera === 'on' ? (
+                    <video ref={video} muted playsInline className="w-full rounded-xl border-2 border-[#C8E64A]" aria-label="Image de la caméra" />
+                ) : (
+                    <Button type="button" onClick={() => setCamera('on')} className="w-full bg-[#C8E64A] font-bold text-[#0E1B2C] hover:bg-[#b5d23c]">
+                        Scanner un QR code avec la caméra
+                    </Button>
+                )}
+                {camera === 'unavailable' && (
+                    <p className="text-sm text-[#F7F6F1]/80">Caméra indisponible sur cet appareil : saisissez le code ci-dessous.</p>
+                )}
+            </div>
             <form
                 onSubmit={(e) => {
                     e.preventDefault();
