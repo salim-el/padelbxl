@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\BlockedIdentity;
 use App\Models\User;
 use App\Rules\NotDisposableEmail;
 use App\Services\LegalConsents;
@@ -38,7 +39,11 @@ class RegisteredUserController extends Controller
         $request->merge(['vat_number' => self::normalizeVat($request->input('vat_number'))]);
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class, new NotDisposableEmail],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class, new NotDisposableEmail, function (string $attribute, mixed $value, \Closure $fail) {
+                if (BlockedIdentity::blocksEmail((string) $value)) {
+                    $fail(__('Cette adresse ne peut pas être utilisée pour créer un compte.'));
+                }
+            }],
             // F1 : la date de naissance applique la règle des 13 ans ; le niveau sert aux appels à joueurs (F11).
             'birth_date' => ['required', 'date', 'before:today', 'after:1900-01-01'],
             'level' => ['required', 'numeric', 'between:1,7'],
