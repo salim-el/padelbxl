@@ -16,7 +16,9 @@ export default function Kiosk({ courts, result }: { courts: { id: number; name: 
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[#0E1B2C] p-6 text-[#F7F6F1]">
-            <Head title="Borne d’accès" />
+            <Head title="Borne d’accès">
+                <meta name="robots" content="noindex" />
+            </Head>
             <div className="text-center">
                 <p className="font-mono text-sm tracking-widest text-[#C8E64A] uppercase">Arena Padel Club · Entrée</p>
                 <h1 className="mt-2 text-3xl font-extrabold uppercase">Borne d’accès</h1>
