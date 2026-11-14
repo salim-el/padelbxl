@@ -35,7 +35,96 @@ function Stat({ label, value, icon: Icon }: { label: string; value: string; icon
     );
 }
 
-type Rule = { id: number; name: string; start: string; end: string; price_cents: number };
+type Rule = {
+    id: number;
+    name: string;
+    start: string;
+    end: string;
+    price_cents: number;
+    vat_rate: number;
+    valid_from: string;
+    valid_until: string | null;
+    upcoming: boolean;
+};
+
+// F24 : nouveau tarif, tout de suite ou à une date future.
+function NewRule() {
+    const today = new Date().toISOString().slice(0, 10);
+    const form = useForm({ name: '', start_time: '09:00', end_time: '17:00', price: '', vat_rate: '6', valid_from: today });
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        form.transform((d) => ({ ...d, price_cents: Math.round(parseFloat(d.price.replace(',', '.')) * 100) }));
+        form.post('/admin/pricing-rules', { preserveScroll: true, onSuccess: () => form.reset('name', 'price') });
+    };
+    const field = 'bg-card mt-1 block w-full rounded-md border px-2 py-1.5';
+    return (
+        <form onSubmit={submit} className="mt-4 grid gap-2 border-t pt-4 text-sm sm:grid-cols-3">
+            <p className="font-semibold sm:col-span-3">Nouveau tarif</p>
+            <label className="sm:col-span-3">
+                Nom
+                <input
+                    required
+                    value={form.data.name}
+                    onChange={(e) => form.setData('name', e.target.value)}
+                    className={field}
+                    placeholder="Heures creuses hiver"
+                />
+            </label>
+            <label>
+                De
+                <input
+                    type="time"
+                    required
+                    value={form.data.start_time}
+                    onChange={(e) => form.setData('start_time', e.target.value)}
+                    className={field}
+                />
+            </label>
+            <label>
+                À
+                <input type="time" required value={form.data.end_time} onChange={(e) => form.setData('end_time', e.target.value)} className={field} />
+            </label>
+            <label>
+                Prix TTC (€)
+                <input
+                    required
+                    inputMode="decimal"
+                    value={form.data.price}
+                    onChange={(e) => form.setData('price', e.target.value)}
+                    className={field}
+                />
+            </label>
+            <label>
+                TVA
+                <select value={form.data.vat_rate} onChange={(e) => form.setData('vat_rate', e.target.value)} className={field}>
+                    <option value="6">6 % (accès au terrain)</option>
+                    <option value="21">21 %</option>
+                </select>
+            </label>
+            <label>
+                À partir du
+                <input
+                    type="date"
+                    required
+                    min={today}
+                    value={form.data.valid_from}
+                    onChange={(e) => form.setData('valid_from', e.target.value)}
+                    className={field}
+                />
+            </label>
+            <div className="flex items-end">
+                <Button type="submit" disabled={form.processing} className="w-full">
+                    Ajouter
+                </Button>
+            </div>
+            {Object.values(form.errors)[0] && (
+                <p role="alert" className="text-[#9E2833] sm:col-span-3">
+                    {Object.values(form.errors)[0]}
+                </p>
+            )}
+        </form>
+    );
+}
 type Closure = { id: number; court: string; reason: string; from: string; to: string };
 
 function PriceRow({ rule }: { rule: Rule }) {
@@ -51,7 +140,11 @@ function PriceRow({ rule }: { rule: Rule }) {
     return (
         <form onSubmit={save} className="flex flex-wrap items-center justify-between gap-2 border-b py-2 last:border-0">
             <label htmlFor={`rule-${rule.id}`} className="text-sm">
-                <span className="font-semibold">{rule.name}</span> · {rule.start} – {rule.end}
+                <span className="font-semibold">{rule.name}</span> · {rule.start} – {rule.end} · TVA {rule.vat_rate} %
+                <span className="text-muted-foreground block text-xs">
+                    {rule.upcoming ? `À partir du ${rule.valid_from}` : `Depuis le ${rule.valid_from}`}
+                    {rule.valid_until ? ` · jusqu’au ${rule.valid_until}` : ''}
+                </span>
             </label>
             <span className="flex items-center gap-2">
                 <input
@@ -65,6 +158,19 @@ function PriceRow({ rule }: { rule: Rule }) {
                 <Button type="submit" variant="outline" size="sm">
                     Enregistrer
                 </Button>
+                {!rule.valid_until && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            const until = prompt('Dernier jour de ce tarif (AAAA-MM-JJ) :', new Date().toISOString().slice(0, 10));
+                            if (until) router.post(`/admin/pricing-rules/${rule.id}/close`, { valid_until: until }, { preserveScroll: true });
+                        }}
+                    >
+                        Clôturer
+                    </Button>
+                )}
             </span>
         </form>
     );
@@ -340,6 +446,12 @@ export default function Dashboard({
                         {rules.map((r) => (
                             <PriceRow key={r.id} rule={r} />
                         ))}
+                        <NewRule />
+                        {(errors.pricing || errors.valid_until) && (
+                            <p role="alert" className="mt-2 text-sm text-[#9E2833]">
+                                {errors.pricing ?? errors.valid_until}
+                            </p>
+                        )}
                         {errors.price_cents && (
                             <p role="alert" className="mt-2 text-sm text-[#9E2833]">
                                 {errors.price_cents}
