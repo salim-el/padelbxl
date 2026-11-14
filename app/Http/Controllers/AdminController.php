@@ -22,6 +22,8 @@ use Spatie\Activitylog\Models\Activity;
 
 class AdminController extends Controller
 {
+    private const ROLE_LABELS = ['player' => 'Joueur', 'manager' => 'Gérant', 'admin' => 'Administrateur'];
+
     public function index(Request $request): Response
     {
         $this->ensureStaff($request);
@@ -125,6 +127,7 @@ class AdminController extends Controller
         return match ($a->event) {
             'price-updated' => number_format($p['old_cents'] / 100, 2, ',', ' ').' € → '.number_format($p['new_cents'] / 100, 2, ',', ' ').' €',
             'closure-deleted' => Clock::local(CarbonImmutable::parse($p['from']))->format('d/m/Y H:i').' → '.Clock::local(CarbonImmutable::parse($p['to']))->format('d/m/Y H:i'),
+            'staff-invited', 'staff-role-changed' => isset($p['old']) ? self::ROLE_LABELS[$p['old']].' → '.self::ROLE_LABELS[$p['role']] : self::ROLE_LABELS[$p['role']],
             default => null,
         };
     }
