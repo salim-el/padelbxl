@@ -443,6 +443,15 @@ const nl: Record<string, string> = {
     'Acceptée en avoir': 'Aanvaard als tegoed',
     Refusée: 'Geweigerd',
     'Imprévu grave ? Introduire une demande exceptionnelle': 'Ernstig onvoorzien? Dien een uitzonderlijke aanvraag in',
+    'Contester la suspension': 'Schorsing betwisten',
+    'Une autre personne que celle qui a suspendu votre compte examinera votre réponse.':
+        'Iemand anders dan wie uw account schorste, bekijkt uw antwoord.',
+    'Motif de la suspension': 'Reden van de schorsing',
+    'Fin prévue le :date.': 'Einde gepland op :date.',
+    'Jusqu’à une nouvelle décision du club.': 'Tot een nieuwe beslissing van de club.',
+    'Votre contestation est déjà reçue. Le club vous répond par e-mail.': 'Uw bezwaar is al ontvangen. De club antwoordt per e-mail.',
+    'Votre réponse': 'Uw antwoord',
+    'Envoyer ma contestation': 'Mijn bezwaar versturen',
 };
 
 export default nl;

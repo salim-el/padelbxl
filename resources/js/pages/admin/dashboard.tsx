@@ -16,6 +16,7 @@ const ROLES: Record<string, string> = { player: 'Joueur', manager: 'Gérant', ad
 const ACCOUNT: Record<string, [string, string]> = {
     active: ['Actif', 'bg-[#EEF4D6] text-[#4E6600]'],
     suspended: ['Suspendu', 'bg-[#FCE6E8] text-[#9E2833]'],
+    revoked: ['Révoqué', 'bg-[#0E1B2C] text-[#F7F6F1]'],
     pending: ['En attente', 'bg-[#E6ECF2] text-[#17304A]'],
 };
 const pill = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold';
@@ -94,10 +95,25 @@ export default function Dashboard({
         router.get('/admin', q ? { q } : {}, { preserveScroll: true, preserveState: true });
     };
 
-    const act = (u: Account, action: 'suspend' | 'reactivate') => {
-        const question =
-            action === 'suspend' ? `Suspendre le compte de ${u.name} ? Il ne pourra plus réserver.` : `Réactiver le compte de ${u.name} ?`;
-        if (confirm(question)) router.post(`/admin/users/${u.id}/${action}`, {}, { preserveScroll: true });
+    const reactivate = (u: Account) => {
+        if (confirm(`Réactiver le compte de ${u.name} ?`)) router.post(`/admin/users/${u.id}/reactivate`, {}, { preserveScroll: true });
+    };
+    // F28 : suspension et révocation toujours motivées ; le motif part chez le joueur.
+    const [target, setTarget] = useState<{ user: Account; action: 'suspend' | 'revoke' } | null>(null);
+    const decision = useForm({ reason: '', days: '7' });
+    const confirmDecision = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!target) return;
+        decision.transform((d) =>
+            target.action === 'suspend' ? { reason: d.reason, days: d.days === '' ? null : Number(d.days) } : { reason: d.reason },
+        );
+        decision.post(`/admin/users/${target.user.id}/${target.action}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setTarget(null);
+                decision.reset();
+            },
+        });
     };
 
     return (
@@ -209,21 +225,31 @@ export default function Dashboard({
                                             </td>
                                             <td className="p-2 whitespace-nowrap">{u.created_at}</td>
                                             <td className="p-2 text-right">
-                                                {u.role === 'player' &&
-                                                    (u.status === 'suspended' ? (
-                                                        <Button variant="outline" size="sm" onClick={() => act(u, 'reactivate')}>
-                                                            Réactiver
-                                                        </Button>
-                                                    ) : (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="border-[#CC3342]/40 text-[#9E2833] hover:bg-[#FCE6E8]"
-                                                            onClick={() => act(u, 'suspend')}
-                                                        >
-                                                            Suspendre
-                                                        </Button>
-                                                    ))}
+                                                {u.role === 'player' && u.status === 'suspended' && (
+                                                    <Button variant="outline" size="sm" onClick={() => reactivate(u)}>
+                                                        Réactiver
+                                                    </Button>
+                                                )}
+                                                {u.role === 'player' && u.status === 'active' && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="border-[#CC3342]/40 text-[#9E2833] hover:bg-[#FCE6E8]"
+                                                        onClick={() => setTarget({ user: u, action: 'suspend' })}
+                                                    >
+                                                        Suspendre
+                                                    </Button>
+                                                )}
+                                                {u.role === 'player' && ['active', 'suspended'].includes(u.status) && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="ml-1 text-[#9E2833]"
+                                                        onClick={() => setTarget({ user: u, action: 'revoke' })}
+                                                    >
+                                                        Révoquer
+                                                    </Button>
+                                                )}
                                             </td>
                                         </tr>
                                     );
@@ -231,6 +257,59 @@ export default function Dashboard({
                             </tbody>
                         </table>
                     </div>
+                    {target && (
+                        <form
+                            onSubmit={confirmDecision}
+                            className="flex flex-col gap-3 rounded-xl border border-[#CC3342]/40 bg-[#FFF7F7] p-4 text-sm"
+                        >
+                            <p className="font-semibold">
+                                {target.action === 'suspend'
+                                    ? `Suspendre le compte de ${target.user.name}`
+                                    : `Révoquer définitivement le compte de ${target.user.name}`}
+                            </p>
+                            <label className="flex flex-col gap-1">
+                                Motif (envoyé au joueur)
+                                <textarea
+                                    required
+                                    minLength={10}
+                                    rows={3}
+                                    value={decision.data.reason}
+                                    onChange={(e) => decision.setData('reason', e.target.value)}
+                                    className="rounded-lg border border-[#DAD7CC] bg-white p-2"
+                                />
+                            </label>
+                            {target.action === 'suspend' && (
+                                <label className="flex flex-col gap-1">
+                                    Durée
+                                    <select
+                                        value={decision.data.days}
+                                        onChange={(e) => decision.setData('days', e.target.value)}
+                                        className="h-9 w-56 rounded-md border border-[#DAD7CC] bg-white px-2"
+                                    >
+                                        {[1, 3, 7, 14, 30, 90].map((d) => (
+                                            <option key={d} value={d}>
+                                                {d} jour{d > 1 ? 's' : ''}
+                                            </option>
+                                        ))}
+                                        <option value="">Jusqu’à nouvelle décision</option>
+                                    </select>
+                                </label>
+                            )}
+                            {decision.errors.reason && (
+                                <p role="alert" className="text-[#9E2833]">
+                                    {decision.errors.reason}
+                                </p>
+                            )}
+                            <div className="flex gap-2">
+                                <Button type="submit" disabled={decision.processing} className="bg-[#9E2833] text-white hover:bg-[#82202A]">
+                                    {target.action === 'suspend' ? 'Suspendre' : 'Révoquer'}
+                                </Button>
+                                <Button type="button" variant="outline" onClick={() => setTarget(null)}>
+                                    Annuler
+                                </Button>
+                            </div>
+                        </form>
+                    )}
                     {users.last_page > 1 && (
                         <nav aria-label="Pages des comptes" className="flex items-center justify-end gap-3 text-sm">
                             {users.prev_page_url ? (

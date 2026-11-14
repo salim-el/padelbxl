@@ -4,7 +4,21 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, FileText, Inbox, LayoutDashboard, LifeBuoy, Mail, QrCode, ScrollText, Shield, Store, Ticket, Users } from 'lucide-react';
+import {
+    CalendarDays,
+    FileText,
+    Gavel,
+    Inbox,
+    LayoutDashboard,
+    LifeBuoy,
+    Mail,
+    QrCode,
+    ScrollText,
+    Shield,
+    Store,
+    Ticket,
+    Users,
+} from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -18,6 +32,7 @@ const staffNavItems: NavItem[] = [
     { title: 'Tableau de bord', url: '/admin', icon: LayoutDashboard },
     { title: 'Comptoir', url: '/admin/counter', icon: Store },
     { title: 'Demandes', url: '/admin/disputes', icon: Inbox },
+    { title: 'Contestations', url: '/admin/appeals', icon: Gavel },
     { title: 'Journal', url: '/admin/journal', icon: ScrollText },
     { title: 'Borne d’accès', url: '/kiosk', icon: QrCode },
 ];

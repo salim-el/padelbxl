@@ -441,6 +441,15 @@ const en: Record<string, string> = {
     'Acceptée en avoir': 'Accepted as credit',
     Refusée: 'Rejected',
     'Imprévu grave ? Introduire une demande exceptionnelle': 'Serious mishap? File an exceptional request',
+    'Contester la suspension': 'Contest the suspension',
+    'Une autre personne que celle qui a suspendu votre compte examinera votre réponse.':
+        'Someone other than the person who suspended your account will review your answer.',
+    'Motif de la suspension': 'Reason for the suspension',
+    'Fin prévue le :date.': 'Planned end on :date.',
+    'Jusqu’à une nouvelle décision du club.': 'Until a new decision of the club.',
+    'Votre contestation est déjà reçue. Le club vous répond par e-mail.': 'Your appeal has already been received. The club will answer by email.',
+    'Votre réponse': 'Your answer',
+    'Envoyer ma contestation': 'Send my appeal',
 };
 
 export default en;

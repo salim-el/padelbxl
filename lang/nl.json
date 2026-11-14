@@ -108,5 +108,21 @@
     "Voir mes demandes": "Mijn aanvragen bekijken",
     "Ce montant dépasse ce qui reste remboursable sur ce paiement.": "Dit bedrag is hoger dan wat nog terugbetaald kan worden op deze betaling.",
     "Cette demande a déjà reçu une décision.": "Over deze aanvraag is al beslist.",
-    "Le montant partiel doit être supérieur à zéro et inférieur à :max.": "Het gedeeltelijke bedrag moet groter zijn dan nul en kleiner dan :max."
+    "Le montant partiel doit être supérieur à zéro et inférieur à :max.": "Het gedeeltelijke bedrag moet groter zijn dan nul en kleiner dan :max.",
+    "Votre compte PadelBxl est suspendu": "Uw PadelBxl-account is geschorst",
+    "Le club a suspendu votre compte. Vous ne pouvez plus vous connecter ni réserver.": "De club heeft uw account geschorst. U kunt niet meer inloggen of reserveren.",
+    "La suspension prend fin le :date.": "De schorsing eindigt op :date.",
+    "La suspension dure jusqu’à une nouvelle décision du club.": "De schorsing duurt tot een nieuwe beslissing van de club.",
+    "Contester la suspension": "Schorsing betwisten",
+    "Une autre personne que celle qui a suspendu votre compte examinera votre réponse.": "Iemand anders dan wie uw account schorste, bekijkt uw antwoord.",
+    "Votre compte PadelBxl est révoqué": "Uw PadelBxl-account is ingetrokken",
+    "Le club a révoqué votre compte de façon définitive.": "De club heeft uw account definitief ingetrokken.",
+    "Vos factures restent conservées comme la loi l’impose. Pour toute question, répondez à cet e-mail.": "Uw facturen worden bewaard zoals de wet vereist. Vragen? Beantwoord deze e-mail.",
+    "Décision sur votre contestation": "Beslissing over uw bezwaar",
+    "Votre contestation est acceptée. Votre compte est de nouveau actif.": "Uw bezwaar is aanvaard. Uw account is opnieuw actief.",
+    "Votre contestation est refusée. La suspension continue.": "Uw bezwaar is geweigerd. De schorsing loopt verder.",
+    "Votre contestation est reçue. Le club vous répond par e-mail.": "Uw bezwaar is ontvangen. De club antwoordt per e-mail.",
+    "Cette suspension ne peut plus être contestée.": "Deze schorsing kan niet meer betwist worden.",
+    "Vous avez déjà contesté cette suspension.": "U hebt deze schorsing al betwist.",
+    "Cette adresse ne peut pas être utilisée pour créer un compte.": "Dit adres kan niet gebruikt worden om een account aan te maken."
 }
