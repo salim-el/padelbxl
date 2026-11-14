@@ -146,7 +146,7 @@ class OpenMatchTest extends TestCase
         $booking = $this->open(1, [], []);
         $this->assertSame('pending_payment', $booking->status);
 
-        $this->actingAs($this->lucas)->post("/bookings/{$booking->public_id}/pay", ['accept_terms' => '1', 'guests' => ['a@example.test', 'b@example.test'], 'open_spots' => 2, 'accept_guarantee' => '1'])
+        $this->actingAs($this->lucas)->post("/bookings/{$booking->public_id}/pay", ['accept_terms' => '1', 'guests' => ['a@example.test', 'b@example.test'], 'open_spots' => 2, 'accept_guarantee' => '1', 'level_min' => 1, 'level_max' => 7])
             ->assertSessionHasErrors('booking');
         $this->assertSame('pending_payment', $booking->refresh()->status);
         $this->assertSame(0, DB::table('payments')->where('booking_id', $booking->id)->count());
