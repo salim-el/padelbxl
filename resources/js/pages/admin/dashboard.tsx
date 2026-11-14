@@ -47,6 +47,54 @@ type Rule = {
     upcoming: boolean;
 };
 
+// F24 : heures d'ouverture et durée des créneaux.
+function Settings({ settings }: { settings: { opens_at: string; closes_at: string; slot_minutes: number } }) {
+    const form = useForm({ ...settings, slot_minutes: String(settings.slot_minutes) });
+    const field = 'bg-card mt-1 block w-full rounded-md border px-2 py-1.5';
+    return (
+        <form
+            onSubmit={(e) => {
+                e.preventDefault();
+                form.put('/admin/settings', { preserveScroll: true });
+            }}
+            className="grid gap-2 text-sm sm:grid-cols-4"
+        >
+            <label>
+                Ouverture
+                <input type="time" required value={form.data.opens_at} onChange={(e) => form.setData('opens_at', e.target.value)} className={field} />
+            </label>
+            <label>
+                Fermeture
+                <input
+                    type="time"
+                    required
+                    value={form.data.closes_at}
+                    onChange={(e) => form.setData('closes_at', e.target.value)}
+                    className={field}
+                />
+            </label>
+            <label>
+                Créneau
+                <select value={form.data.slot_minutes} onChange={(e) => form.setData('slot_minutes', e.target.value)} className={field}>
+                    <option value="60">60 minutes</option>
+                    <option value="90">90 minutes</option>
+                    <option value="120">120 minutes</option>
+                </select>
+            </label>
+            <div className="flex items-end">
+                <Button type="submit" variant="outline" disabled={form.processing} className="w-full">
+                    Enregistrer
+                </Button>
+            </div>
+            {Object.values(form.errors)[0] && (
+                <p role="alert" className="text-[#9E2833] sm:col-span-4">
+                    {Object.values(form.errors)[0]}
+                </p>
+            )}
+        </form>
+    );
+}
+
 // F24 : nouveau tarif, tout de suite ou à une date future.
 function NewRule() {
     const today = new Date().toISOString().slice(0, 10);
@@ -183,6 +231,7 @@ export default function Dashboard({
     search,
     courts,
     rules,
+    settings,
     closures,
 }: {
     stats: Stats;
@@ -191,6 +240,7 @@ export default function Dashboard({
     search: string;
     courts: { id: number; name: string }[];
     rules: Rule[];
+    settings: { opens_at: string; closes_at: string; slot_minutes: number };
     closures: Closure[];
 }) {
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
@@ -441,7 +491,10 @@ export default function Dashboard({
 
                 <section className="grid gap-4 lg:grid-cols-2">
                     <div className="bg-card rounded-2xl border p-5">
-                        <h2 className="text-lg font-semibold">Tarifs</h2>
+                        <h2 className="text-lg font-semibold">Horaires</h2>
+                        <p className="text-muted-foreground mb-2 text-sm">Les réservations déjà faites gardent leurs heures.</p>
+                        <Settings settings={settings} />
+                        <h2 className="mt-6 text-lg font-semibold">Tarifs</h2>
                         <p className="text-muted-foreground mb-2 text-sm">Prix TTC par créneau. Les réservations déjà payées gardent leur prix.</p>
                         {rules.map((r) => (
                             <PriceRow key={r.id} rule={r} />
