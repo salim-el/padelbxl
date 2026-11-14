@@ -443,6 +443,34 @@ class BookingService
         return $payment;
     }
 
+    /**
+     * Rembourse tout ou partie d'un paiement : note de crédit qui renvoie à la facture, puis remboursement.
+     * Un montant partiel se répartit entre net et TVA dans la même proportion que la facture (6 % et 21 % mêlés).
+     * À appeler dans une transaction.
+     */
+    public function refund(Payment $payment, int $amount, string $note, string $code): CreditNote
+    {
+        $refundable = $payment->amount_cents - (int) Refund::where('payment_id', $payment->id)->where('status', '<>', 'failed')->sum('amount_cents');
+        if ($amount <= 0 || $amount > $refundable) {
+            throw new BookingException(__('Ce montant dépasse ce qui reste remboursable sur ce paiement.'));
+        }
+        $invoice = Invoice::where('payment_id', $payment->id)->firstOrFail();
+        $net = $amount === $invoice->total_cents ? $invoice->net_cents : (int) round($invoice->net_cents * $amount / $invoice->total_cents);
+        $creditNote = CreditNote::create([
+            'number' => $this->nextNumber('credit_note', 'NC'),
+            'invoice_id' => $invoice->id,
+            'issued_at' => now(),
+            'net_cents' => $net,
+            'vat_cents' => $amount - $net,
+            'total_cents' => $amount,
+            'reason' => $note,
+        ]);
+        Refund::create(['payment_id' => $payment->id, 'amount_cents' => $amount, 'reason' => $code, 'status' => 'succeeded', 'credit_note_id' => $creditNote->id]);
+        $payment->update(['status' => $amount === $refundable ? 'refunded' : 'partially_refunded']);
+
+        return $creditNote;
+    }
+
     public function cancel(Booking $booking, User $user): Booking
     {
         return DB::transaction(function () use ($booking, $user) {
@@ -456,18 +484,7 @@ class BookingService
             $refundable = now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS));
             if ($refundable) {
                 foreach ($booking->payments()->where('status', 'succeeded')->get() as $payment) {
-                    $invoice = Invoice::where('payment_id', $payment->id)->firstOrFail();
-                    $note = CreditNote::create([
-                        'number' => $this->nextNumber('credit_note', 'NC'),
-                        'invoice_id' => $invoice->id,
-                        'issued_at' => now(),
-                        'net_cents' => $invoice->net_cents,
-                        'vat_cents' => $invoice->vat_cents,
-                        'total_cents' => $invoice->total_cents,
-                        'reason' => 'Annulation au moins 24 h avant le match.',
-                    ]);
-                    Refund::create(['payment_id' => $payment->id, 'amount_cents' => $payment->amount_cents, 'reason' => 'cancellation_24h', 'status' => 'succeeded', 'credit_note_id' => $note->id]);
-                    $payment->update(['status' => 'refunded']);
+                    $this->refund($payment, $payment->amount_cents, 'Annulation au moins 24 h avant le match.', 'cancellation_24h');
                 }
                 // Remboursés avant le match, les articles vendus n'ont pas été remis : ils reviennent en stock.
                 foreach ($booking->items()->whereHas('product', fn ($q) => $q->where('kind', 'sale'))->get() as $item) {
