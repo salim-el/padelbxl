@@ -92,7 +92,11 @@ class BookingController extends Controller
 
         // Après le paiement : un e-mail qui échoue ne doit pas annuler une réservation payée.
         if ($open > 0) {
-            $calls->publish($booking, (int) $data['level_min'], (int) $data['level_max']);
+            try {
+                $calls->publish($booking, (int) $data['level_min'], (int) $data['level_max']);
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
 
         return to_route('bookings.show', $booking)->with('success', $guests === []
