@@ -455,6 +455,8 @@ const en: Record<string, string> = {
     'Ce QR code a déjà été utilisé.': 'This QR code has already been used.',
     'Cette réservation est annulée : ce QR code ne donne plus accès au terrain.':
         'This booking is cancelled: this QR code no longer gives access to the court.',
+    'Téléphone (facultatif)': 'Phone (optional)',
+    Langue: 'Language',
 };
 
 export default en;

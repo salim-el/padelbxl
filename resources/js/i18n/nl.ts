@@ -457,6 +457,8 @@ const nl: Record<string, string> = {
     'Ce QR code a déjà été utilisé.': 'Deze QR-code is al gebruikt.',
     'Cette réservation est annulée : ce QR code ne donne plus accès au terrain.':
         'Deze reservering is geannuleerd: deze QR-code geeft geen toegang meer tot het terrein.',
+    'Téléphone (facultatif)': 'Telefoon (optioneel)',
+    Langue: 'Taal',
 };
 
 export default nl;
