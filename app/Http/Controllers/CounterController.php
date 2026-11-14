@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Exceptions\BookingException;
 use App\Models\Booking;
 use App\Models\Court;
+use App\Notifications\AccessPassLink;
 use App\Services\BookingService;
 use App\Services\Clock;
 use chillerlan\QRCode\QRCode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -51,8 +53,11 @@ class CounterController extends Controller
         }
         activity('staff')->performedOn($booking)->event('counter-booking-created')
             ->withProperties(['method' => $data['method']])->log('Réservation au comptoir');
+        if (filter_var($data['contact'], FILTER_VALIDATE_EMAIL)) {
+            Notification::route('mail', $data['contact'])->notify(new AccessPassLink($booking->players()->where('is_organizer', true)->firstOrFail()));
+        }
 
-        return to_route('admin.counter.show', $booking)->with('success', 'Réservation payée et confirmée. Imprimez le ticket pour le client.');
+        return to_route('admin.counter.show', $booking)->with('success', 'Réservation payée et confirmée. Imprimez le ticket ; un client qui a donné son e-mail reçoit aussi le lien vers son QR code.');
     }
 
     public function show(Request $request, Booking $booking): Response
