@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\BookingException;
 use App\Models\Booking;
+use App\Models\ClubSetting;
 use App\Models\Court;
 use App\Models\CourtClosure;
 use App\Models\PricingRule;
@@ -33,7 +34,7 @@ class AdminController extends Controller
             ->whereIn('status', ['pending_payment', 'confirmed', 'used', 'missed', 'cancelled_refunded', 'cancelled_unrefunded'])
             ->orderBy('starts_at')->orderBy('court_id')->get();
         $played = $today->whereIn('status', ['confirmed', 'used', 'missed'])->count();
-        $slots = Court::where('is_active', true)->count() * count(Clock::SLOTS);
+        $slots = Court::where('is_active', true)->count() * count(Clock::slots());
 
         return Inertia::render('admin/dashboard', [
             'stats' => [
@@ -50,6 +51,8 @@ class AdminController extends Controller
                 'status' => $b->status,
             ])->all(),
             'search' => $search,
+            'settings' => ['opens_at' => substr(app(ClubSetting::class)->opens_at, 0, 5), 'closes_at' => substr(app(ClubSetting::class)->closes_at, 0, 5),
+                'slot_minutes' => app(ClubSetting::class)->slot_minutes],
             'courts' => Court::orderBy('id')->get(['id', 'name'])->all(),
             // Tarifs en cours et à venir ; ceux qui sont clos restent en base pour l'historique des prix.
             'rules' => PricingRule::where(fn ($q) => $q->whereNull('valid_until')->orWhereDate('valid_until', '>=', today()))
@@ -194,8 +197,8 @@ class AdminController extends Controller
         $this->ensureStaff($request);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:60'],
-            'start_time' => ['required', 'date_format:H:i', 'after_or_equal:09:00'],
-            'end_time' => ['required', 'date_format:H:i', 'after:start_time', 'before_or_equal:23:00'],
+            'start_time' => ['required', 'date_format:H:i', 'after_or_equal:'.substr(app(ClubSetting::class)->opens_at, 0, 5)],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time', 'before_or_equal:'.substr(app(ClubSetting::class)->closes_at, 0, 5)],
             'price_cents' => ['required', 'integer', 'min:100', 'max:100000'],
             // 6 % : accès aux installations sportives ; 21 % : par exemple un cours vendu seul (circulaire 2022/C/118).
             'vat_rate' => ['required', 'in:6,21'],
@@ -222,6 +225,37 @@ class AdminController extends Controller
         activity('staff')->performedOn($rule)->event('price-rule-closed')->withProperties($data)->log('Tarif clôturé');
 
         return back()->with('success', "Tarif « {$rule->name} » valable jusqu'au ".CarbonImmutable::parse($data['valid_until'])->format('d/m/Y').'.');
+    }
+
+    /**
+     * F24 : heures d'ouverture et durée des créneaux. Refusé si une réservation à venir ne tombe plus sur un créneau :
+     * le gérant la déplace ou l'annule d'abord, comme pour une fermeture de terrain.
+     */
+    public function updateSettings(Request $request): RedirectResponse
+    {
+        $this->ensureStaff($request);
+        $data = $request->validate([
+            'opens_at' => ['required', 'date_format:H:i'],
+            'closes_at' => ['required', 'date_format:H:i', 'after:opens_at'],
+            'slot_minutes' => ['required', 'integer', 'in:60,90,120'],
+        ]);
+        $next = new ClubSetting($data);
+        if ($next->slots() === []) {
+            return back()->withErrors(['settings' => 'Aucun créneau ne tient entre ces heures.']);
+        }
+        $misplaced = Booking::whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->get(['starts_at', 'ends_at'])
+            ->filter(fn (Booking $b) => ! in_array(Clock::local($b->starts_at)->format('H:i'), $next->slots(), true)
+                || $b->starts_at->diffInMinutes($b->ends_at) !== $next->slot_minutes)->count();
+        if ($misplaced > 0) {
+            return back()->withErrors(['settings' => "$misplaced réservation(s) à venir ne tomberai(en)t plus sur un créneau. Déplacez-les ou annulez-les d’abord."]);
+        }
+        $settings = ClubSetting::firstOrFail();
+        $old = $settings->only(['opens_at', 'closes_at', 'slot_minutes']);
+        $settings->update($data);
+        app()->forgetScopedInstances();
+        activity('staff')->performedOn($settings)->event('club-settings-updated')->withProperties(['old' => $old, 'new' => $data])->log('Horaires modifiés');
+
+        return back()->with('success', 'Horaires enregistrés.');
     }
 
     public function storeClosure(Request $request): RedirectResponse

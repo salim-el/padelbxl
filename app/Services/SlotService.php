@@ -56,9 +56,9 @@ class SlotService
         $closures = CourtClosure::where('starts_at', '<', $dayStart->addDay())->where('ends_at', '>', $dayStart)->get(['court_id', 'starts_at', 'ends_at']);
 
         $rows = [];
-        foreach (Clock::SLOTS as $time) {
+        foreach (Clock::slots() as $time) {
             $start = Clock::slotStart($date, $time);
-            $end = $start->addMinutes(Clock::SLOT_MINUTES);
+            $end = $start->addMinutes(Clock::slotMinutes());
             $cells = [];
             foreach ($courts as $court) {
                 $closed = $closures->contains(fn ($c) => $c->court_id === $court->id && $c->starts_at < $end && $c->ends_at > $start);
