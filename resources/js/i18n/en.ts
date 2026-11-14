@@ -407,6 +407,20 @@ const en: Record<string, string> = {
     'Envoyer le lien de réactivation': 'Send the reactivation link',
     'Compte désactivé ?': 'Account deactivated?',
     'Le réactiver': 'Reactivate it',
+    'Date de naissance': 'Date of birth',
+    'Niveau estimé': 'Estimated level',
+    Choisir: 'Choose',
+    'De 1 (débutant) à 7 (compétition). Il sert aux appels à joueurs.': 'From 1 (beginner) to 7 (competition). It is used for player calls.',
+    'E-mail du parent': "Parent's email",
+    'Moins de 13 ans : le compte est créé par un parent, qui accepte les conditions.':
+        'Under 13: the account is created by a parent, who accepts the terms.',
+    'J’accepte les conditions générales et la politique de vie privée.': 'I accept the terms and conditions and the privacy policy.',
+    'Politique de vie privée': 'Privacy policy',
+    'Nos conditions ont changé': 'Our terms have changed',
+    'Acceptez la nouvelle version pour continuer à réserver.': 'Accept the new version to keep booking.',
+    'version :version du :date': 'version :version of :date',
+    'J’accepte la nouvelle version.': 'I accept the new version.',
+    Continuer: 'Continue',
 };
 
 export default en;

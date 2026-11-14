@@ -408,6 +408,20 @@ const nl: Record<string, string> = {
     'Envoyer le lien de réactivation': 'Heractiveringslink versturen',
     'Compte désactivé ?': 'Account gedeactiveerd?',
     'Le réactiver': 'Heractiveren',
+    'Date de naissance': 'Geboortedatum',
+    'Niveau estimé': 'Geschat niveau',
+    Choisir: 'Kiezen',
+    'De 1 (débutant) à 7 (compétition). Il sert aux appels à joueurs.': 'Van 1 (beginner) tot 7 (competitie). Het dient voor oproepen aan spelers.',
+    'E-mail du parent': 'E-mail van de ouder',
+    'Moins de 13 ans : le compte est créé par un parent, qui accepte les conditions.':
+        'Jonger dan 13: het account wordt aangemaakt door een ouder, die de voorwaarden aanvaardt.',
+    'J’accepte les conditions générales et la politique de vie privée.': 'Ik aanvaard de algemene voorwaarden en het privacybeleid.',
+    'Politique de vie privée': 'Privacybeleid',
+    'Nos conditions ont changé': 'Onze voorwaarden zijn gewijzigd',
+    'Acceptez la nouvelle version pour continuer à réserver.': 'Aanvaard de nieuwe versie om verder te reserveren.',
+    'version :version du :date': 'versie :version van :date',
+    'J’accepte la nouvelle version.': 'Ik aanvaard de nieuwe versie.',
+    Continuer: 'Doorgaan',
 };
 
 export default nl;

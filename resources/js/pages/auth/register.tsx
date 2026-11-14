@@ -4,6 +4,7 @@ import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
 import { PasswordInput } from '@/components/password-input';
+import TermsLink from '@/components/terms-link';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,10 @@ interface RegisterForm {
     email: string;
     password: string;
     password_confirmation: string;
+    birth_date: string;
+    level: string;
+    guardian_email: string;
+    accept_terms: boolean;
 }
 
 export default function Register() {
@@ -32,7 +37,16 @@ export default function Register() {
         email: '',
         password: '',
         password_confirmation: '',
+        birth_date: '',
+        level: '',
+        guardian_email: '',
+        accept_terms: false,
     });
+
+    // F1 : sous 13 ans, le compte est créé par un parent, qui donne son adresse.
+    const thirteenYearsAgo = new Date();
+    thirteenYearsAgo.setFullYear(thirteenYearsAgo.getFullYear() - 13);
+    const under13 = data.birth_date !== '' && new Date(data.birth_date) > thirteenYearsAgo;
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -144,6 +158,64 @@ export default function Register() {
                         <InputError message={errors.email} />
                     </div>
 
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="grid gap-2">
+                            <Label htmlFor="birth_date">{t('Date de naissance')}</Label>
+                            <Input
+                                id="birth_date"
+                                type="date"
+                                required
+                                autoComplete="bday"
+                                value={data.birth_date}
+                                onChange={(e) => setData('birth_date', e.target.value)}
+                                disabled={processing}
+                            />
+                            <InputError message={errors.birth_date} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="level">{t('Niveau estimé')}</Label>
+                            <select
+                                id="level"
+                                required
+                                value={data.level}
+                                onChange={(e) => setData('level', e.target.value)}
+                                disabled={processing}
+                                aria-describedby="level_help"
+                                className="h-9 rounded-md border border-[#DAD7CC] bg-white px-3 text-sm"
+                            >
+                                <option value="">{t('Choisir')}</option>
+                                {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                                    <option key={n} value={n}>
+                                        {n}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError message={errors.level} />
+                        </div>
+                    </div>
+                    <p id="level_help" className="-mt-4 text-xs text-[#5F6B78]">
+                        {t('De 1 (débutant) à 7 (compétition). Il sert aux appels à joueurs.')}
+                    </p>
+
+                    {under13 && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="guardian_email">{t('E-mail du parent')}</Label>
+                            <Input
+                                id="guardian_email"
+                                type="email"
+                                required
+                                value={data.guardian_email}
+                                onChange={(e) => setData('guardian_email', e.target.value)}
+                                disabled={processing}
+                                aria-describedby="guardian_help"
+                            />
+                            <p id="guardian_help" className="text-xs text-[#5F6B78]">
+                                {t('Moins de 13 ans : le compte est créé par un parent, qui accepte les conditions.')}
+                            </p>
+                            <InputError message={errors.guardian_email} />
+                        </div>
+                    )}
+
                     <div className="grid gap-2">
                         <Label htmlFor="password">{t('Mot de passe')}</Label>
                         <PasswordInput
@@ -172,6 +244,20 @@ export default function Register() {
                             placeholder={t('Confirmer le mot de passe')}
                         />
                         <InputError message={errors.password_confirmation} />
+                    </div>
+
+                    <div className="grid gap-1">
+                        <label className="flex items-start gap-3 text-sm">
+                            <input
+                                type="checkbox"
+                                className="mt-0.5 size-4 accent-[#1D5C7A]"
+                                checked={data.accept_terms}
+                                onChange={(e) => setData('accept_terms', e.target.checked)}
+                            />
+                            {t('J’accepte les conditions générales et la politique de vie privée.')}
+                        </label>
+                        <TermsLink />
+                        <InputError message={errors.accept_terms} />
                     </div>
 
                     <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>
