@@ -24,6 +24,9 @@ class CompanyAccountTest extends TestCase
             'email' => 'nora@atelier-nova.test',
             'password' => 'mot-de-passe-long-2026',
             'password_confirmation' => 'mot-de-passe-long-2026',
+            'birth_date' => '1995-04-12',
+            'level' => 3,
+            'accept_terms' => true,
         ]);
     }
 
