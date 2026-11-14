@@ -76,5 +76,7 @@
     "Ce lien vaut soixante minutes.": "This link is valid for sixty minutes.",
     "Si vous n’avez rien demandé, ignorez cet e-mail. Votre compte reste désactivé.": "If you did not ask for this, ignore this email. Your account stays deactivated.",
     "Si un compte désactivé depuis moins de trente jours utilise cette adresse, un lien de réactivation vient d’y être envoyé.": "If an account deactivated less than thirty days ago uses this address, a reactivation link has just been sent to it.",
-    "Votre compte est réactivé. Vous pouvez vous connecter.": "Your account is active again. You can log in."
+    "Votre compte est réactivé. Vous pouvez vous connecter.": "Your account is active again. You can log in.",
+    "Les adresses e-mail jetables ne sont pas acceptées.": "Disposable email addresses are not accepted.",
+    "Acceptez d’abord la nouvelle version des conditions dans l’application.": "First accept the new version of the terms in the app."
 }

@@ -3,9 +3,11 @@
 namespace Database\Seeders;
 
 use App\Models\Court;
+use App\Models\LegalDocument;
 use App\Models\PricingRule;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\LegalConsents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -37,5 +39,21 @@ class DatabaseSeeder extends Seeder
             User::create(['name' => $name, 'email' => $email, 'password' => Hash::make(self::DEMO_PASSWORD), 'email_verified_at' => $verified, 'role' => 'player', 'status' => $status]);
         }
         User::create(['name' => 'Marc Dumont', 'email' => 'marc.dumont@example.test', 'password' => Hash::make(self::DEMO_PASSWORD), 'email_verified_at' => now(), 'role' => 'manager']);
+        self::legalDocuments();
+        User::all()->each(fn (User $u) => app(LegalConsents::class)->accept($u, null));
+    }
+
+    /** Version 2026.1 des conditions générales et de la politique de vie privée. Le texte complet est la page publique. */
+    public static function legalDocuments(): void
+    {
+        $texts = [
+            'terms' => ['fr' => 'Conditions générales de PadelBxl, version 2026.1. Texte complet : /conditions-generales.', 'nl' => 'Algemene voorwaarden van PadelBxl, versie 2026.1. Volledige tekst: /conditions-generales.', 'en' => 'PadelBxl terms and conditions, version 2026.1. Full text: /conditions-generales.'],
+            'privacy' => ['fr' => 'Politique de vie privée de PadelBxl, version 2026.1. Texte complet : /confidentialite.', 'nl' => 'Privacybeleid van PadelBxl, versie 2026.1. Volledige tekst: /confidentialite.', 'en' => 'PadelBxl privacy policy, version 2026.1. Full text: /confidentialite.'],
+        ];
+        foreach ($texts as $type => $byLocale) {
+            foreach ($byLocale as $locale => $content) {
+                LegalDocument::firstOrCreate(['type' => $type, 'version' => '2026.1', 'locale' => $locale], ['content' => $content, 'published_at' => '2026-01-01 00:00:00+01']);
+            }
+        }
     }
 }

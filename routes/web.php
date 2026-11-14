@@ -5,6 +5,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CounterController;
 use App\Http\Controllers\KioskController;
+use App\Http\Controllers\LegalAcceptanceController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\OpenMatchController;
 use App\Http\Controllers\PlanningController;
@@ -36,7 +37,13 @@ Route::get('contact', [ContactController::class, 'create'])->name('contact');
 Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:3,1')->name('contact.store');
 Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// F7 : la nouvelle version des documents est acceptée avant toute réservation.
+Route::middleware('auth')->group(function () {
+    Route::get('legal/accept', [LegalAcceptanceController::class, 'show'])->name('legal.accept');
+    Route::post('legal/accept', [LegalAcceptanceController::class, 'store'])->middleware('throttle:10,1')->name('legal.accept.store');
+});
+
+Route::middleware(['auth', 'verified', 'consented'])->group(function () {
     Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::post('bookings', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('bookings.store');
     Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');

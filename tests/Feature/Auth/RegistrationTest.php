@@ -39,6 +39,9 @@ class RegistrationTest extends TestCase
             'name' => 'Nouveau Joueur',
             'email' => 'nouveau.joueur@example.test',
             'account_type' => 'individual',
+            'birth_date' => '1995-04-12',
+            'level' => 3,
+            'accept_terms' => true,
             'password' => 'mot-de-passe-long-2026',
             'password_confirmation' => 'mot-de-passe-long-2026',
         ]);
@@ -54,6 +57,9 @@ class RegistrationTest extends TestCase
             'name' => 'Test User',
             'email' => 'test@example.com',
             'account_type' => 'individual',
+            'birth_date' => '1995-04-12',
+            'level' => 3,
+            'accept_terms' => true,
             'password' => 'mot-de-passe-long-2026',
             'password_confirmation' => 'mot-de-passe-long-2026',
         ]);
