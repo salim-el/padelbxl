@@ -76,14 +76,40 @@ Déjà fusionné dans `develop` :
 | `feature/invoice-pdf` | Factures et notes de crédit en PDF |
 | `feature/access-log-retention`, `feature/data-export`, `feature/cookie-notice`, `chore/club-email` | Purge du journal de la borne après trois mois ; export des données personnelles ; bandeau d'information sur les cookies ; e-mail de contact du club |
 
-Encore prévu. Dates cibles ; chaque branche est créée au moment où le travail commence.
+Fusionné le 14 novembre 2026 :
 
-| Période | Branche | Objectif |
+| Branche | Contenu |
+|---|---|
+| `bugfix/align-docs-code` | Jetons d'API révoqués après « mot de passe oublié » ; adresse d'invitation effacée à l'anonymisation ; balise noindex sur les pages privées |
+| `feature/account-reactivation` | F4 : réactivation du compte par le joueur pendant trente jours, lien signé à usage unique |
+| `feature/legal-consents` | F1 et F7 : date de naissance, niveau, parent sous 13 ans, adresses jetables refusées, versions acceptées enregistrées, nouvelle version à accepter avant de réserver |
+| `feature/close-sessions-on-password-change` | F3 : un nouveau mot de passe ferme les autres sessions |
+| `feature/exceptional-requests` | F17 et F27 : demande pour un imprévu grave, pièce privée, décision motivée, remboursement total ou partiel |
+
+## Plan jusqu'au 2 décembre 2026
+
+Rythme prévu : 10 h du lundi au jeudi, 12 h du vendredi au dimanche. Les fonctions notées 4 ou 5 dans le T03 passent d'abord. Chaque lot a sa branche, des commits par couche, ses tests, puis une fusion dans `develop`. Le temps réel de chaque lot est relevé pour vérifier l'estimation.
+
+| Jour | Branche | Objectif |
 |---|---|---|
-| 16/11 – 19/11 | `feature/accessibility-audit` | Contrôle WCAG 2.1 AA de tous les écrans, corrections |
-| 20/11 – 24/11 | `feature/stripe-payment` | Paiement réel en mode test Stripe, confirmation par notification signée (dépend du compte Stripe) |
-| 24/11 – 26/11 | `chore/deployment` | Mise en ligne de l'application pour le jury (dépend de l'hébergement) |
-| 27/11 – 30/11 | `release/0.2.0-beta` | Tests de bout en bout, documentation, étiquette `v0.2.0-beta` |
+| Dim. 15/11 | `feature/account-suspension` | F28 et F29 : motif communiqué au joueur, durée avec levée automatique, révocation, signalements, contestation examinée par un autre membre du personnel |
+| Lun. 16/11 | `feature/counter-and-guest-access` | F25 et F18 : QR code envoyé au client du comptoir, lien à usage unique pour un invité sans compte, lecture du QR à la caméra sur la borne |
+| Mar. 17/11 | `feature/profile-and-pricing` | F21 : téléphone, langue et niveau dans le profil. F24 (début) : créer et modifier les tarifs, TVA, heures creuses |
+| Mer. 18/11 | `feature/club-settings-and-staff` | F24 (fin) : horaires d'ouverture. F35 (début) : comptes du personnel et rôles |
+| Jeu. 19/11 | `feature/stripe-payment` | F9 : paiement réel en mode test Stripe, carte et Bancontact, authentification forte (dépend des clés de test) |
+| Ven. 20/11 | `feature/stripe-webhooks` | Confirmation par notification signée ; F30 : contestation bancaire, réservation gelée, compte signalé |
+| Sam. 21/11 | `chore/deployment`, `feature/accessibility-audit` | Mise en ligne pour le jury (dépend de l'hébergement) ; contrôle WCAG 2.1 AA |
+| Dim. 22/11 | `feature/store-credits`, `feature/booking-change` | F15 : avoirs déduits au paiement. F14 : déplacer une réservation |
+| Lun. 23/11 | `feature/reminders` | F16 : rappel 24 h avant ; F21 : préférences de notification ; F13 : créneau libéré proposé à la liste d'attente |
+| Mar. 24/11 | `feature/emergency-codes`, `feature/no-shows` | F19 : code de secours de la borne. F31 : absences comptées et signalées |
+| Mer. 25/11 | `feature/accounting-export`, `feature/dashboard-detail` | F33 : export mensuel pour le comptable. F34 : occupation par terrain et par heure, annulations |
+| Jeu. 26/11 | `feature/level-matching`, `feature/staff-i18n` | F11 : appel envoyé aux joueurs d'un niveau proche. F23 : écrans du personnel en trois langues |
+| Ven. 27/11 | `feature/localized-urls`, `feature/admin-content` | Adresses par langue, hreflang et plan du site (T17). F35 (fin) : textes, traductions, documents légaux, clés d'API |
+| Sam. 28/11 | — | Documents : T03, T06, T08, T09 |
+| Dim. 29/11 | — | Documents : T12, T16, T17, T18, T20, questions de la défense |
+| Lun. 30/11 | `test/end-to-end` | Tests de bout en bout des parcours principaux, corrections |
+| Mar. 01/12 | — | Marge pour les imprévus |
+| Mer. 02/12 | `release/1.0.0` | Version livrée au jury, étiquette `v1.0.0` |
 
 ## Idées à étudier après la bêta
 
