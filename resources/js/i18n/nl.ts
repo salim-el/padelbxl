@@ -422,6 +422,27 @@ const nl: Record<string, string> = {
     'version :version du :date': 'versie :version van :date',
     'J’accepte la nouvelle version.': 'Ik aanvaard de nieuwe versie.',
     Continuer: 'Doorgaan',
+    'Mes demandes': 'Mijn aanvragen',
+    'Demande exceptionnelle': 'Uitzonderlijke aanvraag',
+    'Maladie, accident ou cas de force majeure : expliquez ce qui s’est passé. Le gérant examine chaque demande et vous répond par e-mail. Une seule demande par réservation, au plus tard sept jours après le match.':
+        'Ziekte, ongeval of overmacht: leg uit wat er gebeurd is. De beheerder bekijkt elke aanvraag en antwoordt per e-mail. Eén aanvraag per reservering, uiterlijk zeven dagen na de wedstrijd.',
+    Motif: 'Reden',
+    'Pièce justificative (facultative) : PDF ou image, 5 Mo au plus': 'Bewijsstuk (optioneel): pdf of afbeelding, maximaal 5 MB',
+    'La pièce reste privée : seul le personnel du club peut l’ouvrir.': 'Het stuk blijft privé: alleen het clubpersoneel kan het openen.',
+    'Envoyer la demande': 'Aanvraag versturen',
+    'Mon compte': 'Mijn account',
+    'Mes demandes exceptionnelles': 'Mijn uitzonderlijke aanvragen',
+    'Aucune demande pour le moment. Elle s’introduit depuis une réservation payée.':
+        'Nog geen aanvraag. U dient ze in vanuit een betaalde reservering.',
+    'Introduite le :date': 'Ingediend op :date',
+    'remboursé :amount': 'terugbetaald :amount',
+    Reçue: 'Ontvangen',
+    'En examen': 'In behandeling',
+    Acceptée: 'Aanvaard',
+    'Acceptée en partie': 'Gedeeltelijk aanvaard',
+    'Acceptée en avoir': 'Aanvaard als tegoed',
+    Refusée: 'Geweigerd',
+    'Imprévu grave ? Introduire une demande exceptionnelle': 'Ernstig onvoorzien? Dien een uitzonderlijke aanvraag in',
 };
 
 export default nl;

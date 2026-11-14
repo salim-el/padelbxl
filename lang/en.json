@@ -78,5 +78,19 @@
     "Si un compte désactivé depuis moins de trente jours utilise cette adresse, un lien de réactivation vient d’y être envoyé.": "If an account deactivated less than thirty days ago uses this address, a reactivation link has just been sent to it.",
     "Votre compte est réactivé. Vous pouvez vous connecter.": "Your account is active again. You can log in.",
     "Les adresses e-mail jetables ne sont pas acceptées.": "Disposable email addresses are not accepted.",
-    "Acceptez d’abord la nouvelle version des conditions dans l’application.": "First accept the new version of the terms in the app."
+    "Acceptez d’abord la nouvelle version des conditions dans l’application.": "First accept the new version of the terms in the app.",
+    "Aucun paiement à votre nom sur cette réservation.": "No payment in your name on this booking.",
+    "Une demande s’introduit au plus tard sept jours après le match.": "A request must be filed at the latest seven days after the match.",
+    "Vous avez déjà introduit une demande pour cette réservation.": "You have already filed a request for this booking.",
+    "Votre demande est reçue. Le club vous répond par e-mail.": "Your request has been received. The club will answer by email.",
+    "Décision sur votre demande exceptionnelle": "Decision on your exceptional request",
+    "Votre demande pour la réservation du :date à :time a reçu une décision.": "Your request for the booking of :date at :time has been decided.",
+    "Elle est acceptée. Vous êtes remboursé de :amount.": "It is accepted. You are refunded :amount.",
+    "Elle est acceptée en partie. Vous êtes remboursé de :amount.": "It is partly accepted. You are refunded :amount.",
+    "Elle est refusée.": "It is rejected.",
+    "Motif : :note": "Reason: :note",
+    "Voir mes demandes": "See my requests",
+    "Ce montant dépasse ce qui reste remboursable sur ce paiement.": "This amount exceeds what can still be refunded on this payment.",
+    "Cette demande a déjà reçu une décision.": "This request has already been decided.",
+    "Le montant partiel doit être supérieur à zéro et inférieur à :max.": "The partial amount must be above zero and below :max."
 }

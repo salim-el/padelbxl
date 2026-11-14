@@ -4,18 +4,20 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, FileText, LayoutDashboard, Mail, QrCode, ScrollText, Shield, Store, Ticket, Users } from 'lucide-react';
+import { CalendarDays, FileText, Inbox, LayoutDashboard, LifeBuoy, Mail, QrCode, ScrollText, Shield, Store, Ticket, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
     { title: 'Planning', url: '/planning', icon: CalendarDays },
     { title: 'Mes réservations', url: '/bookings', icon: Ticket },
     { title: 'Parties ouvertes', url: '/open-matches', icon: Users },
+    { title: 'Mes demandes', url: '/disputes', icon: LifeBuoy },
 ];
 
 const staffNavItems: NavItem[] = [
     { title: 'Tableau de bord', url: '/admin', icon: LayoutDashboard },
     { title: 'Comptoir', url: '/admin/counter', icon: Store },
+    { title: 'Demandes', url: '/admin/disputes', icon: Inbox },
     { title: 'Journal', url: '/admin/journal', icon: ScrollText },
     { title: 'Borne d’accès', url: '/kiosk', icon: QrCode },
 ];
