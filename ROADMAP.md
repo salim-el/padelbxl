@@ -90,11 +90,11 @@ Fusionné le 14 novembre 2026 :
 
 Rythme prévu : 7 h par jour, environ 10 commits par lot. Les fonctions notées 4 ou 5 dans le T03 passent d'abord. Chaque lot a sa branche, des commits par couche, ses tests, puis une fusion dans `develop`. Le temps réel de chaque lot est relevé dans `VERIFICATION/estimation_temps_codage.md`.
 
-Déjà fusionnés : F4, F1/F7, F3, F17/F27, F28/F29, F25/F18, F21/F24, F24 horaires, F35 comptes du personnel et rôles (14/11).
+Déjà fusionnés : F4, F1/F7, F3, F17/F27, F28/F29, F25/F18, F21/F24, F24 horaires, F35 comptes du personnel et rôles, F11 appel aux joueurs d'un niveau proche (14/11, en avance d'un jour).
 
 | Jour | Branche | Objectif |
 |---|---|---|
-| Dim. 15/11 | `feature/level-matching`, `bugfix/refund-gaps` | F11 : appel envoyé aux joueurs d'un niveau proche. Trous relevés par l'audit du 14/11 : remboursement partiel puis annulation, demande acceptée avant le match, annulation par le club, réservations d'un compte suspendu, invités qui ont payé, notes de crédit multiples, jetons d'API à la désactivation |
+| Dim. 15/11 | `bugfix/refund-gaps` | Trous relevés par l'audit du 14/11 : remboursement partiel puis annulation, demande acceptée avant le match, annulation par le club, réservations d'un compte suspendu, invités qui ont payé, notes de crédit multiples, jetons d'API à la désactivation |
 | Lun. 16/11 | `feature/staff-i18n`, `chore/docker` | F23 : écrans du personnel en trois langues. Fichier Docker |
 | Mar. 17/11 – mer. 18/11 | `feature/store-credits` | F15 : avoirs déduits au paiement |
 | Mer. 18/11 – jeu. 19/11 | `feature/booking-change`, `feature/waitlist` | F14 : déplacer une réservation. F13 : créneau libéré proposé à la liste d'attente |
