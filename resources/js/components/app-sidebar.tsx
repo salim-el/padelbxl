@@ -17,6 +17,7 @@ import {
     Shield,
     Store,
     Ticket,
+    UserCog,
     Users,
 } from 'lucide-react';
 import AppLogo from './app-logo';
@@ -37,6 +38,9 @@ const staffNavItems: NavItem[] = [
     { title: 'Borne d’accès', url: '/kiosk', icon: QrCode },
 ];
 
+// F35 : réservé à l'administrateur.
+const adminNavItems: NavItem[] = [{ title: 'Personnel', url: '/admin/staff', icon: UserCog }];
+
 // Ouvertes dans un nouvel onglet (NavFooter) : on garde l'écran en cours.
 const footerNavItems: NavItem[] = [
     { title: 'Conditions générales', url: '/conditions-generales', icon: FileText },
@@ -47,6 +51,7 @@ const footerNavItems: NavItem[] = [
 export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
     const isStaff = ['manager', 'admin'].includes(String(auth.user?.role));
+    const items = [...mainNavItems, ...(isStaff ? staffNavItems : []), ...(auth.user?.role === 'admin' ? adminNavItems : [])];
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -63,7 +68,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={isStaff ? [...mainNavItems, ...staffNavItems] : mainNavItems} />
+                <NavMain items={items} />
             </SidebarContent>
 
             <SidebarFooter>

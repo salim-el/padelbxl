@@ -39,6 +39,8 @@ class DatabaseSeeder extends Seeder
             User::create(['name' => $name, 'email' => $email, 'password' => Hash::make(self::DEMO_PASSWORD), 'email_verified_at' => $verified, 'role' => 'player', 'status' => $status]);
         }
         User::create(['name' => 'Marc Dumont', 'email' => 'marc.dumont@example.test', 'password' => Hash::make(self::DEMO_PASSWORD), 'email_verified_at' => now(), 'role' => 'manager']);
+        // F35 : l'administrateur gère le personnel ; il n'utilise pas l'espace gérant au quotidien.
+        User::create(['name' => 'Claire Vermeulen', 'email' => 'claire.vermeulen@example.test', 'password' => Hash::make(self::DEMO_PASSWORD), 'email_verified_at' => now(), 'role' => 'admin']);
         self::legalDocuments();
         User::all()->each(fn (User $u) => app(LegalConsents::class)->accept($u, null));
     }

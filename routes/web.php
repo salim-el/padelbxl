@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminAppealController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDisputeController;
+use App\Http\Controllers\AdminStaffController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CounterController;
@@ -76,6 +77,10 @@ Route::middleware(['auth', 'verified', 'consented'])->group(function () {
     Route::post('kiosk', [KioskController::class, 'validateToken'])->middleware('throttle:30,1')->name('kiosk.validate');
     Route::get('admin', [AdminController::class, 'index'])->name('admin');
     Route::get('admin/journal', [AdminController::class, 'journal'])->name('admin.journal');
+    Route::get('admin/staff', [AdminStaffController::class, 'index'])->name('admin.staff.index');
+    Route::post('admin/staff', [AdminStaffController::class, 'store'])->middleware('throttle:10,1')->name('admin.staff.store');
+    Route::patch('admin/staff/{user}', [AdminStaffController::class, 'update'])->name('admin.staff.update');
+    Route::post('admin/staff/{user}/resend', [AdminStaffController::class, 'resend'])->middleware('throttle:6,1')->name('admin.staff.resend');
     Route::get('admin/counter', [CounterController::class, 'create'])->name('admin.counter');
     Route::post('admin/counter', [CounterController::class, 'store'])->middleware('throttle:30,1')->name('admin.counter.store');
     Route::get('admin/counter/{booking}', [CounterController::class, 'show'])->name('admin.counter.show');

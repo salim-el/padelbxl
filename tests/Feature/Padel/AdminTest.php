@@ -50,7 +50,7 @@ class AdminTest extends TestCase
             ->where('stats.revenue_today_cents', 4800)
             ->has('today', 1)
             ->where('today.0.player', 'Lucas Martin')
-            ->has('users.data', 5));
+            ->has('users.data', 6));
     }
 
     public function test_a_suspended_player_can_no_longer_book(): void

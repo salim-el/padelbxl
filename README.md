@@ -50,6 +50,7 @@ php artisan db:seed --class=DemoSeeder
 |---|---|
 | lucas.martin@example.test | Joueur |
 | marc.dumont@example.test | Gérant, accès à la borne |
+| claire.vermeulen@example.test | Administratrice : comptes du personnel et rôles |
 | sarah.janssens@example.test, mehdi.el.amrani@example.test, lotte.wouters@example.test… | Joueurs ajoutés par `DemoSeeder` |
 | pieter.claes@example.test | Client entreprise (`DemoSeeder`), factures avec numéro de TVA |
 
