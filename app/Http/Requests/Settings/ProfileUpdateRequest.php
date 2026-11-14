@@ -28,6 +28,11 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
 
+            // F21 : téléphone facultatif, langue de l'interface et des e-mails, niveau de jeu pour les appels (F11).
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^\+?[0-9 .\/-]{8,20}$/'],
+            'locale' => ['sometimes', 'in:fr,nl,en'],
+            'level' => ['nullable', 'numeric', 'between:1,7'],
+
             // Changer d'adresse, c'est changer l'identifiant du compte : on redemande le mot de passe.
             'current_password' => [
                 Rule::requiredIf(fn () => mb_strtolower((string) $this->input('email')) !== mb_strtolower($this->user()->email)),

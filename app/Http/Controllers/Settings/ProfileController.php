@@ -30,7 +30,12 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->safe()->only(['name', 'email']));
+        $request->user()->fill($request->safe()->only(['name', 'email', 'level']));
+        $request->user()->forceFill($request->safe()->only(['phone', 'locale']));
+        // La langue choisie vaut tout de suite pour l'interface.
+        if ($request->has('locale')) {
+            $request->session()->put('locale', $request->validated('locale'));
+        }
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
