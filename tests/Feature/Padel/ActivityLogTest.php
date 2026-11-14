@@ -34,7 +34,7 @@ class ActivityLogTest extends TestCase
 
     public function test_the_manager_actions_on_accounts_are_logged_with_their_author(): void
     {
-        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend");
+        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend", ['reason' => 'Trois absences sans prévenir ce mois-ci.', 'days' => 7]);
         $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/reactivate");
 
         $this->assertSame(['account-suspended', 'account-reactivated'], Activity::inLog('staff')->orderBy('id')->pluck('event')->all());
@@ -101,7 +101,7 @@ class ActivityLogTest extends TestCase
     {
         $rule = PricingRule::where('name', 'Heures pleines')->firstOrFail();
         $old = $rule->price_cents;
-        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend");
+        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend", ['reason' => 'Trois absences sans prévenir ce mois-ci.', 'days' => 7]);
         $this->actingAs($this->marc)->patch("/admin/pricing-rules/{$rule->id}", ['price_cents' => $old + 500]);
 
         $this->actingAs($this->marc)->get('/admin/journal')->assertOk()->assertInertia(fn (Assert $page) => $page

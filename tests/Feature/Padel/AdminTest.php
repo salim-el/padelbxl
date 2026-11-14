@@ -55,7 +55,7 @@ class AdminTest extends TestCase
 
     public function test_a_suspended_player_can_no_longer_book(): void
     {
-        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend")->assertRedirect();
+        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend", ['reason' => 'Trois absences sans prévenir ce mois-ci.', 'days' => 7])->assertRedirect();
         $this->assertSame('suspended', $this->lucas->refresh()->status);
 
         $this->expectException(BookingException::class);
@@ -66,7 +66,7 @@ class AdminTest extends TestCase
     {
         $service = app(BookingService::class);
         $booking = $service->hold($this->lucas, Court::where('name', 'Terrain 1')->first(), Clock::slotStart('2026-10-23', '18:00'));
-        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend");
+        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend", ['reason' => 'Trois absences sans prévenir ce mois-ci.', 'days' => 7]);
 
         $this->expectException(BookingException::class);
         $service->confirmPayment($booking, $this->lucas->refresh());
@@ -74,7 +74,7 @@ class AdminTest extends TestCase
 
     public function test_a_suspended_player_is_logged_out_on_the_next_request(): void
     {
-        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend");
+        $this->actingAs($this->marc)->post("/admin/users/{$this->lucas->id}/suspend", ['reason' => 'Trois absences sans prévenir ce mois-ci.', 'days' => 7]);
 
         $this->actingAs($this->lucas->refresh())->get('/bookings')->assertRedirect('/login')->assertSessionHasErrors('email');
         $this->assertGuest();
@@ -98,7 +98,7 @@ class AdminTest extends TestCase
     public function test_staff_accounts_cannot_be_suspended_and_players_cannot_suspend(): void
     {
         $this->actingAs($this->marc)->post("/admin/users/{$this->marc->id}/suspend")->assertForbidden();
-        $this->actingAs($this->lucas)->post("/admin/users/{$this->lucas->id}/suspend")->assertForbidden();
+        $this->actingAs($this->lucas)->post("/admin/users/{$this->lucas->id}/suspend", ['reason' => 'Trois absences sans prévenir ce mois-ci.', 'days' => 7])->assertForbidden();
         $this->assertSame('active', $this->marc->refresh()->status);
     }
 }
