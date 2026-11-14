@@ -126,5 +126,7 @@
     "Cette personne fait déjà partie du personnel.": "This person is already on the staff.",
     "Ce compte est désactivé ou suspendu : réglez d’abord sa situation.": "This account is deactivated or suspended: sort that out first.",
     "Vous ne pouvez pas changer votre propre rôle.": "You cannot change your own role.",
-    "Ce compte ne fait pas partie du personnel.": "This account is not on the staff."
+    "Ce compte ne fait pas partie du personnel.": "This account is not on the staff.",
+    "Il manque :count joueur(s) pour une partie de padel": ":count player(s) needed for a padel match",
+    "Une partie de niveau :level cherche :count joueur(s) sur le :court le :date à :time.": "A level :level match needs :count player(s) on :court on :date at :time."
 }

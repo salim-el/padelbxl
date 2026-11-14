@@ -36,6 +36,8 @@ class OpenMatchController extends Controller
                     'date' => $start->locale(app()->getLocale())->isoFormat(__('dddd D MMMM YYYY')),
                     'time' => $start->format('H:i').' – '.Clock::local($b->ends_at)->format('H:i'),
                     'share_cents' => $open->first()->share_cents,
+                    // F11 : niveau demandé dans l'appel ; nul pour une partie ouverte avant cette fonction.
+                    'level' => $b->level_min === null ? null : ($b->level_min === $b->level_max ? (string) $b->level_min : $b->level_min.'–'.$b->level_max),
                     'free' => $open->whereNull('user_id')->where('status', 'invited')->count(),
                     'joined' => $b->players->contains('user_id', $user->id),
                     'waiting' => in_array($b->id, $waiting, true),

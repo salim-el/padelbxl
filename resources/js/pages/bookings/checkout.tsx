@@ -23,19 +23,23 @@ type Booking = {
 
 type Product = { id: number; name: string; kind: 'rental' | 'sale'; price_cents: number };
 
-export default function Checkout({ booking, products }: { booking: Booking; products: Product[] }) {
+export default function Checkout({ booking, products, my_level }: { booking: Booking; products: Product[]; my_level: number | null }) {
     const t = useT();
     const { data, setData, post, processing, errors } = useForm<{
         accept_terms: boolean;
         items: Record<number, number>;
         guests: string[];
         open_spots: number;
+        level_min: number;
+        level_max: number;
         accept_guarantee: boolean;
     }>({
         accept_terms: false,
         items: {},
         guests: ['', '', ''],
         open_spots: 0,
+        level_min: Math.max(1, (my_level ?? 4) - 1),
+        level_max: Math.min(7, (my_level ?? 4) + 1),
         accept_guarantee: false,
     });
     const pageErrors = usePage<{ errors: Record<string, string> }>().props.errors;
@@ -206,6 +210,50 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                                     </button>
                                 </span>
                             </div>
+                            {data.open_spots > 0 && (
+                                <fieldset className="bg-card flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm">
+                                    <legend className="sr-only">{t('Niveau demandé')}</legend>
+                                    <span className="font-semibold">{t('Niveau demandé')}</span>
+                                    <label className="flex items-center gap-1">
+                                        {t('de')}
+                                        <select
+                                            value={data.level_min}
+                                            onChange={(e) => setData('level_min', Number(e.target.value))}
+                                            className="rounded-md border px-2 py-1"
+                                        >
+                                            {[1, 2, 3, 4, 5, 6, 7].map((l) => (
+                                                <option key={l} value={l}>
+                                                    {l}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <label className="flex items-center gap-1">
+                                        {t('à')}
+                                        <select
+                                            value={data.level_max}
+                                            onChange={(e) => setData('level_max', Number(e.target.value))}
+                                            className="rounded-md border px-2 py-1"
+                                        >
+                                            {[1, 2, 3, 4, 5, 6, 7]
+                                                .filter((l) => l >= data.level_min)
+                                                .map((l) => (
+                                                    <option key={l} value={l}>
+                                                        {l}
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </label>
+                                    <span className="text-muted-foreground w-full text-xs">
+                                        {t('Les joueurs de ce niveau, libres à cette heure, reçoivent un e-mail.')}
+                                    </span>
+                                    {(pageErrors.level_min || pageErrors.level_max) && (
+                                        <span role="alert" className="w-full text-[#9E2833]">
+                                            {pageErrors.level_min ?? pageErrors.level_max}
+                                        </span>
+                                    )}
+                                </fieldset>
+                            )}
                             {partners > 3 && (
                                 <p className="text-sm text-[#9E2833]">{t('Invitez au plus trois autres joueurs, sans vous compter.')}</p>
                             )}

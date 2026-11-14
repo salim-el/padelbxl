@@ -457,6 +457,11 @@ const en: Record<string, string> = {
         'This booking is cancelled: this QR code no longer gives access to the court.',
     'Téléphone (facultatif)': 'Phone (optional)',
     Langue: 'Language',
+    'Niveau demandé': 'Level wanted',
+    de: 'from',
+    à: 'to',
+    'Les joueurs de ce niveau, libres à cette heure, reçoivent un e-mail.': 'Players at this level who are free at this time get an email.',
+    'Niveau :level': 'Level :level',
 };
 
 export default en;

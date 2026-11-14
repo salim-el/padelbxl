@@ -459,6 +459,11 @@ const nl: Record<string, string> = {
         'Deze reservering is geannuleerd: deze QR-code geeft geen toegang meer tot het terrein.',
     'Téléphone (facultatif)': 'Telefoon (optioneel)',
     Langue: 'Taal',
+    'Niveau demandé': 'Gevraagd niveau',
+    de: 'van',
+    à: 'tot',
+    'Les joueurs de ce niveau, libres à cette heure, reçoivent un e-mail.': 'Spelers van dit niveau die op dit uur vrij zijn, krijgen een e-mail.',
+    'Niveau :level': 'Niveau :level',
 };
 
 export default nl;
