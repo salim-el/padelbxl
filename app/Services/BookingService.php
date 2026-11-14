@@ -450,6 +450,8 @@ class BookingService
      */
     public function refund(Payment $payment, int $amount, string $note, string $code): CreditNote
     {
+        // Verrou sur le paiement : deux remboursements simultanés ne peuvent pas dépasser le montant payé.
+        $payment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
         $refundable = $payment->amount_cents - (int) Refund::where('payment_id', $payment->id)->where('status', '<>', 'failed')->sum('amount_cents');
         if ($amount <= 0 || $amount > $refundable) {
             throw new BookingException(__('Ce montant dépasse ce qui reste remboursable sur ce paiement.'));
