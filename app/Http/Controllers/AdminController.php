@@ -51,10 +51,14 @@ class AdminController extends Controller
             ])->all(),
             'search' => $search,
             'courts' => Court::orderBy('id')->get(['id', 'name'])->all(),
-            'rules' => PricingRule::orderBy('start_time')->get()->map(fn (PricingRule $r) => [
-                'id' => $r->id, 'name' => $r->name, 'start' => substr($r->start_time, 0, 5), 'end' => substr($r->end_time, 0, 5),
-                'price_cents' => $r->price_cents,
-            ])->all(),
+            // Tarifs en cours et à venir ; ceux qui sont clos restent en base pour l'historique des prix.
+            'rules' => PricingRule::where(fn ($q) => $q->whereNull('valid_until')->orWhereDate('valid_until', '>=', today()))
+                ->orderBy('valid_from')->orderBy('start_time')->get()->map(fn (PricingRule $r) => [
+                    'id' => $r->id, 'name' => $r->name, 'start' => substr($r->start_time, 0, 5), 'end' => substr($r->end_time, 0, 5),
+                    'price_cents' => $r->price_cents, 'vat_rate' => (float) $r->vat_rate,
+                    'valid_from' => $r->valid_from->format('d/m/Y'), 'valid_until' => $r->valid_until?->format('d/m/Y'),
+                    'upcoming' => $r->valid_from->isFuture(),
+                ])->all(),
             'closures' => CourtClosure::with('court')->where('ends_at', '>', now())->orderBy('starts_at')->get()->map(fn (CourtClosure $c) => [
                 'id' => $c->id, 'court' => $c->court->name, 'reason' => $c->reason,
                 'from' => Clock::local($c->starts_at)->format('d/m/Y H:i'), 'to' => Clock::local($c->ends_at)->format('d/m/Y H:i'),
@@ -179,6 +183,45 @@ class AdminController extends Controller
             ->withProperties(['old_cents' => $old, 'new_cents' => $rule->price_cents])->log('Tarif modifié');
 
         return back()->with('success', "Tarif « {$rule->name} » mis à jour.");
+    }
+
+    /**
+     * F24 : nouveau tarif, tout de suite ou à une date future (heures creuses, nouvelle saison).
+     * Le tarif le plus récent l'emporte sur les mêmes heures ; deux tarifs qui démarrent le même jour ne se chevauchent pas.
+     */
+    public function storePricingRule(Request $request): RedirectResponse
+    {
+        $this->ensureStaff($request);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:60'],
+            'start_time' => ['required', 'date_format:H:i', 'after_or_equal:09:00'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time', 'before_or_equal:23:00'],
+            'price_cents' => ['required', 'integer', 'min:100', 'max:100000'],
+            // 6 % : accès aux installations sportives ; 21 % : par exemple un cours vendu seul (circulaire 2022/C/118).
+            'vat_rate' => ['required', 'in:6,21'],
+            'valid_from' => ['required', 'date', 'after_or_equal:today'],
+        ]);
+        $overlap = PricingRule::whereDate('valid_from', $data['valid_from'])
+            ->where('start_time', '<', $data['end_time'].':00')->where('end_time', '>', $data['start_time'].':00')->exists();
+        if ($overlap) {
+            return back()->withErrors(['pricing' => 'Un autre tarif commence le même jour sur ces heures.']);
+        }
+        $rule = PricingRule::create($data);
+        activity('staff')->performedOn($rule)->event('price-rule-created')
+            ->withProperties(['price_cents' => $rule->price_cents, 'vat_rate' => $data['vat_rate'], 'valid_from' => $data['valid_from']])->log('Tarif créé');
+
+        return back()->with('success', "Tarif « {$rule->name} » enregistré.");
+    }
+
+    /** F24 : clôturer un tarif à une date ; les réservations déjà payées gardent leur prix. */
+    public function closePricingRule(Request $request, PricingRule $rule): RedirectResponse
+    {
+        $this->ensureStaff($request);
+        $data = $request->validate(['valid_until' => ['required', 'date', 'after_or_equal:today', 'after_or_equal:'.$rule->valid_from->toDateString()]]);
+        $rule->update($data);
+        activity('staff')->performedOn($rule)->event('price-rule-closed')->withProperties($data)->log('Tarif clôturé');
+
+        return back()->with('success', "Tarif « {$rule->name} » valable jusqu'au ".CarbonImmutable::parse($data['valid_until'])->format('d/m/Y').'.');
     }
 
     public function storeClosure(Request $request): RedirectResponse
