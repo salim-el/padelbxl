@@ -113,5 +113,18 @@
     ":court le :date à :time.": ":court on :date at :time.",
     "Le lien ci-dessous affiche votre QR code personnel. Présentez-le à la borne, à partir de quinze minutes avant le début.": "The link below shows your personal QR code. Show it at the access terminal, from fifteen minutes before the start.",
     "Afficher mon QR code": "Show my QR code",
-    "Ce lien est personnel. Ne le transférez pas : le QR code ne sert qu’une fois.": "This link is personal. Do not forward it: the QR code works only once."
+    "Ce lien est personnel. Ne le transférez pas : le QR code ne sert qu’une fois.": "This link is personal. Do not forward it: the QR code works only once.",
+    "Votre accès au personnel de PadelBxl": "Your PadelBxl staff access",
+    "Vous avez maintenant le rôle « :role » au club.": "You now have the role “:role” at the club.",
+    "Administrateur": "Administrator",
+    "Gérant": "Manager",
+    "À la première connexion, vous activerez la double authentification.": "When you first sign in, you will turn on two-factor authentication.",
+    "Choisir mon mot de passe": "Choose my password",
+    "Ce lien expire dans :count minutes. L’administrateur peut en renvoyer un.": "This link expires in :count minutes. The administrator can send a new one.",
+    "Ouvrir l’espace du personnel": "Open the staff area",
+    "Cette adresse appartient à un compte révoqué.": "This address belongs to a revoked account.",
+    "Cette personne fait déjà partie du personnel.": "This person is already on the staff.",
+    "Ce compte est désactivé ou suspendu : réglez d’abord sa situation.": "This account is deactivated or suspended: sort that out first.",
+    "Vous ne pouvez pas changer votre propre rôle.": "You cannot change your own role.",
+    "Ce compte ne fait pas partie du personnel.": "This account is not on the staff."
 }
