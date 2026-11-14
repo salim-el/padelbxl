@@ -92,5 +92,21 @@
     "Voir mes demandes": "See my requests",
     "Ce montant dépasse ce qui reste remboursable sur ce paiement.": "This amount exceeds what can still be refunded on this payment.",
     "Cette demande a déjà reçu une décision.": "This request has already been decided.",
-    "Le montant partiel doit être supérieur à zéro et inférieur à :max.": "The partial amount must be above zero and below :max."
+    "Le montant partiel doit être supérieur à zéro et inférieur à :max.": "The partial amount must be above zero and below :max.",
+    "Votre compte PadelBxl est suspendu": "Your PadelBxl account is suspended",
+    "Le club a suspendu votre compte. Vous ne pouvez plus vous connecter ni réserver.": "The club has suspended your account. You can no longer log in or book.",
+    "La suspension prend fin le :date.": "The suspension ends on :date.",
+    "La suspension dure jusqu’à une nouvelle décision du club.": "The suspension lasts until a new decision of the club.",
+    "Contester la suspension": "Contest the suspension",
+    "Une autre personne que celle qui a suspendu votre compte examinera votre réponse.": "Someone other than the person who suspended your account will review your answer.",
+    "Votre compte PadelBxl est révoqué": "Your PadelBxl account is revoked",
+    "Le club a révoqué votre compte de façon définitive.": "The club has permanently revoked your account.",
+    "Vos factures restent conservées comme la loi l’impose. Pour toute question, répondez à cet e-mail.": "Your invoices are kept as the law requires. Any question? Reply to this email.",
+    "Décision sur votre contestation": "Decision on your appeal",
+    "Votre contestation est acceptée. Votre compte est de nouveau actif.": "Your appeal is accepted. Your account is active again.",
+    "Votre contestation est refusée. La suspension continue.": "Your appeal is rejected. The suspension continues.",
+    "Votre contestation est reçue. Le club vous répond par e-mail.": "Your appeal has been received. The club will answer by email.",
+    "Cette suspension ne peut plus être contestée.": "This suspension can no longer be contested.",
+    "Vous avez déjà contesté cette suspension.": "You have already contested this suspension.",
+    "Cette adresse ne peut pas être utilisée pour créer un compte.": "This address cannot be used to create an account."
 }

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BookingException;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClosure;
 use App\Models\PricingRule;
 use App\Models\User;
+use App\Services\AccountStatusService;
 use App\Services\BookingService;
 use App\Services\Clock;
 use Carbon\CarbonImmutable;
@@ -120,22 +122,42 @@ class AdminController extends Controller
         };
     }
 
-    public function suspend(Request $request, User $user): RedirectResponse
+    /** F28 : suspension motivée, pour une durée fixe ou jusqu'à nouvelle décision. Le joueur reçoit le motif. */
+    public function suspend(Request $request, User $user, AccountStatusService $accounts): RedirectResponse
     {
         $this->ensurePlayer($request, $user);
-        $user->forceFill(['status' => 'suspended'])->save();
-        activity('staff')->performedOn($user)->event('account-suspended')->log('Compte suspendu');
+        abort_unless($user->status === 'active', 422);
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:10', 'max:1000'],
+            'days' => ['nullable', 'integer', 'in:1,3,7,14,30,90'],
+        ]);
+        $accounts->suspend($user, $request->user(), $data['reason'], $data['days'] ?? null);
 
-        return back()->with('success', "Le compte de {$user->name} est suspendu. Il ne peut plus réserver.");
+        return back()->with('success', "Le compte de {$user->name} est suspendu. Le motif lui est envoyé par e-mail.");
     }
 
-    public function reactivate(Request $request, User $user): RedirectResponse
+    public function reactivate(Request $request, User $user, AccountStatusService $accounts): RedirectResponse
     {
         $this->ensurePlayer($request, $user);
-        $user->forceFill(['status' => 'active', 'suspended_until' => null])->save();
-        activity('staff')->performedOn($user)->event('account-reactivated')->log('Compte réactivé');
+        $data = $request->validate(['reason' => ['nullable', 'string', 'max:1000']]);
+        try {
+            $accounts->reactivate($user, $request->user(), $data['reason'] ?? 'Réactivé par le personnel.');
+        } catch (BookingException $e) {
+            return back()->withErrors(['account' => $e->getMessage()]);
+        }
 
         return back()->with('success', "Le compte de {$user->name} est réactivé.");
+    }
+
+    /** F28 : révocation définitive pour fraude, après vérification. */
+    public function revoke(Request $request, User $user, AccountStatusService $accounts): RedirectResponse
+    {
+        $this->ensurePlayer($request, $user);
+        abort_if($user->status === 'revoked', 422);
+        $data = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:1000']]);
+        $accounts->revoke($user, $request->user(), $data['reason']);
+
+        return back()->with('success', "Le compte de {$user->name} est révoqué.");
     }
 
     // Chiffre d'affaires TTC encaissé : factures émises moins notes de crédit sur la période.

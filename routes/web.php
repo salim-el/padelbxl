@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminAppealController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDisputeController;
 use App\Http\Controllers\BookingController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\LegalAcceptanceController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\OpenMatchController;
 use App\Http\Controllers\PlanningController;
+use App\Http\Controllers\SuspensionAppealController;
 use App\Models\PricingRule;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -38,6 +40,9 @@ Route::get('confidentialite', fn () => Inertia::render('legal/privacy', ['club' 
 Route::get('contact', [ContactController::class, 'create'])->name('contact');
 Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:3,1')->name('contact.store');
 Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
+// F29 : le joueur suspendu ne se connecte plus ; il conteste par le lien signé reçu avec le motif.
+Route::get('account/appeal/{suspension}', [SuspensionAppealController::class, 'create'])->middleware('signed')->name('account.appeal');
+Route::post('account/appeal/{suspension}', [SuspensionAppealController::class, 'store'])->middleware(['signed', 'throttle:5,1'])->name('account.appeal.store');
 
 // F7 : la nouvelle version des documents est acceptée avant toute réservation.
 Route::middleware('auth')->group(function () {
@@ -74,6 +79,9 @@ Route::middleware(['auth', 'verified', 'consented'])->group(function () {
     Route::post('admin/counter/{booking}/cancel', [CounterController::class, 'cancel'])->name('admin.counter.cancel');
     Route::post('admin/users/{user}/suspend', [AdminController::class, 'suspend'])->name('admin.users.suspend');
     Route::post('admin/users/{user}/reactivate', [AdminController::class, 'reactivate'])->name('admin.users.reactivate');
+    Route::post('admin/users/{user}/revoke', [AdminController::class, 'revoke'])->name('admin.users.revoke');
+    Route::get('admin/appeals', [AdminAppealController::class, 'index'])->name('admin.appeals.index');
+    Route::post('admin/appeals/{appeal}/decision', [AdminAppealController::class, 'decide'])->name('admin.appeals.decide');
     Route::patch('admin/pricing-rules/{rule}', [AdminController::class, 'updatePrice'])->name('admin.pricing-rules.update');
     Route::post('admin/closures', [AdminController::class, 'storeClosure'])->name('admin.closures.store');
     // F17 et F27 : demandes exceptionnelles et décisions.
