@@ -401,6 +401,12 @@ const en: Record<string, string> = {
         'You can deactivate your account. It is anonymised thirty days later, or right away if you ask.',
     'Effacer mes données tout de suite. Sans cette case, elles le sont trente jours plus tard.':
         'Erase my data right away. Without this box, it is erased thirty days later.',
+    'Réactiver mon compte': 'Reactivate my account',
+    'Vous avez désactivé votre compte il y a moins de trente jours ? Recevez un lien pour le retrouver avec son historique.':
+        'Did you deactivate your account less than thirty days ago? Get a link to recover it with its history.',
+    'Envoyer le lien de réactivation': 'Send the reactivation link',
+    'Compte désactivé ?': 'Account deactivated?',
+    'Le réactiver': 'Reactivate it',
 };
 
 export default en;

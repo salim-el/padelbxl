@@ -402,6 +402,12 @@ const nl: Record<string, string> = {
         'Je kunt je account uitschakelen. Het wordt dertig dagen later geanonimiseerd, of meteen als je dat vraagt.',
     'Effacer mes données tout de suite. Sans cette case, elles le sont trente jours plus tard.':
         'Mijn gegevens meteen wissen. Zonder dit vakje gebeurt dat dertig dagen later.',
+    'Réactiver mon compte': 'Mijn account heractiveren',
+    'Vous avez désactivé votre compte il y a moins de trente jours ? Recevez un lien pour le retrouver avec son historique.':
+        'Hebt u uw account minder dan dertig dagen geleden gedeactiveerd? Ontvang een link om het terug te krijgen, met de geschiedenis.',
+    'Envoyer le lien de réactivation': 'Heractiveringslink versturen',
+    'Compte désactivé ?': 'Account gedeactiveerd?',
+    'Le réactiver': 'Heractiveren',
 };
 
 export default nl;

@@ -1,0 +1,68 @@
+import { Head, useForm } from '@inertiajs/react';
+import { LoaderCircle } from 'lucide-react';
+import { FormEventHandler } from 'react';
+
+import InputError from '@/components/input-error';
+import TextLink from '@/components/text-link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import AuthLayout from '@/layouts/auth-layout';
+import { useT } from '@/lib/i18n';
+
+// F4 : le joueur qui a désactivé son compte depuis moins de trente jours reçoit un lien pour le retrouver.
+export default function ReactivateAccount({ status }: { status?: string }) {
+    const t = useT();
+    const { data, setData, post, processing, errors } = useForm({ email: '' });
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        post(route('account.reactivation.send'));
+    };
+
+    return (
+        <AuthLayout
+            title={t('Réactiver mon compte')}
+            description={t('Vous avez désactivé votre compte il y a moins de trente jours ? Recevez un lien pour le retrouver avec son historique.')}
+        >
+            <Head title={t('Réactiver mon compte')} />
+
+            {status && (
+                <div role="status" className="mb-4 text-center text-sm font-medium text-green-600">
+                    {status}
+                </div>
+            )}
+
+            <div className="space-y-6">
+                <form onSubmit={submit}>
+                    <div className="grid gap-2">
+                        <Label htmlFor="email">{t('Adresse e-mail')}</Label>
+                        <Input
+                            id="email"
+                            type="email"
+                            name="email"
+                            autoComplete="email"
+                            value={data.email}
+                            autoFocus
+                            onChange={(e) => setData('email', e.target.value)}
+                            placeholder={t('prenom.nom@exemple.be')}
+                        />
+                        <InputError message={errors.email} />
+                    </div>
+
+                    <div className="my-6 flex items-center justify-start">
+                        <Button className="w-full" disabled={processing}>
+                            {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                            {t('Envoyer le lien de réactivation')}
+                        </Button>
+                    </div>
+                </form>
+
+                <div className="text-muted-foreground space-x-1 text-center text-sm">
+                    <span>{t('Ou revenir à la')}</span>
+                    <TextLink href={route('login')}>{t('connexion')}</TextLink>
+                </div>
+            </div>
+        </AuthLayout>
+    );
+}
