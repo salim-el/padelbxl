@@ -10,6 +10,7 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Services\BookingService;
+use App\Services\MatchCallService;
 use App\Services\Clock;
 use App\Services\InvoicePdf;
 use App\Services\UblInvoice;
@@ -65,7 +66,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function pay(Request $request, Booking $booking): RedirectResponse
+    public function pay(Request $request, Booking $booking, MatchCallService $calls): RedirectResponse
     {
         $this->ensureOwner($request, $booking);
         $data = $request->validate([
@@ -73,6 +74,9 @@ class BookingController extends Controller
             'items' => ['nullable', 'array'], 'items.*' => ['integer', 'min:0', 'max:4'],
             'guests' => ['nullable', 'array', 'max:'.(BookingService::MAX_PLAYERS - 1)], 'guests.*' => ['nullable', 'email:rfc', 'max:255', 'distinct:ignore_case'],
             'open_spots' => ['nullable', 'integer', 'min:0', 'max:'.(BookingService::MAX_PLAYERS - 1)],
+            // F11 : niveau demandé dans l'appel, obligatoire dès qu'une place est ouverte au club.
+            'level_min' => ['required_unless:open_spots,0,null', 'nullable', 'integer', 'between:1,7'],
+            'level_max' => ['required_unless:open_spots,0,null', 'nullable', 'integer', 'between:1,7', 'gte:level_min'],
         ]);
         $guests = array_values(array_filter($data['guests'] ?? []));
         $open = (int) ($data['open_spots'] ?? 0);
@@ -84,6 +88,11 @@ class BookingController extends Controller
             $this->bookings->confirmPayment($booking, $request->user(), $data['items'] ?? [], 'card', $guests, $open);
         } catch (BookingException $e) {
             return back()->withErrors(['booking' => $e->getMessage()]);
+        }
+
+        // Après le paiement : un e-mail qui échoue ne doit pas annuler une réservation payée.
+        if ($open > 0) {
+            $calls->publish($booking, (int) $data['level_min'], (int) $data['level_max']);
         }
 
         return to_route('bookings.show', $booking)->with('success', $guests === []
