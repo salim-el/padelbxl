@@ -4,7 +4,7 @@ import { StatusBadge } from '@/components/status-badge';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
 import { euros, SHARE_LABELS, ucfirst } from '@/lib/money';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { CalendarDays, Clock, FileText, RotateCcw, Users } from 'lucide-react';
 
 type Booking = {
@@ -159,6 +159,11 @@ export default function Show({ booking, qr, qr_window, items, invoices, players 
                     >
                         <RotateCcw className="size-4" aria-hidden /> {t('Revanche : même terrain, même heure, la semaine prochaine')}
                     </button>
+                )}
+                {['confirmed', 'used', 'missed', 'cancelled_unrefunded'].includes(booking.status) && !booking.refundable && (
+                    <Link href={`/bookings/${booking.id}/dispute`} className="text-sm font-semibold text-[#1D5C7A] underline">
+                        {t('Imprévu grave ? Introduire une demande exceptionnelle')}
+                    </Link>
                 )}
                 {booking.cancellable && (
                     <div className="bg-card flex flex-col gap-3 rounded-2xl border p-5">

@@ -421,6 +421,26 @@ const en: Record<string, string> = {
     'version :version du :date': 'version :version of :date',
     'J’accepte la nouvelle version.': 'I accept the new version.',
     Continuer: 'Continue',
+    'Mes demandes': 'My requests',
+    'Demande exceptionnelle': 'Exceptional request',
+    'Maladie, accident ou cas de force majeure : expliquez ce qui s’est passé. Le gérant examine chaque demande et vous répond par e-mail. Une seule demande par réservation, au plus tard sept jours après le match.':
+        'Illness, accident or force majeure: explain what happened. The manager reviews every request and answers by email. One request per booking, at the latest seven days after the match.',
+    Motif: 'Reason',
+    'Pièce justificative (facultative) : PDF ou image, 5 Mo au plus': 'Supporting document (optional): PDF or image, 5 MB at most',
+    'La pièce reste privée : seul le personnel du club peut l’ouvrir.': 'The document stays private: only club staff can open it.',
+    'Envoyer la demande': 'Send the request',
+    'Mon compte': 'My account',
+    'Mes demandes exceptionnelles': 'My exceptional requests',
+    'Aucune demande pour le moment. Elle s’introduit depuis une réservation payée.': 'No request yet. You file one from a paid booking.',
+    'Introduite le :date': 'Filed on :date',
+    'remboursé :amount': 'refunded :amount',
+    Reçue: 'Received',
+    'En examen': 'Under review',
+    Acceptée: 'Accepted',
+    'Acceptée en partie': 'Partly accepted',
+    'Acceptée en avoir': 'Accepted as credit',
+    Refusée: 'Rejected',
+    'Imprévu grave ? Introduire une demande exceptionnelle': 'Serious mishap? File an exceptional request',
 };
 
 export default en;
