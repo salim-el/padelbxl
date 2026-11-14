@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AccountReactivationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
@@ -40,6 +41,19 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+
+    // F4 : réactivation d'un compte désactivé depuis moins de trente jours.
+    Route::get('reactivate-account', [AccountReactivationController::class, 'create'])
+        ->name('account.reactivation');
+
+    Route::post('reactivate-account', [AccountReactivationController::class, 'store'])
+        ->middleware('throttle:3,1')
+        ->name('account.reactivation.send');
+
+    Route::get('reactivate-account/{user}', [AccountReactivationController::class, 'update'])
+        ->whereNumber('user')
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('account.reactivate');
 });
 
 Route::middleware('auth')->group(function () {
