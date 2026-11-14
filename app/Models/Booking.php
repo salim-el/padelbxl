@@ -10,7 +10,7 @@ class Booking extends Model
 {
     public const ACTIVE = ['pending_payment', 'confirmed', 'used', 'frozen'];
 
-    protected $fillable = ['public_id', 'court_id', 'organizer_id', 'pricing_rule_id', 'starts_at', 'ends_at', 'status', 'price_cents', 'vat_rate', 'hold_expires_at', 'cancelled_at', 'walk_in_name', 'walk_in_contact'];
+    protected $fillable = ['public_id', 'court_id', 'organizer_id', 'pricing_rule_id', 'starts_at', 'ends_at', 'status', 'price_cents', 'vat_rate', 'hold_expires_at', 'cancelled_at', 'walk_in_name', 'walk_in_contact', 'level_min', 'level_max'];
 
     protected function casts(): array
     {
