@@ -28,6 +28,9 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
         name: auth.user.name,
         email: auth.user.email,
         current_password: '',
+        phone: (auth.user.phone as string | null) ?? '',
+        locale: (auth.user.locale as string | null) ?? 'fr',
+        level: auth.user.level == null ? '' : String(Number(auth.user.level)),
     });
     const emailChanged = data.email.trim().toLowerCase() !== auth.user.email.toLowerCase();
 
@@ -77,6 +80,54 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                             />
 
                             <InputError className="mt-2" message={errors.email} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="phone">{t('Téléphone (facultatif)')}</Label>
+                            <Input
+                                id="phone"
+                                type="tel"
+                                className="mt-1 block w-full"
+                                value={data.phone}
+                                onChange={(e) => setData('phone', e.target.value)}
+                                autoComplete="tel"
+                                placeholder="0470 12 34 56"
+                            />
+                            <InputError className="mt-2" message={errors.phone} />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="grid gap-2">
+                                <Label htmlFor="locale">{t('Langue')}</Label>
+                                <select
+                                    id="locale"
+                                    value={data.locale}
+                                    onChange={(e) => setData('locale', e.target.value)}
+                                    className="h-9 rounded-md border border-[#DAD7CC] bg-white px-3 text-sm"
+                                >
+                                    <option value="fr">Français</option>
+                                    <option value="nl">Nederlands</option>
+                                    <option value="en">English</option>
+                                </select>
+                                <InputError className="mt-2" message={errors.locale} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="level">{t('Niveau estimé')}</Label>
+                                <select
+                                    id="level"
+                                    value={data.level}
+                                    onChange={(e) => setData('level', e.target.value)}
+                                    className="h-9 rounded-md border border-[#DAD7CC] bg-white px-3 text-sm"
+                                >
+                                    <option value="">{t('Choisir')}</option>
+                                    {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                                        <option key={n} value={n}>
+                                            {n}
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError className="mt-2" message={errors.level} />
+                            </div>
                         </div>
 
                         {emailChanged && (
