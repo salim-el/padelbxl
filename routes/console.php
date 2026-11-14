@@ -15,3 +15,5 @@ Schedule::command('accounts:anonymize')->dailyAt('03:00');
 Schedule::command('access-logs:prune')->dailyAt('03:15');
 // Le journal des actions sensibles n'est gardé qu'un an (minimisation RGPD).
 Schedule::command('activitylog:clean')->dailyAt('03:30');
+// F28 : à la fin de la durée, le compte suspendu redevient actif.
+Schedule::command('accounts:lift-suspensions')->everyFifteenMinutes();
