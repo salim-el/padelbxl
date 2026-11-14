@@ -124,5 +124,10 @@
     "Votre contestation est reçue. Le club vous répond par e-mail.": "Uw bezwaar is ontvangen. De club antwoordt per e-mail.",
     "Cette suspension ne peut plus être contestée.": "Deze schorsing kan niet meer betwist worden.",
     "Vous avez déjà contesté cette suspension.": "U hebt deze schorsing al betwist.",
-    "Cette adresse ne peut pas être utilisée pour créer un compte.": "Dit adres kan niet gebruikt worden om een account aan te maken."
+    "Cette adresse ne peut pas être utilisée pour créer un compte.": "Dit adres kan niet gebruikt worden om een account aan te maken.",
+    "Votre accès au terrain": "Uw toegang tot het terrein",
+    ":court le :date à :time.": ":court op :date om :time.",
+    "Le lien ci-dessous affiche votre QR code personnel. Présentez-le à la borne, à partir de quinze minutes avant le début.": "De link hieronder toont uw persoonlijke QR-code. Toon hem aan de toegangszuil, vanaf vijftien minuten voor de start.",
+    "Afficher mon QR code": "Mijn QR-code tonen",
+    "Ce lien est personnel. Ne le transférez pas : le QR code ne sert qu’une fois.": "Deze link is persoonlijk. Stuur hem niet door: de QR-code werkt maar één keer."
 }

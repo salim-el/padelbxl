@@ -450,6 +450,11 @@ const en: Record<string, string> = {
     'Votre contestation est déjà reçue. Le club vous répond par e-mail.': 'Your appeal has already been received. The club will answer by email.',
     'Votre réponse': 'Your answer',
     'Envoyer ma contestation': 'Send my appeal',
+    'Mon QR code': 'My QR code',
+    'Valable de :window, à présenter à la borne.': 'Valid :window, show it at the access terminal.',
+    'Ce QR code a déjà été utilisé.': 'This QR code has already been used.',
+    'Cette réservation est annulée : ce QR code ne donne plus accès au terrain.':
+        'This booking is cancelled: this QR code no longer gives access to the court.',
 };
 
 export default en;

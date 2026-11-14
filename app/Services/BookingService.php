@@ -17,6 +17,7 @@ use App\Models\Product;
 use App\Models\Refund;
 use App\Models\User;
 use App\Models\WaitlistEntry;
+use App\Notifications\AccessPassLink;
 use App\Notifications\ShareInvitation;
 use App\Notifications\SpotAvailable;
 use Carbon\CarbonImmutable;
@@ -233,6 +234,9 @@ class BookingService
                 }
                 $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card');
                 $player->update(['status' => 'covered']);
+                if ($player->user_id === null && $player->guest_email !== null) {
+                    DB::afterCommit(fn () => Notification::route('mail', $player->guest_email)->notify(new AccessPassLink($player)));
+                }
 
                 return 1;
             });

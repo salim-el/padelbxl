@@ -11,6 +11,7 @@ use App\Http\Controllers\KioskController;
 use App\Http\Controllers\LegalAcceptanceController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\OpenMatchController;
+use App\Http\Controllers\PassController;
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\SuspensionAppealController;
 use App\Models\PricingRule;
@@ -40,6 +41,8 @@ Route::get('confidentialite', fn () => Inertia::render('legal/privacy', ['club' 
 Route::get('contact', [ContactController::class, 'create'])->name('contact');
 Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:3,1')->name('contact.store');
 Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
+// F18 et F25 : QR code d'un joueur sans compte, par son lien signé valable jusqu'à la fin du créneau.
+Route::get('pass/{player}', [PassController::class, 'show'])->middleware(['signed', 'throttle:30,1'])->name('pass.show');
 // F29 : le joueur suspendu ne se connecte plus ; il conteste par le lien signé reçu avec le motif.
 Route::get('account/appeal/{suspension}', [SuspensionAppealController::class, 'create'])->middleware('signed')->name('account.appeal');
 Route::post('account/appeal/{suspension}', [SuspensionAppealController::class, 'store'])->middleware(['signed', 'throttle:5,1'])->name('account.appeal.store');
