@@ -31,5 +31,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Politique d'accès (T07) : le droit de gérer le club est défini ici, une seule fois.
         Gate::define('manage-club', fn (User $user) => $user->isStaff());
+        Gate::define('administer-platform', fn (User $user) => $user->isAdmin());
     }
 }

@@ -28,6 +28,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return in_array($this->role, self::STAFF_ROLES, true);
     }
 
+    /** F35 : seul l'administrateur gère les comptes du personnel et leurs rôles. */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
     // Mêmes valeurs par défaut que la base, pour un modèle tout juste créé.
     protected $attributes = ['role' => 'player', 'status' => 'active'];
 
