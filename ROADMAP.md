@@ -88,28 +88,29 @@ Fusionné le 14 novembre 2026 :
 
 ## Plan jusqu'au 2 décembre 2026
 
-Rythme prévu : 10 h du lundi au jeudi, 12 h du vendredi au dimanche. Les fonctions notées 4 ou 5 dans le T03 passent d'abord. Chaque lot a sa branche, des commits par couche, ses tests, puis une fusion dans `develop`. Le temps réel de chaque lot est relevé pour vérifier l'estimation.
+Rythme prévu : 7 h par jour, environ 10 commits par lot. Les fonctions notées 4 ou 5 dans le T03 passent d'abord. Chaque lot a sa branche, des commits par couche, ses tests, puis une fusion dans `develop`. Le temps réel de chaque lot est relevé dans `VERIFICATION/estimation_temps_codage.md`.
+
+Déjà fusionnés : F4, F1/F7, F3, F17/F27, F28/F29, F25/F18, F21/F24, F24 horaires, F35 comptes du personnel et rôles (14/11).
 
 | Jour | Branche | Objectif |
 |---|---|---|
-| Dim. 15/11 | `feature/account-suspension` | F28 et F29 : motif communiqué au joueur, durée avec levée automatique, révocation, signalements, contestation examinée par un autre membre du personnel |
-| Lun. 16/11 | `feature/counter-and-guest-access` | F25 et F18 : QR code envoyé au client du comptoir, lien à usage unique pour un invité sans compte, lecture du QR à la caméra sur la borne |
-| Mar. 17/11 | `feature/profile-and-pricing` | F21 : téléphone, langue et niveau dans le profil. F24 (début) : créer et modifier les tarifs, TVA, heures creuses |
-| Mer. 18/11 | `feature/club-settings-and-staff` | F24 (fin) : horaires d'ouverture. F35 (début) : comptes du personnel et rôles |
-| Jeu. 19/11 | `feature/stripe-payment` | F9 : paiement réel en mode test Stripe, carte et Bancontact, authentification forte (dépend des clés de test) |
-| Ven. 20/11 | `feature/stripe-webhooks` | Confirmation par notification signée ; F30 : contestation bancaire, réservation gelée, compte signalé |
-| Sam. 21/11 | `chore/deployment`, `feature/accessibility-audit` | Mise en ligne pour le jury (dépend de l'hébergement) ; contrôle WCAG 2.1 AA |
-| Dim. 22/11 | `feature/store-credits`, `feature/booking-change` | F15 : avoirs déduits au paiement. F14 : déplacer une réservation |
-| Lun. 23/11 | `feature/reminders` | F16 : rappel 24 h avant ; F21 : préférences de notification ; F13 : créneau libéré proposé à la liste d'attente |
-| Mar. 24/11 | `feature/emergency-codes`, `feature/no-shows` | F19 : code de secours de la borne. F31 : absences comptées et signalées |
-| Mer. 25/11 | `feature/accounting-export`, `feature/dashboard-detail` | F33 : export mensuel pour le comptable. F34 : occupation par terrain et par heure, annulations |
-| Jeu. 26/11 | `feature/level-matching`, `feature/staff-i18n` | F11 : appel envoyé aux joueurs d'un niveau proche. F23 : écrans du personnel en trois langues |
-| Ven. 27/11 | `feature/localized-urls`, `feature/admin-content` | Adresses par langue, hreflang et plan du site (T17). F35 (fin) : textes, traductions, documents légaux, clés d'API |
-| Sam. 28/11 | — | Documents : T03, T06, T08, T09 |
-| Dim. 29/11 | — | Documents : T12, T16, T17, T18, T20, questions de la défense |
-| Lun. 30/11 | `test/end-to-end` | Tests de bout en bout des parcours principaux, corrections |
-| Mar. 01/12 | — | Marge pour les imprévus |
-| Mer. 02/12 | `release/1.0.0` | Version livrée au jury, étiquette `v1.0.0` |
+| Dim. 15/11 | `feature/level-matching`, `bugfix/refund-gaps` | F11 : appel envoyé aux joueurs d'un niveau proche. Trous relevés par l'audit du 14/11 : remboursement partiel puis annulation, demande acceptée avant le match, annulation par le club, réservations d'un compte suspendu, invités qui ont payé, notes de crédit multiples, jetons d'API à la désactivation |
+| Lun. 16/11 | `feature/staff-i18n`, `chore/docker` | F23 : écrans du personnel en trois langues. Fichier Docker |
+| Mar. 17/11 – mer. 18/11 | `feature/store-credits` | F15 : avoirs déduits au paiement |
+| Mer. 18/11 – jeu. 19/11 | `feature/booking-change`, `feature/waitlist` | F14 : déplacer une réservation. F13 : créneau libéré proposé à la liste d'attente |
+| Ven. 20/11 – sam. 21/11 | `feature/stripe-payment` | F9 : paiement réel en mode test Stripe (clés de test nécessaires avant le 19/11) |
+| Sam. 21/11 – dim. 22/11 | `feature/stripe-webhooks` | Confirmation par notification signée ; F30 : contestation bancaire, réservation gelée |
+| Dim. 22/11 – lun. 23/11 | `chore/deployment` | Mise en ligne sur Render, e-mails par Brevo (comptes nécessaires avant le 21/11) |
+| Lun. 23/11 – mar. 24/11 | `feature/reminders` | F16 : rappel 24 h avant ; F21 : préférences de notification |
+| Mar. 24/11 – mer. 25/11 | `feature/emergency-codes` | F19 : code de secours de la borne |
+| Mer. 25/11 – jeu. 26/11 | `feature/no-shows` | F31 : absences comptées et signalées |
+| Jeu. 26/11 | `feature/accounting-export` | F33 : export mensuel pour le comptable |
+| Jeu. 26/11 – ven. 27/11 | `feature/dashboard-detail` | F34 : occupation par terrain et par heure, annulations |
+| Ven. 27/11 – sam. 28/11 | `feature/admin-content` | F35 (fin) : textes, traductions, documents légaux, clés d'API |
+| Sam. 28/11 – dim. 29/11 | `feature/localized-urls` | Référencement : adresses par langue, hreflang et plan du site (T17) |
+| Dim. 29/11 – lun. 30/11 | `feature/accessibility-audit` | Contrôle WCAG 2.1 AA |
+| Lun. 30/11 – mer. 02/12 | `test/end-to-end` | Tests de bout en bout des parcours principaux, corrections |
+| Mer. 02/12 | `release/1.0.0` | Documents mis à jour par les générateurs, version livrée au jury, étiquette `v1.0.0` |
 
 ## Idées à étudier après la bêta
 
