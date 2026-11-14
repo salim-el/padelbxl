@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsureLegalConsents;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireStaffTwoFactor;
 use App\Http\Middleware\SetLocale;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
+            'consented' => EnsureLegalConsents::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

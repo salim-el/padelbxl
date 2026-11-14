@@ -26,7 +26,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::get('me', [MeController::class, 'show'])->name('me.show');
             Route::put('me', [MeController::class, 'update'])->name('me.update');
             Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
-            Route::post('bookings', [BookingController::class, 'store'])->middleware('throttle:10,1')->name('bookings.store');
+            Route::post('bookings', [BookingController::class, 'store'])->middleware(['throttle:10,1', 'consented'])->name('bookings.store');
             Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
             Route::delete('bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
         });
