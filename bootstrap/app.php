@@ -24,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(AddSecurityHeaders::class);
+        // F3 : chaque session garde l'empreinte du mot de passe. Un nouveau mot de passe ferme les autres sessions
+        // et les cookies « Rester connecté » ; la session qui fait le changement reste ouverte.
+        $middleware->authenticateSessions();
         $middleware->web(append: [
             EnsureAccountIsActive::class,
             RequireStaffTwoFactor::class,
