@@ -86,14 +86,14 @@ class BookingService
         if ($user->status !== 'active' || $user->email_verified_at === null) {
             throw new BookingException(__('Votre compte doit être actif et votre e-mail confirmé pour réserver.'));
         }
-        if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::SLOTS, true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
+        if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::slots(), true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
             throw new BookingException(__('Ce créneau n’existe pas ou n’est plus réservable.'));
         }
         $rule = $this->slots->priceFor($startUtc);
         if ($rule === null || ! $court->is_active) {
             throw new BookingException(__('Ce terrain n’est pas réservable à cette heure.'));
         }
-        $end = $startUtc->addMinutes(Clock::SLOT_MINUTES);
+        $end = $startUtc->addMinutes(Clock::slotMinutes());
 
         $this->expireHolds();
 
@@ -118,7 +118,7 @@ class BookingService
                     'organizer_id' => $user->id,
                     'pricing_rule_id' => $rule->id,
                     'starts_at' => $startUtc,
-                    'ends_at' => $startUtc->addMinutes(Clock::SLOT_MINUTES),
+                    'ends_at' => $startUtc->addMinutes(Clock::slotMinutes()),
                     'status' => 'pending_payment',
                     'price_cents' => $this->slots->priceCents($rule, $startUtc),
                     'vat_rate' => $rule->vat_rate,

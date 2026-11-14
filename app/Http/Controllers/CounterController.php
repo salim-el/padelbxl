@@ -26,7 +26,7 @@ class CounterController extends Controller
 
         return Inertia::render('admin/counter', [
             'courts' => Court::where('is_active', true)->orderBy('id')->get(['id', 'name'])->all(),
-            'slots' => Clock::SLOTS,
+            'slots' => Clock::slots(),
             'today' => now(Clock::ZONE)->format('Y-m-d'),
         ]);
     }
@@ -37,7 +37,7 @@ class CounterController extends Controller
         $data = $request->validate([
             'court_id' => ['required', 'integer', 'exists:courts,id'],
             'date' => ['required', 'date_format:Y-m-d'],
-            'time' => ['required', 'in:'.implode(',', Clock::SLOTS)],
+            'time' => ['required', 'in:'.implode(',', Clock::slots())],
             'name' => ['required', 'string', 'max:120'],
             // Un e-mail ou un numéro de téléphone, pour prévenir le client en cas de fermeture du terrain.
             'contact' => ['required', 'string', 'max:190', 'regex:/^([^@\s]+@[^@\s]+\.[^@\s]+|\+?[0-9 .\/-]{8,20})$/'],

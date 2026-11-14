@@ -2,15 +2,23 @@
 
 namespace App\Services;
 
+use App\Models\ClubSetting;
 use Carbon\CarbonImmutable;
 
 class Clock
 {
     public const ZONE = 'Europe/Brussels';
 
-    public const SLOTS = ['09:00', '10:30', '12:00', '13:30', '15:00', '16:30', '18:00', '19:30', '21:00'];
+    /** F24 : heures de départ des créneaux, calculées depuis les réglages du club (9 h à 23 h, 90 minutes par défaut). */
+    public static function slots(): array
+    {
+        return app(ClubSetting::class)->slots();
+    }
 
-    public const SLOT_MINUTES = 90;
+    public static function slotMinutes(): int
+    {
+        return app(ClubSetting::class)->slot_minutes;
+    }
 
     public static function local(CarbonImmutable $utc): CarbonImmutable
     {

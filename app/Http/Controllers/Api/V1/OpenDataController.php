@@ -39,7 +39,7 @@ class OpenDataController extends Controller
                     return [
                         '@type' => 'Slot',
                         'startDate' => $row['starts_at'],
-                        'endDate' => CarbonImmutable::parse($row['starts_at'])->addMinutes(Clock::SLOT_MINUTES)->toIso8601String(),
+                        'endDate' => CarbonImmutable::parse($row['starts_at'])->addMinutes(Clock::slotMinutes())->toIso8601String(),
                         'duration' => 'PT1H30M',
                         'remainingUses' => 1,
                         'maximumUses' => 1,

@@ -33,7 +33,7 @@ class AdminController extends Controller
             ->whereIn('status', ['pending_payment', 'confirmed', 'used', 'missed', 'cancelled_refunded', 'cancelled_unrefunded'])
             ->orderBy('starts_at')->orderBy('court_id')->get();
         $played = $today->whereIn('status', ['confirmed', 'used', 'missed'])->count();
-        $slots = Court::where('is_active', true)->count() * count(Clock::SLOTS);
+        $slots = Court::where('is_active', true)->count() * count(Clock::slots());
 
         return Inertia::render('admin/dashboard', [
             'stats' => [

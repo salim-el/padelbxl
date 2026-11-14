@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\ClubSetting;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -14,6 +15,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // F24 : réglages du club lus une fois par requête.
+        $this->app->scoped(ClubSetting::class, fn () => ClubSetting::query()->firstOrFail());
         //
     }
 

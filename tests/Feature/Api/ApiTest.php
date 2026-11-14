@@ -47,7 +47,7 @@ class ApiTest extends TestCase
     public function test_courts_and_availability_are_public_and_validated(): void
     {
         $this->getJson('/api/v1/courts')->assertOk()->assertJsonCount(Court::where('is_active', true)->count(), 'data');
-        $this->getJson('/api/v1/availability?date=2026-10-23')->assertOk()->assertJsonPath('date', '2026-10-23')->assertJsonCount(count(Clock::SLOTS), 'rows');
+        $this->getJson('/api/v1/availability?date=2026-10-23')->assertOk()->assertJsonPath('date', '2026-10-23')->assertJsonCount(count(Clock::slots()), 'rows');
         $this->getJson('/api/v1/availability?date=23-10-2026')->assertUnprocessable()->assertJsonValidationErrors('date');
         $this->getJson('/api/v1/availability?date=2026-12-31')->assertUnprocessable();
     }
@@ -63,7 +63,7 @@ class ApiTest extends TestCase
 
         $court1 = collect($response->json('items'))->firstWhere('name', 'Terrain 1');
         $this->assertNotContains($taken->starts_at->toIso8601String(), array_column($court1['event'], 'startDate'));
-        $this->assertCount(count(Clock::SLOTS) - 1, $court1['event']);
+        $this->assertCount(count(Clock::slots()) - 1, $court1['event']);
         $this->assertStringNotContainsString('lucas', strtolower($response->getContent()));
 
         $this->getJson('/api/v1/opendata/slots.jsonld?date=2025-01-01')->assertUnprocessable();
