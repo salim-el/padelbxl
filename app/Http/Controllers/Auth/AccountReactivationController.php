@@ -27,10 +27,11 @@ class AccountReactivationController extends Controller
     {
         $request->validate(['email' => ['required', 'email', 'max:255']]);
 
-        $this->reactivable()->whereRaw('lower(email) = ?', [mb_strtolower($request->string('email'))])
-            ->first()?->notify(new ReactivateAccount);
+        $email = mb_strtolower($request->string('email'));
+        // Recherche et envoi après la réponse : même texte et même durée que le compte existe ou non,
+        // la page ne dit pas qui est inscrit.
+        defer(fn () => $this->reactivable()->whereRaw('lower(email) = ?', [$email])->first()?->notify(new ReactivateAccount));
 
-        // Même réponse que le compte existe ou non : la page ne dit pas qui est inscrit.
         return back()->with('status', __('Si un compte désactivé depuis moins de trente jours utilise cette adresse, un lien de réactivation vient d’y être envoyé.'));
     }
 
