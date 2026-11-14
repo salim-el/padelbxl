@@ -69,7 +69,8 @@ export default function Staff({ staff }: { staff: Member[] }) {
                 <section>
                     <h2 className="text-lg font-semibold">Ajouter un membre</h2>
                     <p className="mb-2 text-sm text-[#5F6B78]">
-                        Un nouveau compte reçoit un lien pour choisir son mot de passe. La double authentification est demandée à la première connexion.
+                        Un nouveau compte reçoit un lien pour choisir son mot de passe. La double authentification est demandée à la première
+                        connexion.
                     </p>
                     <Invite />
                 </section>
