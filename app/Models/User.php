@@ -43,6 +43,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'account_type',
         'company_name',
         'vat_number',
+        'birth_date',
+        'guardian_email',
+        'level',
     ];
 
     /**
@@ -68,6 +71,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'two_factor_secret' => 'encrypted',
             'two_factor_confirmed_at' => 'datetime',
+            'birth_date' => 'date',
         ];
     }
 
@@ -111,6 +115,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'name' => 'Compte supprimé',
             'email' => "supprime-{$this->id}@padelbxl.invalid",
             'phone' => null,
+            'birth_date' => null,
+            'guardian_email' => null,
             'account_type' => 'individual',
             'company_name' => null,
             'vat_number' => null,

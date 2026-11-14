@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\AccessService;
 use App\Services\BookingService;
 use App\Services\Clock;
+use App\Services\LegalConsents;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Closure;
@@ -83,6 +84,7 @@ class DemoSeeder extends Seeder
                 ['Nina Vermeulen', 'nina'], ['Julie Lambert', 'julie'], ['Pieter Claes', 'pieter']] as [$name, $key]) {
                 $user = User::create(['name' => $name, 'email' => strtolower(str_replace(' ', '.', $name)).'@example.test', 'password' => Hash::make(DatabaseSeeder::DEMO_PASSWORD)]);
                 $user->forceFill(['email_verified_at' => now(), 'locale' => $key === 'lotte' || $key === 'pieter' ? 'nl' : 'fr'])->save();
+                app(LegalConsents::class)->accept($user, null);
                 $this->users[$key] = $user;
             }
             // Client entreprise : numéro de TVA belge valide (97 − 08441234 mod 97 = 94).
