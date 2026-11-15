@@ -283,8 +283,6 @@ const nl: Record<string, string> = {
     'L’organisateur annule depuis son espace.': 'De organisator annuleert in zijn ruimte.',
     'Jusqu’à 24 h avant le début, chaque paiement de la partie est remboursé en entier. Une note de crédit renvoie à la facture d’origine.':
         'Tot 24 uur voor het begin wordt elke betaling van het spel volledig terugbetaald. Een creditnota verwijst naar de oorspronkelijke factuur.',
-    'Moins de 24 h avant le début, rien n’est remboursé. Les parts encore impayées sont payées par l’organisateur.':
-        'Minder dan 24 uur voor het begin wordt niets terugbetaald. De organisator betaalt de delen die nog openstaan.',
     'Une fois le créneau commencé, la réservation ne s’annule plus.': 'Is het tijdslot begonnen, dan kun je de reservering niet meer annuleren.',
     'À l’annulation, les QR codes de la partie sont désactivés.': 'Bij annulering worden de QR-codes van het spel uitgeschakeld.',
     'Une réservation faite à l’accueil suit les mêmes règles.': 'Een reservering aan het onthaal volgt dezelfde regels.',
@@ -466,6 +464,10 @@ const nl: Record<string, string> = {
     'Niveau :level': 'Niveau :level',
     'Si j’annule à moins de 24 h, je paie tout le terrain : les parts déjà réglées par mes partenaires leur sont rendues et me sont débitées.':
         'Als ik minder dan 24 uur vooraf annuleer, betaal ik het hele terrein: de delen die mijn partners al betaald hebben, krijgen zij terug en worden van mijn kaart afgehouden.',
+    'Moins de 24 h avant le début, l’organisateur n’est pas remboursé et paie tout le terrain. Il paie les parts encore impayées. Une part déjà payée par un partenaire lui est rendue et passe sur la carte de l’organisateur.':
+        'Minder dan 24 uur voor het begin wordt de organisator niet terugbetaald en betaalt hij het hele terrein. Hij betaalt de delen die nog niet betaald zijn. Een deel dat een partner al betaald heeft, krijgt die partner terug en wordt van de kaart van de organisator afgehouden.',
+    'Si le club annule une réservation, chaque paiement est remboursé en entier et les joueurs sont prévenus par e-mail.':
+        'Als de club een reservatie annuleert, wordt elke betaling volledig terugbetaald en krijgen de spelers een e-mail.',
 };
 
 export default nl;
