@@ -456,12 +456,16 @@ class BookingService
     {
         // Verrou sur le paiement : deux remboursements simultanés ne peuvent pas dépasser le montant payé.
         $payment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
-        $refundable = $payment->amount_cents - (int) Refund::where('payment_id', $payment->id)->where('status', '<>', 'failed')->sum('amount_cents');
+        $refundable = self::refundable($payment);
         if ($amount <= 0 || $amount > $refundable) {
             throw new BookingException(__('Ce montant dépasse ce qui reste remboursable sur ce paiement.'));
         }
         $invoice = Invoice::where('payment_id', $payment->id)->firstOrFail();
-        $net = $amount === $invoice->total_cents ? $invoice->net_cents : (int) round($invoice->net_cents * $amount / $invoice->total_cents);
+        // Le remboursement qui solde le paiement prend ce qui reste hors TVA : la somme des notes de crédit
+        // retombe ainsi au centime près sur la facture, même après plusieurs remboursements partiels.
+        $net = $amount === $refundable
+            ? $invoice->net_cents - (int) CreditNote::where('invoice_id', $invoice->id)->sum('net_cents')
+            : (int) round($invoice->net_cents * $amount / $invoice->total_cents);
         $creditNote = CreditNote::create([
             'number' => $this->nextNumber('credit_note', 'NC'),
             'invoice_id' => $invoice->id,
@@ -477,6 +481,32 @@ class BookingService
         return $creditNote;
     }
 
+    /** Ce qui reste remboursable sur un paiement, une fois retirés les remboursements déjà faits. */
+    public static function refundable(Payment $payment): int
+    {
+        return $payment->amount_cents - (int) Refund::where('payment_id', $payment->id)->where('status', '<>', 'failed')->sum('amount_cents');
+    }
+
+    /**
+     * Rembourse le solde de chaque paiement. Un paiement déjà remboursé en partie (demande exceptionnelle)
+     * rend ce qui lui reste, pas son montant de départ. À appeler dans une transaction.
+     *
+     * @param  iterable<Payment>  $payments
+     */
+    private function refundRest(iterable $payments, string $note, string $code): int
+    {
+        $total = 0;
+        foreach ($payments as $payment) {
+            $rest = self::refundable($payment);
+            if ($rest > 0) {
+                $this->refund($payment, $rest, $note, $code);
+                $total += $rest;
+            }
+        }
+
+        return $total;
+    }
+
     public function cancel(Booking $booking, User $user): Booking
     {
         return DB::transaction(function () use ($booking, $user) {
@@ -489,9 +519,7 @@ class BookingService
             }
             $refundable = now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS));
             if ($refundable) {
-                foreach ($booking->payments()->where('status', 'succeeded')->get() as $payment) {
-                    $this->refund($payment, $payment->amount_cents, 'Annulation au moins 24 h avant le match.', 'cancellation_24h');
-                }
+                $this->refundRest($booking->payments()->whereIn('status', ['succeeded', 'partially_refunded'])->get(), 'Annulation au moins 24 h avant le match.', 'cancellation_24h');
                 // Remboursés avant le match, les articles vendus n'ont pas été remis : ils reviennent en stock.
                 foreach ($booking->items()->whereHas('product', fn ($q) => $q->where('kind', 'sale'))->get() as $item) {
                     Product::whereKey($item->product_id)->increment('stock', $item->quantity);
