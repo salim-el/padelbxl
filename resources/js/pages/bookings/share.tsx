@@ -19,7 +19,7 @@ type Props = {
     declinable: boolean;
     qr: string | null;
     qr_window: string | null;
-    invoices: { number: string; total_cents: number; vat_cents: number; credit_note: string | null }[];
+    invoices: { number: string; total_cents: number; vat_cents: number; credit_notes: string[] }[];
 };
 
 export default function Share({ booking, organizer, share_cents, share_status, payable, declinable, qr, qr_window, invoices }: Props) {
@@ -120,7 +120,7 @@ export default function Share({ booking, organizer, share_cents, share_status, p
                     <p key={i.number} className="bg-card flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
                         <span className="flex flex-wrap items-center gap-2">
                             <FileText className="size-4 text-[#1D5C7A]" aria-hidden /> {t('Facture :number', { number: i.number })}
-                            <InvoiceLinks booking={booking.id} invoice={i.number} creditNote={i.credit_note} />
+                            <InvoiceLinks booking={booking.id} invoice={i.number} creditNotes={i.credit_notes} />
                         </span>
                         <span>
                             <strong>{euros(i.total_cents)}</strong>{' '}
