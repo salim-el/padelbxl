@@ -128,5 +128,11 @@
     "Vous ne pouvez pas changer votre propre rôle.": "You cannot change your own role.",
     "Ce compte ne fait pas partie du personnel.": "This account is not on the staff.",
     "Il manque :count joueur(s) pour une partie de padel": ":count player(s) needed for a padel match",
-    "Une partie de niveau :level cherche :count joueur(s) sur le :court le :date à :time.": "A level :level match needs :count player(s) on :court on :date at :time."
+    "Une partie de niveau :level cherche :count joueur(s) sur le :court le :date à :time.": "A level :level match needs :count player(s) on :court on :date at :time.",
+    "Votre partie est annulée": "Your match is cancelled",
+    "La partie du :date à :time (:court) est annulée.": "The match on :date at :time (:court) is cancelled.",
+    "Vous êtes remboursé de :amount.": "You are refunded :amount.",
+    "Voir mes réservations": "See my bookings",
+    "L’organisateur a annulé la partie.": "The organiser cancelled the match.",
+    "La partie est annulée par le club.": "The match is cancelled by the club."
 }

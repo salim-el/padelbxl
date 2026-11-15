@@ -21,12 +21,20 @@ class AccountStatusService
     /** Délai pour contester une suspension depuis le lien reçu par e-mail. */
     public const APPEAL_DAYS = 14;
 
+    public function __construct(private BookingService $bookings) {}
+
     public function suspend(User $user, User $staff, string $reason, ?int $days): AccountStatusHistory
     {
         $until = $days ? now()->addDays($days) : null;
-        $history = $this->change($user, 'suspended', $reason, $staff, $until);
-        // Un compte suspendu n'utilise plus l'API non plus.
-        $user->tokens()->delete();
+        $history = DB::transaction(function () use ($user, $staff, $reason, $until) {
+            $history = $this->change($user, 'suspended', $reason, $staff, $until);
+            // Un compte suspendu n'utilise plus l'API non plus.
+            $user->tokens()->delete();
+            // Ses QR codes sont désactivés, ses réservations à venir annulées et remboursées.
+            $this->bookings->releaseAccount($user, $staff);
+
+            return $history;
+        });
         activity('staff')->performedOn($user)->causedBy($staff)->event('account-suspended')
             ->withProperties(['until' => $until?->toIso8601String()])->log('Compte suspendu');
         $user->notify(new AccountSuspended($history));
@@ -52,6 +60,8 @@ class AccountStatusService
             $history = $this->change($user, 'revoked', $reason, $staff, null);
             BlockedIdentity::firstOrCreate(['email_hash' => BlockedIdentity::hashEmail($user->email)], ['reason' => $reason]);
             $user->tokens()->delete();
+            // Un compte révoqué sans être passé par la suspension a encore ses réservations : elles tombent ici.
+            $this->bookings->releaseAccount($user, $staff);
 
             return $history;
         });

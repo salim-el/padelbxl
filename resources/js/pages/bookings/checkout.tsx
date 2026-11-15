@@ -269,7 +269,12 @@ export default function Checkout({ booking, products, my_level }: { booking: Boo
                                             checked={data.accept_guarantee}
                                             onChange={(e) => setData('accept_guarantee', e.target.checked)}
                                         />
-                                        {t('Ma carte sert de garantie : les parts encore impayées 24 h avant le match me seront débitées.')}
+                                        <span>
+                                            {t('Ma carte sert de garantie : les parts encore impayées 24 h avant le match me seront débitées.')}{' '}
+                                            {t(
+                                                'Si j’annule à moins de 24 h, je paie tout le terrain : les parts déjà réglées par mes partenaires leur sont rendues et me sont débitées.',
+                                            )}
+                                        </span>
                                     </label>
                                     {errors.accept_guarantee && <p className="text-sm text-[#9E2833]">{errors.accept_guarantee}</p>}
                                 </>

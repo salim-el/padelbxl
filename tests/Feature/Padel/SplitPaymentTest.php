@@ -253,9 +253,10 @@ class SplitPaymentTest extends TestCase
         $this->actingAs($this->lucas)->post("/bookings/{$booking->public_id}/cancel");
 
         $this->assertSame('cancelled_unrefunded', $booking->refresh()->status);
-        $this->assertSame(4800, (int) DB::table('payments')->where('booking_id', $booking->id)->sum('amount_cents'));
-        $this->assertSame(['paid', 'paid', 'covered'], $booking->players()->orderBy('id')->pluck('status')->all());
-        $this->assertSame(0, DB::table('refunds')->count());
+        // L'organisateur qui annule trop tard paie tout le terrain : la part impayée, et celle d'Inès, qui lui est rendue.
+        $this->assertSame(4800, (int) DB::table('payments')->where('booking_id', $booking->id)->where('payer_id', $this->lucas->id)->sum('amount_cents'));
+        $this->assertSame(['paid', 'covered', 'covered'], $booking->players()->orderBy('id')->pluck('status')->all());
+        $this->assertSame([1600], DB::table('refunds')->pluck('amount_cents')->all());
     }
 
     public function test_the_organizer_does_not_see_or_download_a_partner_invoice(): void

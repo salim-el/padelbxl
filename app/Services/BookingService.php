@@ -18,11 +18,13 @@ use App\Models\Refund;
 use App\Models\User;
 use App\Models\WaitlistEntry;
 use App\Notifications\AccessPassLink;
+use App\Notifications\MatchCancelled;
 use App\Notifications\ShareInvitation;
 use App\Notifications\SpotAvailable;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -437,8 +439,8 @@ class BookingService
                 'vat_rate' => $l['vat'], 'net_cents' => $l['net'], 'vat_cents' => $l['total'] - $l['net'], 'total_cents' => $l['total'],
             ]);
         }
-        AccessPass::create([
-            'booking_player_id' => $player->id,
+        // Un joueur garde un seul QR code : la garantie qui reprend une part déjà payée ne lui en crée pas un second.
+        AccessPass::firstOrCreate(['booking_player_id' => $player->id], [
             'token_hash' => hash('sha256', self::passToken($player)),
             'valid_from' => $booking->starts_at->subMinutes(15),
             'valid_until' => $booking->ends_at,
@@ -456,12 +458,16 @@ class BookingService
     {
         // Verrou sur le paiement : deux remboursements simultanés ne peuvent pas dépasser le montant payé.
         $payment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
-        $refundable = $payment->amount_cents - (int) Refund::where('payment_id', $payment->id)->where('status', '<>', 'failed')->sum('amount_cents');
+        $refundable = self::refundable($payment);
         if ($amount <= 0 || $amount > $refundable) {
             throw new BookingException(__('Ce montant dépasse ce qui reste remboursable sur ce paiement.'));
         }
         $invoice = Invoice::where('payment_id', $payment->id)->firstOrFail();
-        $net = $amount === $invoice->total_cents ? $invoice->net_cents : (int) round($invoice->net_cents * $amount / $invoice->total_cents);
+        // Le remboursement qui solde le paiement prend ce qui reste hors TVA : la somme des notes de crédit
+        // retombe ainsi au centime près sur la facture, même après plusieurs remboursements partiels.
+        $net = $amount === $refundable
+            ? $invoice->net_cents - (int) CreditNote::where('invoice_id', $invoice->id)->sum('net_cents')
+            : (int) round($invoice->net_cents * $amount / $invoice->total_cents);
         $creditNote = CreditNote::create([
             'number' => $this->nextNumber('credit_note', 'NC'),
             'invoice_id' => $invoice->id,
@@ -477,6 +483,32 @@ class BookingService
         return $creditNote;
     }
 
+    /** Ce qui reste remboursable sur un paiement, une fois retirés les remboursements déjà faits. */
+    public static function refundable(Payment $payment): int
+    {
+        return $payment->amount_cents - (int) Refund::where('payment_id', $payment->id)->where('status', '<>', 'failed')->sum('amount_cents');
+    }
+
+    /**
+     * Rembourse le solde de chaque paiement. Un paiement déjà remboursé en partie (demande exceptionnelle)
+     * rend ce qui lui reste, pas son montant de départ. À appeler dans une transaction.
+     *
+     * @param  iterable<Payment>  $payments
+     */
+    private function refundRest(iterable $payments, string $note, string $code): int
+    {
+        $total = 0;
+        foreach ($payments as $payment) {
+            $rest = self::refundable($payment);
+            if ($rest > 0) {
+                $this->refund($payment, $rest, $note, $code);
+                $total += $rest;
+            }
+        }
+
+        return $total;
+    }
+
     public function cancel(Booking $booking, User $user): Booking
     {
         return DB::transaction(function () use ($booking, $user) {
@@ -489,26 +521,151 @@ class BookingService
             }
             $refundable = now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS));
             if ($refundable) {
-                foreach ($booking->payments()->where('status', 'succeeded')->get() as $payment) {
-                    $this->refund($payment, $payment->amount_cents, 'Annulation au moins 24 h avant le match.', 'cancellation_24h');
-                }
-                // Remboursés avant le match, les articles vendus n'ont pas été remis : ils reviennent en stock.
-                foreach ($booking->items()->whereHas('product', fn ($q) => $q->where('kind', 'sale'))->get() as $item) {
-                    Product::whereKey($item->product_id)->increment('stock', $item->quantity);
-                }
+                $this->refundRest($this->openPayments($booking), 'Annulation au moins 24 h avant le match.', 'cancellation_24h');
+                $this->restock($booking);
             }
             if (! $refundable) {
-                // Annulée trop tard : la garantie encaisse ici les parts impayées, sans attendre la tâche planifiée.
+                // Annulée trop tard : l'organisateur supporte seul le prix du terrain.
+                // La garantie encaisse ici les parts impayées, sans attendre la tâche planifiée.
                 foreach ($booking->players()->where('is_organizer', false)->where('status', 'invited')->get() as $player) {
                     $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card');
                     $player->update(['status' => 'covered']);
                 }
+                // Un partenaire qui avait payé sa part n'a rien décidé : elle lui est rendue et passe sur la garantie.
+                foreach ($booking->players()->where('is_organizer', false)->where('status', 'paid')->get() as $player) {
+                    $back = $this->refundRest($this->openPayments($booking)->where('booking_player_id', $player->id)->where('payer_id', '!=', $booking->organizer_id),
+                        'Partie annulée par l’organisateur moins de 24 h avant.', 'organizer_cancellation');
+                    if ($back === 0) {
+                        continue;
+                    }
+                    $this->charge($booking, $player, $booking->organizer, [[...$this->courtLine($booking, $player), 'unit' => $back]], 'card');
+                    $player->update(['status' => 'covered']);
+                    $this->notifyCancelled($booking, $player, $back, 'L’organisateur a annulé la partie.');
+                }
             }
-            AccessPass::whereIn('booking_player_id', $booking->players()->pluck('id'))->whereNull('revoked_at')->update(['revoked_at' => now()]);
-            $booking->update(['cancelled_at' => now()]);
-            $this->transition($booking, $refundable ? 'cancelled_refunded' : 'cancelled_unrefunded', $refundable ? 'Annulation au moins 24 h avant.' : 'Annulation moins de 24 h avant.', $user->id);
+            $this->close($booking, $refundable ? 'cancelled_refunded' : 'cancelled_unrefunded', $refundable ? 'Annulation au moins 24 h avant.' : 'Annulation moins de 24 h avant.', $user->id);
 
             return $booking->fresh();
+        });
+    }
+
+    /**
+     * Annulation décidée par le club : le gérant, une demande exceptionnelle acceptée ou un compte suspendu.
+     * Chaque payeur retrouve tout ce qu'il a payé, même à moins de 24 h, et chaque joueur est prévenu.
+     *
+     * @param  string  $reason  motif gardé dans l'historique
+     * @param  string|null  $public  motif envoyé aux joueurs, s'il ne doit pas être le même
+     */
+    public function cancelByClub(Booking $booking, ?User $staff, string $reason, string $code = 'club_cancellation', ?string $public = null): Booking
+    {
+        return DB::transaction(function () use ($booking, $staff, $reason, $code, $public) {
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            if ($booking->status !== 'confirmed' || ! $booking->starts_at->isFuture()) {
+                throw new BookingException(__('Cette réservation ne peut plus être annulée.'));
+            }
+            $back = [];
+            foreach ($this->openPayments($booking) as $payment) {
+                $back[$payment->payer_id] = ($back[$payment->payer_id] ?? 0) + $this->refundRest([$payment], 'Annulation par le club.', $code);
+            }
+            $this->restock($booking);
+            $this->close($booking, 'cancelled_refunded', 'Annulée par le club : '.$reason, $staff?->id);
+            // Le client du comptoir n'a pas de compte : le gérant le prévient lui-même.
+            foreach ($booking->walk_in_name === null ? $booking->players()->get() : [] as $player) {
+                $this->notifyCancelled($booking, $player, $back[$player->user_id] ?? 0, $public ?? $reason);
+            }
+
+            return $booking->fresh();
+        });
+    }
+
+    /**
+     * Un joueur ne joue plus une partie à venir, par décision du club : sa demande exceptionnelle est acceptée en entier.
+     * L'organisateur emporte la partie avec lui, un partenaire libère seulement sa place. À appeler dans une transaction.
+     */
+    public function withdraw(Booking $booking, User $user, ?User $staff, string $reason, string $code): void
+    {
+        if ($booking->status !== 'confirmed' || ! $booking->starts_at->isFuture()) {
+            return;
+        }
+        if ($booking->organizer_id === $user->id) {
+            $this->cancelByClub($booking, $staff, $reason, $code, 'La partie est annulée par le club.');
+
+            return;
+        }
+        foreach ($booking->players()->where('is_organizer', false)->where('user_id', $user->id)->whereIn('status', ['invited', 'paid'])->get() as $player) {
+            $this->leave($player, $user, $reason, $code);
+        }
+    }
+
+    /**
+     * Compte suspendu ou révoqué (cas limite du T03) : ses QR codes sont désactivés, ses réservations à venir
+     * annulées et remboursées, ses places chez les autres libérées. À appeler dans une transaction.
+     */
+    public function releaseAccount(User $user, ?User $staff): int
+    {
+        $bookings = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('status', 'confirmed')->where('starts_at', '>', now())->get();
+        foreach ($bookings as $booking) {
+            $this->cancelByClub($booking, $staff, 'Compte de l’organisateur suspendu.', 'suspension', 'La partie est annulée par le club.');
+        }
+        // Un créneau encore bloqué sans paiement est libéré tout de suite.
+        foreach (Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('status', 'pending_payment')->get() as $booking) {
+            $this->transition($booking, 'expired', 'Compte suspendu.', $staff?->id);
+        }
+        // Ses places dans les parties des autres : sa part lui est rendue, la partie continue sans lui.
+        $places = BookingPlayer::where('user_id', $user->id)->where('is_organizer', false)->whereIn('status', ['invited', 'paid'])
+            ->whereHas('booking', fn ($q) => $q->where('status', 'confirmed')->where('starts_at', '>', now()))->get();
+        foreach ($places as $player) {
+            $this->leave($player, $user, 'Compte suspendu.', 'suspension');
+        }
+        WaitlistEntry::where('user_id', $user->id)->delete();
+
+        return $bookings->count();
+    }
+
+    /** Un partenaire quitte une partie par décision du club : sa part lui est rendue, son QR code désactivé, sa place ne coûte rien à l'organisateur. */
+    private function leave(BookingPlayer $player, User $user, string $reason, string $code): void
+    {
+        $this->refundRest($this->openPayments($player->booking)->where('booking_player_id', $player->id)->where('payer_id', $user->id), $reason, $code);
+        AccessPass::where('booking_player_id', $player->id)->whereNull('revoked_at')->update(['revoked_at' => now()]);
+        $player->update(['status' => 'withdrawn']);
+    }
+
+    /**
+     * Paiements d'une réservation sur lesquels il reste quelque chose à rendre.
+     *
+     * @return Collection<int, Payment>
+     */
+    private function openPayments(Booking $booking): Collection
+    {
+        return $booking->payments()->whereIn('status', ['succeeded', 'partially_refunded'])->get();
+    }
+
+    /** Remboursés avant le match, les articles vendus n'ont pas été remis : ils reviennent en stock. */
+    private function restock(Booking $booking): void
+    {
+        foreach ($booking->items()->whereHas('product', fn ($q) => $q->where('kind', 'sale'))->get() as $item) {
+            Product::whereKey($item->product_id)->increment('stock', $item->quantity);
+        }
+    }
+
+    /** Ferme une réservation annulée : plus aucun QR code ne passe, et le changement d'état est tracé. */
+    private function close(Booking $booking, string $status, string $reason, ?int $by): void
+    {
+        AccessPass::whereIn('booking_player_id', $booking->players()->pluck('id'))->whereNull('revoked_at')->update(['revoked_at' => now()]);
+        $booking->update(['cancelled_at' => now()]);
+        $this->transition($booking, $status, $reason, $by);
+    }
+
+    /** Prévient un joueur que sa partie est annulée, dans sa langue, une fois la transaction validée. */
+    private function notifyCancelled(Booking $booking, BookingPlayer $player, int $refunded, string $reason): void
+    {
+        $user = $player->user;
+        if ($user === null && $player->guest_email === null) {
+            return;
+        }
+        DB::afterCommit(function () use ($booking, $player, $user, $refunded, $reason) {
+            $mail = (new MatchCancelled($booking, $refunded, $reason))->locale($user?->locale ?? app()->getLocale());
+            $user ? $user->notify($mail) : Notification::route('mail', $player->guest_email)->notify($mail);
         });
     }
 

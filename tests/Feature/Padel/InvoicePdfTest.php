@@ -4,6 +4,7 @@ namespace Tests\Feature\Padel;
 
 use App\Models\Booking;
 use App\Models\Court;
+use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Product;
@@ -77,13 +78,15 @@ class InvoicePdfTest extends TestCase
 
     public function test_the_credit_note_exists_only_after_a_refunded_cancellation(): void
     {
-        $url = "/bookings/{$this->booking->public_id}/invoices/{$this->number}/credit-note/pdf";
-        $this->actingAs($this->lucas)->get($url)->assertNotFound();
+        $page = "/bookings/{$this->booking->public_id}";
+        $this->actingAs($this->lucas)->get($page)->assertInertia(fn (Assert $p) => $p->where('invoices.0.credit_notes', []));
+        $this->actingAs($this->lucas)->get("{$page}/invoices/{$this->number}/credit-notes/NC2026-000001/pdf")->assertNotFound();
 
         app(BookingService::class)->cancel($this->booking, $this->lucas);
 
-        $this->actingAs($this->lucas)->get($url)->assertOk()->assertHeader('Content-Type', 'application/pdf');
-        $this->actingAs($this->lucas)->get("/bookings/{$this->booking->public_id}")
-            ->assertInertia(fn (Assert $page) => $page->where('invoices.0.credit_note', fn ($n) => str_starts_with((string) $n, 'NC')));
+        $note = CreditNote::sole()->number;
+        $this->assertStringStartsWith('NC', $note);
+        $this->actingAs($this->lucas)->get("{$page}/invoices/{$this->number}/credit-notes/{$note}/pdf")->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->actingAs($this->lucas)->get($page)->assertInertia(fn (Assert $p) => $p->where('invoices.0.credit_notes', [$note]));
     }
 }

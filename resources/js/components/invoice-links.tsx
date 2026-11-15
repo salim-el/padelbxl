@@ -1,7 +1,8 @@
 import { useT } from '@/lib/i18n';
 
 // Liens de téléchargement directs (pas de visite Inertia) : le serveur renvoie un fichier PDF.
-export default function InvoiceLinks({ booking, invoice, creditNote }: { booking: string; invoice: string; creditNote: string | null }) {
+// Une facture porte une note de crédit par remboursement : chacune a son lien.
+export default function InvoiceLinks({ booking, invoice, creditNotes }: { booking: string; invoice: string; creditNotes: string[] }) {
     const t = useT();
     const base = `/bookings/${booking}/invoices/${invoice}`;
 
@@ -10,11 +11,11 @@ export default function InvoiceLinks({ booking, invoice, creditNote }: { booking
             <a href={`${base}/pdf`} download className="text-[#1D5C7A] underline">
                 {t('Télécharger le PDF')}
             </a>
-            {creditNote && (
-                <a href={`${base}/credit-note/pdf`} download className="text-[#1D5C7A] underline">
-                    {t('Note de crédit :number (PDF)', { number: creditNote })}
+            {creditNotes.map((number) => (
+                <a key={number} href={`${base}/credit-notes/${number}/pdf`} download className="text-[#1D5C7A] underline">
+                    {t('Note de crédit :number (PDF)', { number })}
                 </a>
-            )}
+            ))}
         </>
     );
 }

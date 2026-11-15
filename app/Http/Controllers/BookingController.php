@@ -6,6 +6,7 @@ use App\Exceptions\BookingException;
 use App\Models\Booking;
 use App\Models\BookingPlayer;
 use App\Models\Court;
+use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
@@ -127,8 +128,8 @@ class BookingController extends Controller
             'declinable' => $player->status === 'invited' && $booking->status === 'confirmed' && now()->lte($booking->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS)),
             'qr' => $qr,
             'qr_window' => $pass ? Clock::local($pass->valid_from)->format('H:i').' – '.Clock::local($pass->valid_until)->format('H:i') : null,
-            'invoices' => $booking->invoices()->whereIn('payment_id', Payment::where('booking_player_id', $player->id)->where('payer_id', $request->user()->id)->select('id'))->with('creditNote')->get()
-                ->map(fn ($i) => ['number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents, 'credit_note' => $i->creditNote?->number])->all(),
+            'invoices' => $booking->invoices()->whereIn('payment_id', Payment::where('booking_player_id', $player->id)->where('payer_id', $request->user()->id)->select('id'))->with('creditNotes')->get()
+                ->map(fn ($i) => ['number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents, 'credit_notes' => $i->creditNotes->pluck('number')->all()])->all(),
         ]);
     }
 
@@ -162,7 +163,7 @@ class BookingController extends Controller
         $this->ensureOwner($request, $booking);
         // Seules les factures payées par l'organisateur : celles d'un partenaire sont à son nom et ne regardent que lui.
         $booking->load(['court', 'players.accessPass', 'players.user', 'items.product',
-            'invoices' => fn ($q) => $q->with('creditNote')->whereIn('payment_id', Payment::where('payer_id', $request->user()->id)->select('id'))]);
+            'invoices' => fn ($q) => $q->with('creditNotes')->whereIn('payment_id', Payment::where('payer_id', $request->user()->id)->select('id'))]);
         $player = $booking->players->firstWhere('is_organizer', true);
         $pass = $player?->accessPass;
         $qr = $pass && $pass->revoked_at === null && in_array($booking->status, ['confirmed', 'used'], true)
@@ -182,7 +183,7 @@ class BookingController extends Controller
                 'open' => ! $p->is_organizer && $p->guest_email === null, 'taken' => $p->user_id !== null, 'is_organizer' => $p->is_organizer, 'share_cents' => $p->share_cents, 'status' => $p->status,
             ])->all(),
             'invoices' => $booking->invoices->map(fn ($i) => [
-                'number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents, 'credit_note' => $i->creditNote?->number,
+                'number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents, 'credit_notes' => $i->creditNotes->pluck('number')->all(),
                 'ubl' => $i->customer_vat !== null && UblInvoice::sellerIsConfigured(),
             ])->all(),
         ]);
@@ -210,13 +211,12 @@ class BookingController extends Controller
         return $this->pdfResponse((new InvoicePdf)->render($invoice), $invoice->number);
     }
 
-    /** Note de crédit PDF, émise au remboursement de cette facture. */
-    public function creditNotePdf(Request $request, Booking $booking, Invoice $invoice): HttpResponse
+    /** Note de crédit PDF. Une facture en porte une par remboursement : l'adresse nomme celle qui est demandée. */
+    public function creditNotePdf(Request $request, Booking $booking, Invoice $invoice, CreditNote $creditNote): HttpResponse
     {
         $this->ensurePayerOrStaff($request, $invoice);
-        $note = $invoice->creditNote ?? abort(404);
 
-        return $this->pdfResponse((new InvoicePdf)->render($invoice, $note), $note->number);
+        return $this->pdfResponse((new InvoicePdf)->render($invoice, $creditNote), $creditNote->number);
     }
 
     // Une facture ne regarde que celui qui l'a payée (organisateur ou partenaire) et le personnel du club.

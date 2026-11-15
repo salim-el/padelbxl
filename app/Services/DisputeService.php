@@ -80,6 +80,10 @@ class DisputeService
                 }
             }
             $dispute->update(['status' => $decision, 'decision_note' => $note, 'refunded_cents' => $amount ?: null, 'decided_by' => $staff->id, 'decided_at' => now()]);
+            // Acceptée en entier avant le match : le joueur est remboursé, il ne joue donc plus. Son QR code ne passe plus.
+            if ($decision === 'accepted_full') {
+                $this->bookings->withdraw($dispute->booking, $dispute->user, $staff, 'Demande exceptionnelle acceptée.', 'dispute_accepted');
+            }
             activity('staff')->performedOn($dispute)->causedBy($staff)->event('dispute-decided')
                 ->withProperties(['decision' => $decision, 'refunded_cents' => $amount])->log('Décision sur une demande exceptionnelle');
 

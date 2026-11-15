@@ -144,5 +144,11 @@
     "Vous ne pouvez pas changer votre propre rôle.": "U kunt uw eigen rol niet wijzigen.",
     "Ce compte ne fait pas partie du personnel.": "Dit account maakt geen deel uit van het personeel.",
     "Il manque :count joueur(s) pour une partie de padel": "Er ontbreken :count speler(s) voor een padelpartij",
-    "Une partie de niveau :level cherche :count joueur(s) sur le :court le :date à :time.": "Een partij van niveau :level zoekt :count speler(s) op :court op :date om :time."
+    "Une partie de niveau :level cherche :count joueur(s) sur le :court le :date à :time.": "Een partij van niveau :level zoekt :count speler(s) op :court op :date om :time.",
+    "Votre partie est annulée": "Uw wedstrijd is geannuleerd",
+    "La partie du :date à :time (:court) est annulée.": "De wedstrijd van :date om :time (:court) is geannuleerd.",
+    "Vous êtes remboursé de :amount.": "U krijgt :amount terugbetaald.",
+    "Voir mes réservations": "Mijn reservaties bekijken",
+    "L’organisateur a annulé la partie.": "De organisator heeft de wedstrijd geannuleerd.",
+    "La partie est annulée par le club.": "De wedstrijd is door de club geannuleerd."
 }
