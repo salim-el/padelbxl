@@ -75,7 +75,10 @@ export default function Terms({ club }: { club: Club }) {
                         t(
                             'Jusqu’à 24 h avant le début, chaque paiement de la partie est remboursé en entier. Une note de crédit renvoie à la facture d’origine.',
                         ),
-                        t('Moins de 24 h avant le début, rien n’est remboursé. Les parts encore impayées sont payées par l’organisateur.'),
+                        t(
+                            'Moins de 24 h avant le début, l’organisateur n’est pas remboursé et paie tout le terrain. Il paie les parts encore impayées. Une part déjà payée par un partenaire lui est rendue et passe sur la carte de l’organisateur.',
+                        ),
+                        t('Si le club annule une réservation, chaque paiement est remboursé en entier et les joueurs sont prévenus par e-mail.'),
                         t('Une fois le créneau commencé, la réservation ne s’annule plus.'),
                         t('À l’annulation, les QR codes de la partie sont désactivés.'),
                         t('Une réservation faite à l’accueil suit les mêmes règles.'),

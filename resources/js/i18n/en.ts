@@ -282,8 +282,6 @@ const en: Record<string, string> = {
     'L’organisateur annule depuis son espace.': 'The organiser cancels from their account.',
     'Jusqu’à 24 h avant le début, chaque paiement de la partie est remboursé en entier. Une note de crédit renvoie à la facture d’origine.':
         'Up to 24 hours before the start, every payment for the match is refunded in full. A credit note refers to the original invoice.',
-    'Moins de 24 h avant le début, rien n’est remboursé. Les parts encore impayées sont payées par l’organisateur.':
-        'Less than 24 hours before the start, nothing is refunded. The organiser pays the shares still unpaid.',
     'Une fois le créneau commencé, la réservation ne s’annule plus.': 'Once the slot has started, the booking can no longer be cancelled.',
     'À l’annulation, les QR codes de la partie sont désactivés.': 'On cancellation, the QR codes of the match are disabled.',
     'Une réservation faite à l’accueil suit les mêmes règles.': 'A booking made at the reception follows the same rules.',
@@ -464,6 +462,10 @@ const en: Record<string, string> = {
     'Niveau :level': 'Level :level',
     'Si j’annule à moins de 24 h, je paie tout le terrain : les parts déjà réglées par mes partenaires leur sont rendues et me sont débitées.':
         'If I cancel less than 24 hours before, I pay for the whole court: the shares my partners already paid are refunded to them and charged to my card.',
+    'Moins de 24 h avant le début, l’organisateur n’est pas remboursé et paie tout le terrain. Il paie les parts encore impayées. Une part déjà payée par un partenaire lui est rendue et passe sur la carte de l’organisateur.':
+        "Less than 24 hours before the start, the organiser is not refunded and pays for the whole court. He pays the shares that are still unpaid. A share already paid by a partner is refunded to that partner and charged to the organiser's card.",
+    'Si le club annule une réservation, chaque paiement est remboursé en entier et les joueurs sont prévenus par e-mail.':
+        'If the club cancels a booking, every payment is refunded in full and the players are told by e-mail.',
 };
 
 export default en;
