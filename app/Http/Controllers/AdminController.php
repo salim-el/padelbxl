@@ -27,14 +27,19 @@ class AdminController extends Controller
     public function index(Request $request): Response
     {
         $this->ensureStaff($request);
-        $search = trim((string) ($request->validate(['q' => ['nullable', 'string', 'max:100']])['q'] ?? ''));
+        $input = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'day' => ['nullable', 'date_format:Y-m-d']]);
+        $search = trim((string) ($input['q'] ?? ''));
         $day = CarbonImmutable::now(Clock::ZONE)->startOfDay();
+        // Le gérant choisit le jour de la liste : c'est là qu'il annule une réservation, par exemple avant de fermer un terrain.
+        $listed = isset($input['day']) ? CarbonImmutable::parse($input['day'], Clock::ZONE)->startOfDay() : $day;
         $month = $day->startOfMonth();
 
-        $today = Booking::with('court', 'organizer')
-            ->where('starts_at', '>=', $day->utc())->where('starts_at', '<', $day->addDay()->utc())
+        $bookingsOf = fn (CarbonImmutable $d) => Booking::with('court', 'organizer')
+            ->where('starts_at', '>=', $d->utc())->where('starts_at', '<', $d->addDay()->utc())
             ->whereIn('status', ['pending_payment', 'confirmed', 'used', 'missed', 'cancelled_refunded', 'cancelled_unrefunded'])
             ->orderBy('starts_at')->orderBy('court_id')->get();
+        $today = $bookingsOf($day);
+        $list = $listed->equalTo($day) ? $today : $bookingsOf($listed);
         $played = $today->whereIn('status', ['confirmed', 'used', 'missed'])->count();
         $slots = Court::where('is_active', true)->count() * count(Clock::slots());
 
@@ -45,12 +50,15 @@ class AdminController extends Controller
                 'revenue_today_cents' => $this->revenue($day, $day->addDay()),
                 'revenue_month_cents' => $this->revenue($month, $month->addMonth()),
             ],
-            'today' => $today->map(fn (Booking $b) => [
+            'day' => $listed->format('Y-m-d'),
+            'today' => $list->map(fn (Booking $b) => [
                 'id' => $b->public_id,
                 'court' => $b->court->name,
                 'time' => Clock::local($b->starts_at)->format('H:i').' – '.Clock::local($b->ends_at)->format('H:i'),
                 'player' => $b->walk_in_name ? $b->walk_in_name.' (comptoir)' : $b->organizer->name,
                 'status' => $b->status,
+                // Une réservation du comptoir s'annule depuis son ticket, avec la règle des 24 heures.
+                'cancellable' => $b->walk_in_name === null && $b->status === 'confirmed' && $b->starts_at->isFuture(),
             ])->all(),
             'search' => $search,
             'settings' => ['opens_at' => substr(app(ClubSetting::class)->opens_at, 0, 5), 'closes_at' => substr(app(ClubSetting::class)->closes_at, 0, 5),
@@ -128,8 +136,26 @@ class AdminController extends Controller
             'price-updated' => number_format($p['old_cents'] / 100, 2, ',', ' ').' € → '.number_format($p['new_cents'] / 100, 2, ',', ' ').' €',
             'closure-deleted' => Clock::local(CarbonImmutable::parse($p['from']))->format('d/m/Y H:i').' → '.Clock::local(CarbonImmutable::parse($p['to']))->format('d/m/Y H:i'),
             'staff-invited', 'staff-role-changed' => isset($p['old']) ? self::ROLE_LABELS[$p['old']].' → '.self::ROLE_LABELS[$p['role']] : self::ROLE_LABELS[$p['role']],
+            'booking-cancelled-by-club' => $p['reason'] ?? null,
             default => null,
         };
+    }
+
+    /** Le club annule une réservation en ligne, par exemple avant de fermer un terrain : tout est remboursé et les joueurs sont prévenus. */
+    public function cancelBooking(Request $request, Booking $booking, BookingService $bookings): RedirectResponse
+    {
+        $this->ensureStaff($request);
+        abort_if($booking->walk_in_name !== null, 404);
+        $data = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:200']]);
+        try {
+            $bookings->cancelByClub($booking, $request->user(), $data['reason']);
+        } catch (BookingException $e) {
+            return back()->withErrors(['booking' => $e->getMessage()]);
+        }
+        activity('staff')->performedOn($booking)->causedBy($request->user())->event('booking-cancelled-by-club')
+            ->withProperties(['reason' => $data['reason']])->log('Réservation annulée par le club');
+
+        return back()->with('success', 'Réservation annulée et remboursée. Les joueurs sont prévenus par e-mail.');
     }
 
     /** F28 : suspension motivée, pour une durée fixe ou jusqu'à nouvelle décision. Le joueur reçoit le motif. */

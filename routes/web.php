@@ -85,6 +85,7 @@ Route::middleware(['auth', 'verified', 'consented'])->group(function () {
     Route::post('admin/counter', [CounterController::class, 'store'])->middleware('throttle:30,1')->name('admin.counter.store');
     Route::get('admin/counter/{booking}', [CounterController::class, 'show'])->name('admin.counter.show');
     Route::post('admin/counter/{booking}/cancel', [CounterController::class, 'cancel'])->name('admin.counter.cancel');
+    Route::post('admin/bookings/{booking}/cancel', [AdminController::class, 'cancelBooking'])->middleware('throttle:20,1')->name('admin.bookings.cancel');
     Route::post('admin/users/{user}/suspend', [AdminController::class, 'suspend'])->name('admin.users.suspend');
     Route::post('admin/users/{user}/reactivate', [AdminController::class, 'reactivate'])->name('admin.users.reactivate');
     Route::post('admin/users/{user}/revoke', [AdminController::class, 'revoke'])->name('admin.users.revoke');
