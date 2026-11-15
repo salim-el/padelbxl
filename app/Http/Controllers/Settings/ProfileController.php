@@ -73,6 +73,8 @@ class ProfileController extends Controller
         // Soft delete : réservations et factures restent liées au compte, anonymisé après 30 jours (accounts:anonymize).
         // Le délai laisse au joueur le temps de revenir sur une erreur ; il peut aussi demander l'effacement tout de suite.
         $user->forceFill(['status' => 'deactivated'])->save();
+        // Les jetons d'API ne survivent pas à la désactivation : un compte réactivé repart sans accès resté ouvert.
+        $user->tokens()->delete();
         $user->delete();
         if ($request->boolean('erase_now')) {
             $user->anonymize();
