@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Invoice extends Model
 {
@@ -16,9 +16,9 @@ class Invoice extends Model
         return ['issued_at' => 'immutable_datetime', 'vat_rate' => 'decimal:2'];
     }
 
-    // Le remboursement est toujours total : une facture a au plus une note de crédit.
-    public function creditNote(): HasOne
+    // Un remboursement partiel puis un autre donnent chacun leur note de crédit sur la même facture.
+    public function creditNotes(): HasMany
     {
-        return $this->hasOne(CreditNote::class);
+        return $this->hasMany(CreditNote::class)->orderBy('id');
     }
 }
