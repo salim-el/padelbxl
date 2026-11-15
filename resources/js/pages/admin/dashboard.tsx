@@ -8,7 +8,7 @@ import { CalendarCheck, Gauge, TrendingUp, Wallet } from 'lucide-react';
 import { useState } from 'react';
 
 type Stats = { bookings_today: number; occupancy: number; revenue_today_cents: number; revenue_month_cents: number };
-type Row = { id: string; court: string; time: string; player: string; status: string };
+type Row = { id: string; court: string; time: string; player: string; status: string; cancellable: boolean };
 type Account = { id: number; name: string; email: string; verified: boolean; role: string; status: string; created_at: string | null };
 type Page<T> = { data: T[]; current_page: number; last_page: number; total: number; prev_page_url: string | null; next_page_url: string | null };
 
@@ -226,6 +226,7 @@ function PriceRow({ rule }: { rule: Rule }) {
 
 export default function Dashboard({
     stats,
+    day,
     today,
     users,
     search,
@@ -235,6 +236,7 @@ export default function Dashboard({
     closures,
 }: {
     stats: Stats;
+    day: string;
     today: Row[];
     users: Page<Account>;
     search: string;
@@ -249,6 +251,17 @@ export default function Dashboard({
     const find = (e: React.FormEvent) => {
         e.preventDefault();
         router.get('/admin', q ? { q } : {}, { preserveScroll: true, preserveState: true });
+    };
+
+    const showDay = (value: string) => {
+        router.get('/admin', { ...(search ? { q: search } : {}), ...(value ? { day: value } : {}) }, { preserveScroll: true });
+    };
+    // Annulation par le club : tout est remboursé, le motif part chez les joueurs.
+    const cancelBooking = (b: Row) => {
+        const reason = prompt(
+            `Annuler la réservation de ${b.player} (${b.court}, ${b.time}) ?\nTout est remboursé. Motif envoyé aux joueurs, dix caractères au moins :`,
+        );
+        if (reason) router.post(`/admin/bookings/${b.id}/cancel`, { reason }, { preserveScroll: true });
     };
 
     const reactivate = (u: Account) => {
@@ -286,9 +299,25 @@ export default function Dashboard({
                 </section>
 
                 <section className="flex flex-col gap-2">
-                    <h2 className="text-lg font-semibold">Réservations du jour</h2>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-lg font-semibold">Réservations du jour</h2>
+                        <label className="flex items-center gap-2 text-sm">
+                            Jour affiché
+                            <input
+                                type="date"
+                                value={day}
+                                onChange={(e) => showDay(e.target.value)}
+                                className="bg-background rounded-md border px-2 py-1"
+                            />
+                        </label>
+                    </div>
+                    {(errors.booking || errors.reason) && (
+                        <p role="alert" className="text-sm text-[#9E2833]">
+                            {errors.booking ?? errors.reason}
+                        </p>
+                    )}
                     {today.length === 0 ? (
-                        <p className="text-muted-foreground text-sm">Aucune réservation aujourd’hui.</p>
+                        <p className="text-muted-foreground text-sm">Aucune réservation ce jour-là.</p>
                     ) : (
                         <div className="bg-card relative overflow-x-auto rounded-xl border">
                             <table className="w-full text-sm">
@@ -298,6 +327,9 @@ export default function Dashboard({
                                         <th className="p-2">Terrain</th>
                                         <th className="p-2">Joueur</th>
                                         <th className="p-2">État</th>
+                                        <th className="p-2">
+                                            <span className="sr-only">Action</span>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -308,6 +340,18 @@ export default function Dashboard({
                                             <td className="p-2">{b.player}</td>
                                             <td className="p-2">
                                                 <StatusBadge status={b.status} />
+                                            </td>
+                                            <td className="p-2 text-right">
+                                                {b.cancellable && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="border-[#CC3342]/40 text-[#9E2833] hover:bg-[#FCE6E8]"
+                                                        onClick={() => cancelBooking(b)}
+                                                    >
+                                                        Annuler et rembourser
+                                                    </Button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
