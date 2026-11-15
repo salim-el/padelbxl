@@ -92,13 +92,13 @@ Le rapport écrit final (S1-B) est remis le **jeudi 26 novembre 2026**. Le dossi
 
 Rythme : 7 h par jour, environ 10 commits par lot, et seulement le lot du jour. Chaque lot a sa branche, des commits par couche et ses tests, puis il est fusionné dans `develop`. Le temps réel de chaque lot est noté dans `VERIFICATION/estimation_temps_codage.md`.
 
-Déjà fusionnés : F4, F1/F7, F3, F17/F27, F28/F29, F25/F18, F21/F24, F24 horaires, F35 comptes du personnel et rôles, F11 appel aux joueurs d'un niveau proche (14/11, en avance d'un jour).
+Déjà fusionnés : F4, F1/F7, F3, F17/F27, F28/F29, F25/F18, F21/F24, F24 horaires, F35 comptes du personnel et rôles, F11 appel aux joueurs d'un niveau proche (14/11, en avance d'un jour), trous de remboursement (15/11).
 
 ### Code (15/11 au 22/11)
 
 | Jour | Branche | Objectif |
 |---|---|---|
-| Dim. 15/11 | `bugfix/refund-gaps` | Trous de l'audit du 14/11 : remboursement partiel puis annulation, demande acceptée avant le match, annulation par le club, réservations d'un compte suspendu, invités qui ont payé, notes de crédit multiples, jetons d'API à la désactivation |
+| Dim. 15/11 | `bugfix/refund-gaps` | Fait le 15/11. Trous de la relecture du 14/11 : remboursement partiel puis annulation, demande acceptée avant le match, annulation par le club, réservations d'un compte suspendu, invités qui ont payé, notes de crédit multiples, jetons d'API à la désactivation |
 | Lun. 16/11 | `feature/staff-i18n`, `chore/docker` | F23 : écrans du personnel en trois langues. Fichier Docker. Audits des dépendances dans la chaîne d'intégration (`composer audit`, `npm audit`, Dependabot) |
 | Mar. 17/11 | `feature/store-credits` | F15 : avoirs déduits au paiement |
 | Mer. 18/11 | `feature/booking-change`, `feature/waitlist` | F14 : déplacer une réservation. F13 : créneau libéré proposé à la liste d'attente |
