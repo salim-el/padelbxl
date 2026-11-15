@@ -114,7 +114,7 @@ Ces jours sont serrés. Si un lot déborde, F13 puis F30 passent après la remis
 | Jour | Travail |
 |---|---|
 | Lun. 23/11 | Gel du code, étiquette `v1.0.0-rc.1`. T03, T06, T07, T08, T09, T14 et T18 réalignés sur le code par les générateurs. Les chiffres (tests, commits, tables) sont relevés le jour même |
-| Mar. 24/11 | Générateur du rapport final, qui rassemble T01 à T20 comme le S1-B de référence. Nouvelles parties : enquête, difficultés rencontrées, réalisation (alpha, bêta, ce qui reste à faire) |
+| Mar. 24/11 | Générateur du rapport final, qui rassemble T01 à T20 comme le S1-B de référence. Nouvelles parties : étude de marché documentaire (à la place d'une enquête auprès des joueurs, choix du 15/11), difficultés rencontrées, réalisation (alpha, bêta, ce qui reste à faire) |
 | Mer. 25/11 | Relecture complète, PDF, archive ZIP du code et du dump, support de présentation |
 | Jeu. 26/11 | Remise du dossier |
 
@@ -128,7 +128,6 @@ F16 rappels et F21 préférences, F19 codes de secours, F31 absences, F33 export
 |---|---|
 | 18/11 | Clés de test Stripe dans `.env` |
 | 20/11 | Comptes Render et Brevo |
-| 22/11 | Enquête auprès des joueurs (réelle, au moins 20 réponses), résultats bruts transmis pour le rapport |
 | 22/11 | Publication GitHub relancée : le dépôt doit montrer un travail régulier |
 | 25/11 | Page de garde conforme au modèle officiel ; attestation anti-plagiat remplie et signée |
 
