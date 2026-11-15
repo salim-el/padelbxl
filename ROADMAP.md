@@ -99,7 +99,7 @@ Déjà fusionnés : F4, F1/F7, F3, F17/F27, F28/F29, F25/F18, F21/F24, F24 horai
 | Jour | Branche | Objectif |
 |---|---|---|
 | Dim. 15/11 | `bugfix/refund-gaps` | Trous de l'audit du 14/11 : remboursement partiel puis annulation, demande acceptée avant le match, annulation par le club, réservations d'un compte suspendu, invités qui ont payé, notes de crédit multiples, jetons d'API à la désactivation |
-| Lun. 16/11 | `feature/staff-i18n`, `chore/docker` | F23 : écrans du personnel en trois langues. Fichier Docker |
+| Lun. 16/11 | `feature/staff-i18n`, `chore/docker` | F23 : écrans du personnel en trois langues. Fichier Docker. Audits des dépendances dans la chaîne d'intégration (`composer audit`, `npm audit`, Dependabot) |
 | Mar. 17/11 | `feature/store-credits` | F15 : avoirs déduits au paiement |
 | Mer. 18/11 | `feature/booking-change`, `feature/waitlist` | F14 : déplacer une réservation. F13 : créneau libéré proposé à la liste d'attente |
 | Jeu. 19/11 | `feature/stripe-payment` | F9 : paiement réel en mode test Stripe (clés de test nécessaires le 18/11) |
@@ -113,14 +113,14 @@ Ces jours sont serrés. Si un lot déborde, F13 puis F30 passent après la remis
 
 | Jour | Travail |
 |---|---|
-| Lun. 23/11 | Gel du code, étiquette `v1.0.0-rc.1`. T03, T06, T07, T08, T09, T14 et T18 réalignés sur le code par les générateurs. Les chiffres (tests, commits, tables) sont relevés le jour même |
+| Lun. 23/11 | Gel du code, étiquette `v1.0.0-rc.1`. Les documents sont rédigés dans leur état final depuis le 15/11 : le script `verif_gel.py` des générateurs liste ce qui a été écrit par anticipation, et chaque point est vérifié dans le code. T03, T06, T07, T08, T09, T14 et T18 réalignés sur le code par les générateurs. Les chiffres (tests, commits, tables) sont relevés le jour même |
 | Mar. 24/11 | Générateur du rapport final, qui rassemble T01 à T20 comme le S1-B de référence. Nouvelles parties : étude de marché documentaire (à la place d'une enquête auprès des joueurs, choix du 15/11), difficultés rencontrées, réalisation (alpha, bêta, ce qui reste à faire) |
 | Mer. 25/11 | Relecture complète, PDF, archive ZIP du code et du dump, support de présentation |
 | Jeu. 26/11 | Remise du dossier |
 
 ### Après la remise (27/11 jusqu'à la défense)
 
-F16 rappels et F21 préférences, F19 codes de secours, F31 absences, F33 export comptable, F34 détail du tableau de bord, F35 (fin) contenus, référencement (T17), contrôle WCAG 2.1 AA, tests de bout en bout. Le rapport du 26/11 les présente comme « v1.1, après la remise », avec la raison. L'erratum remis au jury et la version `v1.0.0` arrivent avant la défense.
+F16 rappels et F21 préférences, F19 codes de secours, F31 absences, F33 export comptable, F34 détail du tableau de bord, F35 (fin) contenus, référencement (T17), contrôle WCAG 2.1 AA, tests de bout en bout. S'y ajoutent trois points relevés le 15/11 en relisant les documents : le recours contre la décision d'une demande exceptionnelle, la suppression d'un compte jamais confirmé après sept jours et les codes de secours de la double authentification. Le rapport du 26/11 les présente comme « v1.1, après la remise », avec la raison. L'erratum remis au jury et la version `v1.0.0` arrivent avant la défense.
 
 ### À faire par Salim
 
