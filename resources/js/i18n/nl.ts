@@ -464,6 +464,8 @@ const nl: Record<string, string> = {
     à: 'tot',
     'Les joueurs de ce niveau, libres à cette heure, reçoivent un e-mail.': 'Spelers van dit niveau die op dit uur vrij zijn, krijgen een e-mail.',
     'Niveau :level': 'Niveau :level',
+    'Si j’annule à moins de 24 h, je paie tout le terrain : les parts déjà réglées par mes partenaires leur sont rendues et me sont débitées.':
+        'Als ik minder dan 24 uur vooraf annuleer, betaal ik het hele terrein: de delen die mijn partners al betaald hebben, krijgen zij terug en worden van mijn kaart afgehouden.',
 };
 
 export default nl;

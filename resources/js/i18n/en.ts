@@ -462,6 +462,8 @@ const en: Record<string, string> = {
     à: 'to',
     'Les joueurs de ce niveau, libres à cette heure, reçoivent un e-mail.': 'Players at this level who are free at this time get an email.',
     'Niveau :level': 'Level :level',
+    'Si j’annule à moins de 24 h, je paie tout le terrain : les parts déjà réglées par mes partenaires leur sont rendues et me sont débitées.':
+        'If I cancel less than 24 hours before, I pay for the whole court: the shares my partners already paid are refunded to them and charged to my card.',
 };
 
 export default en;
