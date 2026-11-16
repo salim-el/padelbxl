@@ -6,20 +6,24 @@
 
 | Branche | Rôle |
 |---|---|
-| `main` | Versions livrées uniquement, chacune marquée d'une étiquette (`v0.1.0-alpha`, `v0.2.0-beta`…) |
-| `develop` | Intégration des fonctionnalités terminées |
+| `main` | Versions livrées uniquement, chacune marquée d'une étiquette (`v0.1.0-alpha`) |
+| `develop` | Intégration des fonctionnalités terminées. La version remise est l'état de cette branche |
 | `feature/<sujet>` | Une fonctionnalité, créée depuis `develop`, fusionnée dans `develop` |
-| `bugfix/<sujet>` | Correction d'une anomalie trouvée sur `develop` |
+| `fix/<sujet>`, `bugfix/<sujet>` | Correction d'une anomalie trouvée sur `develop` |
+| `test/<sujet>` | Tests ajoutés à une règle déjà codée |
+| `refactor/<sujet>`, `style/<sujet>`, `chore/<sujet>`, `docs/<sujet>` | Réorganisation du code, mise en forme, outillage et documentation |
 | `release/<version>` | Préparation d'une version, fusionnée dans `main` et dans `develop` |
-| `hotfix/<sujet>` | Correction urgente d'une version livrée, créée depuis `main` |
 
 Noms en anglais, en minuscules, mots séparés par des tirets.
 
 **Messages de commit** (Conventional Commits)
 
-`type(portée): description courte en français`, avec `feat`, `fix`, `style`, `docs`, `test`, `refactor` ou `chore`.
+`type(portée): description courte en français`, avec `feat`, `fix`, `style`, `docs`, `test`, `refactor`, `chore` ou `ci`.
 
-## Version alpha — v0.1.0-alpha (livrée)
+## Version alpha — v0.1.0-alpha (29 octobre 2026)
+
+La version alpha couvre le chemin principal : trouver un créneau, réserver, payer, entrer.
+Elle compte 78 tests, dont 5 pour le mode Arcade, retiré le 9 novembre 2026.
 
 | Branche | Contenu |
 |---|---|
@@ -32,106 +36,76 @@ Noms en anglais, en minuscules, mots séparés par des tirets.
 | `feature/i18n-fr` | Interface et e-mails en français |
 | `feature/password-policy` | Mot de passe de 15 caractères minimum |
 | `bugfix/confirm-password-throttle` | Limite d'essais sur la confirmation du mot de passe |
-
-## Version alpha — v0.1.0-alpha (octobre 2026)
-
-| Branche | Contenu |
-|---|---|
 | `feature/home-page`, `feature/home-images` | Page d'accueil publique, photos |
 | `feature/app-visual-refresh`, `bugfix/planning-cell-size` | Nouveau visuel des écrans connectés |
-| `feature/arena-game-mode`, `feature/auth-layout-and-arcade` | Mode arcade sur les six terrains (+14 €), choix au paiement ; écrans de connexion revus |
-| `feature/arcade-zones` | Un seul mode Arcade, aligné sur le document de conception : zones Or (point double), Rouge (faute) et Bleue (points Arena) |
+| `feature/arena-game-mode`, `feature/auth-layout-and-arcade`, `feature/arcade-zones` | Mode Arcade sur les six terrains (+14 €). Retiré le 9 novembre 2026 |
 | `feature/flash-slots`, `feature/rematch` | Créneaux flash (-20 % à moins de 3 h) ; revanche la semaine suivante |
 | `feature/court-management` | Tarifs et fermetures de terrains gérés par le gérant |
 | `feature/equipment-rental` | Location et vente de matériel ; facture à plusieurs lignes (6 % terrain, 21 % matériel) ; stock par créneau |
 | `feature/company-accounts` | Inscription en particulier ou en entreprise ; numéro de TVA belge contrôlé et repris sur la facture |
 | `chore/ci-github-actions` | Intégration continue : Pint, Prettier, ESLint et PHPUnit sur PostgreSQL 16 |
 
-## Version bêta — v0.2.0-beta (livraison au plus tard le 30 novembre 2026)
+## Version remise — branche `develop`, code gelé le 15 novembre 2026
 
-Déjà fusionné dans `develop` :
+Le code est gelé au commit `e1e5aef`. La suite compte 250 tests et 1536 vérifications.
+Le 16 novembre 2026, ce fichier et le README ont été mis à jour, sans changer le code.
 
-| Branche | Contenu |
-|---|---|
-| `fix/account-soft-delete` | Désinscription en soft delete, anonymisation après 30 jours |
-| `feature/i18n-nl-en`, `feature/i18n-pages` | Interface joueur en français, néerlandais et anglais |
-| `feature/api-rest`, `feature/opendata-jsonld` | API REST `/api/v1` (Sanctum), créneaux libres en JSON-LD ouvert |
-| `feature/security-headers` | Politique CSP avec nonce, HSTS, protection contre l'affichage dans un cadre |
-| `feature/activity-log`, `feature/activity-log-screen` | Journal des actions sensibles, gardé un an, consultable par le gérant |
-| `feature/staff-two-factor` | Double authentification obligatoire du personnel, refus des mots de passe déjà fuités |
-| `feature/counter-booking` | Réservation au comptoir pour un client sans compte, ticket et QR code imprimés |
-| `feature/ubl-export` | Facture électronique UBL (Peppol BIS 3.0) pour les clients entreprises |
-| `feature/split-payment` | Partage du prix entre quatre joueurs au plus, invitation par e-mail, part payée par chacun avec sa facture et son QR code ; carte de garantie de l'organisateur débitée des parts impayées 24 h avant le match |
-| `feature/open-matches` | Places ouvertes aux membres du club au moment du paiement, place prise en payant sa part, liste d'attente prévenue par e-mail quand un invité refuse ; liste sans nom ni adresse des joueurs |
-| `refactor/remove-arcade` | Retrait du mode Arcade : terrains classiques seulement, tarifs et supplément Arena supprimés, accueil, planning, paiement, comptoir et API simplifiés ; les réservations déjà payées gardent leur prix et leurs factures |
-| `refactor/terminal-wording`, `docs/readme-degree` | L'appareil du terrain devient un écran ; intitulé officiel du bachelier |
-| `fix/email-verification`, `fix/email-change-password` | E-mail de confirmation à l'inscription ; mot de passe demandé pour changer d'adresse |
-| `test/untested-rules` | Tests du créneau commencé, de l'annulation d'une partie commencée et de la limite de l'API |
-| `fix/booking-concurrency` | Verrous sur l'expiration d'un blocage, la fermeture d'un terrain et le plafond de trois réservations |
-| `fix/account-safety`, `fix/deletion-paid-share` | Désinscription refusée à un invité qui a payé sa part ; jetons révoqués au changement de mot de passe ; pas de jeton d'API pour le personnel |
-| `fix/history-and-stock` | Passage à la borne dans l'historique ; stock des articles vendus |
-| `refactor/staff-policy` | Droits du personnel définis à un seul endroit (Gate `manage-club`) |
-| `feature/legal-pages` | Pages publiques des conditions générales et de la confidentialité |
-| `chore/demo-data` | Données de démonstration réalistes (`DemoSeeder`) |
-| `feature/invoice-pdf` | Factures et notes de crédit en PDF |
-| `feature/access-log-retention`, `feature/data-export`, `feature/cookie-notice`, `chore/club-email` | Purge du journal de la borne après trois mois ; export des données personnelles ; bandeau d'information sur les cookies ; e-mail de contact du club |
-
-Fusionné le 14 novembre 2026 :
-
-| Branche | Contenu |
-|---|---|
-| `bugfix/align-docs-code` | Jetons d'API révoqués après « mot de passe oublié » ; adresse d'invitation effacée à l'anonymisation ; balise noindex sur les pages privées |
-| `feature/account-reactivation` | F4 : réactivation du compte par le joueur pendant trente jours, lien signé à usage unique |
-| `feature/legal-consents` | F1 et F7 : date de naissance, niveau, parent sous 13 ans, adresses jetables refusées, versions acceptées enregistrées, nouvelle version à accepter avant de réserver |
-| `feature/close-sessions-on-password-change` | F3 : un nouveau mot de passe ferme les autres sessions |
-| `feature/exceptional-requests` | F17 et F27 : demande pour un imprévu grave, pièce privée, décision motivée, remboursement total ou partiel |
-
-## Plan jusqu'à la remise du 26 novembre 2026
-
-Le rapport écrit final (S1-B) est remis le **jeudi 26 novembre 2026**. Le dossier rassemble le rapport en PDF, l'archive ZIP du code avec le dump, le support de présentation et l'attestation anti-plagiat. La défense a lieu mi-décembre.
-
-Rythme : 7 h par jour, environ 10 commits par lot, et seulement le lot du jour. Chaque lot a sa branche, des commits par couche et ses tests, puis il est fusionné dans `develop`. Le temps réel de chaque lot est noté dans `VERIFICATION/estimation_temps_codage.md`.
-
-Déjà fusionnés : F4, F1/F7, F3, F17/F27, F28/F29, F25/F18, F21/F24, F24 horaires, F35 comptes du personnel et rôles, F11 appel aux joueurs d'un niveau proche (14/11, en avance d'un jour), trous de remboursement (15/11).
-
-### Code (15/11 au 22/11)
-
-| Jour | Branche | Objectif |
+| Fusion | Branche | Contenu |
 |---|---|---|
-| Dim. 15/11 | `bugfix/refund-gaps` | Fait le 15/11. Trous de la relecture du 14/11 : remboursement partiel puis annulation, demande acceptée avant le match, annulation par le club, réservations d'un compte suspendu, invités qui ont payé, notes de crédit multiples, jetons d'API à la désactivation |
-| Lun. 16/11 | `feature/staff-i18n`, `chore/docker` | F23 : écrans du personnel en trois langues. Fichier Docker. Audits des dépendances dans la chaîne d'intégration (`composer audit`, `npm audit`, Dependabot) |
-| Mar. 17/11 | `feature/store-credits` | F15 : avoirs déduits au paiement |
-| Mer. 18/11 | `feature/booking-change`, `feature/waitlist` | F14 : déplacer une réservation. F13 : créneau libéré proposé à la liste d'attente |
-| Jeu. 19/11 | `feature/stripe-payment` | F9 : paiement réel en mode test Stripe (clés de test nécessaires le 18/11) |
-| Ven. 20/11 | `feature/stripe-webhooks` | Confirmation par notification signée ; F30 : contestation bancaire, réservation gelée |
-| Sam. 21/11 | `chore/deployment` | Mise en ligne sur Render, e-mails par Brevo (comptes nécessaires le 20/11) |
-| Dim. 22/11 | `bugfix/*` | Corrections après la mise en ligne, parcours principaux testés sur l'adresse publique |
+| 30/10 | `chore/rename-padelbxl`, `bugfix/symfony-mime-cve` | Projet renommé PadelBxl ; PHP 8.4.27 au moins et correctif de symfony/mime |
+| 30/10 | `fix/account-soft-delete` | Désinscription en soft delete, anonymisation après 30 jours |
+| 31/10 au 02/11 | `feature/i18n-nl-en`, `feature/i18n-pages` | Interface du joueur en français, néerlandais et anglais |
+| 01/11 au 02/11 | `feature/api-rest`, `feature/opendata-jsonld` | API REST `/api/v1` (Sanctum), créneaux libres en JSON-LD ouvert |
+| 03/11 | `feature/security-headers` | Politique CSP avec nonce, HSTS en HTTPS, protection contre l'affichage dans un cadre |
+| 03/11 | `feature/activity-log`, `feature/activity-log-screen` | Journal des actions sensibles, gardé un an, consultable par le gérant |
+| 03/11 | `feature/staff-two-factor` | Double authentification obligatoire du personnel, refus des mots de passe déjà fuités |
+| 03/11 | `feature/counter-booking` | Réservation au comptoir pour un client sans compte, ticket et QR code imprimés |
+| 05/11 | `feature/ubl-export` | Facture électronique UBL (Peppol BIS 3.0) pour les clients entreprises |
+| 08/11 | `feature/split-payment` | Partage du prix entre les joueurs invités, quatre au plus, invitation par e-mail ; parts impayées débitées à l'organisateur 24 h avant le match (paiement simulé) |
+| 09/11 | `feature/open-matches` | Places ouvertes aux membres du club, liste d'attente prévenue quand une place se libère dans une partie |
+| 09/11 | `refactor/remove-arcade` | Retrait du mode Arcade : terrains classiques seulement ; les réservations déjà payées gardent leur prix et leurs factures |
+| 10/11 | `refactor/terminal-wording` | L'appareil du terrain devient un écran |
+| 11/11 | `fix/email-verification`, `fix/email-change-password` | E-mail de confirmation à l'inscription ; mot de passe demandé pour changer d'adresse |
+| 11/11 | `test/untested-rules` | Tests du créneau commencé, de l'annulation d'une partie commencée et de la limite de l'API |
+| 11/11 | `fix/booking-concurrency` | Verrous sur l'expiration d'un blocage, la fermeture d'un terrain et le plafond de trois réservations |
+| 11/11 | `fix/account-safety` | Désinscription refusée à un invité qui a payé sa part ; jetons révoqués au changement de mot de passe |
+| 11/11 | `fix/history-and-stock` | Passage à la borne dans l'historique ; stock des articles vendus |
+| 11/11 | `refactor/staff-policy` | Droits du personnel définis à un seul endroit (Gate `manage-club`) |
+| 11/11 | `feature/legal-pages`, `feature/cookie-notice` | Conditions générales et confidentialité ; bandeau d'information sur les cookies |
+| 11/11 | `feature/invoice-pdf` | Factures et notes de crédit en PDF |
+| 11/11 | `feature/access-log-retention`, `feature/data-export` | Journal de la borne purgé après trois mois ; export des données personnelles |
+| 11/11 | `feature/contact-form`, `chore/club-email` | Formulaire « Écrire au club », envoyé par e-mail sans stockage |
+| 11/11 | `chore/demo-data` | Données de démonstration réalistes (`DemoSeeder`) |
+| 12/11 | `feature/invoice-pdf-i18n`, `feature/immediate-erasure` | Factures PDF en trois langues ; effacement immédiat du compte |
+| 12/11 | `test/real-concurrency` | Vraie concurrence entre deux connexions à la base |
+| 14/11 | `bugfix/align-docs-code` | Jetons d'API révoqués après « mot de passe oublié » ; balise noindex sur les pages privées |
+| 14/11 | `feature/account-reactivation` | F4 : réactivation du compte par le joueur pendant trente jours |
+| 14/11 | `feature/legal-consents` | F1 et F7 : date de naissance, niveau, parent sous 13 ans, versions des documents acceptées |
+| 14/11 | `feature/close-sessions-on-password-change` | F3 : un nouveau mot de passe ferme les autres sessions |
+| 14/11 | `feature/exceptional-requests` | F17 et F27 : demande pour un imprévu grave, pièce privée, décision motivée |
+| 14/11 | `feature/account-suspension` | F28 et F29 : suspension motivée, contestation tranchée par un autre membre du personnel |
+| 14/11 | `feature/counter-and-guest-access` | F25 et F18 : lien vers le QR code pour le comptoir et pour les invités |
+| 14/11 | `feature/profile-and-pricing`, `feature/club-settings-and-staff` | F21 et F24 : profil, horaires du club, tarifs programmés |
+| 14/11 | `feature/staff-accounts` | F35 : comptes du personnel et rôles |
+| 14/11 | `feature/level-matching` | F11 : appel aux joueurs d'un niveau proche |
+| 15/11 | `bugfix/refund-gaps`, `bugfix/terms-late-cancellation` | Remboursements partiels, annulation par le club, comptes suspendus ; annulation tardive dans les conditions |
 
-Ces jours sont serrés. Si un lot déborde, F13 puis F30 passent après la remise, et le rapport l'indique.
+## Après la remise — version 1.1 (27 novembre au 11 décembre 2026)
 
-### Rapport (23/11 au 26/11)
+Ces points suivent la remise du 26 novembre 2026 et précèdent la défense de mi-décembre.
+Le rapport écrit les présente comme « version 1.1 ».
 
-| Jour | Travail |
-|---|---|
-| Lun. 23/11 | Gel du code, étiquette `v1.0.0-rc.1`. Les documents sont rédigés dans leur état final depuis le 15/11 : le script `verif_gel.py` des générateurs liste ce qui a été écrit par anticipation, et chaque point est vérifié dans le code. T03, T06, T07, T08, T09, T14 et T18 réalignés sur le code par les générateurs. Les chiffres (tests, commits, tables) sont relevés le jour même |
-| Mar. 24/11 | Générateur du rapport final, qui rassemble T01 à T20 comme le S1-B de référence. Nouvelles parties : étude de marché documentaire (à la place d'une enquête auprès des joueurs, choix du 15/11), difficultés rencontrées, réalisation (alpha, bêta, ce qui reste à faire) |
-| Mer. 25/11 | Relecture complète, PDF, archive ZIP du code et du dump, support de présentation |
-| Jeu. 26/11 | Remise du dossier |
+- Paiement par Stripe en mode test, avec la carte gardée en garantie ; contestation bancaire (F30).
+- Mise en ligne sur Render, e-mails par Brevo, du 27 novembre au 4 décembre 2026. Fichier Docker. Audits des dépendances (`composer audit`, `npm audit`, Dependabot).
+- F14 déplacer une réservation, F15 avoirs, F19 codes de secours de la borne, F31 suivi des absences, F33 export comptable.
+- Créneau libéré par une annulation proposé à la liste d'attente.
+- E-mail de confirmation de réservation, rappels et préférences de notification.
+- Écrans du personnel en néerlandais et en anglais ; textes, documents légaux et clés d'API modifiables par l'administrateur.
+- Codes de secours de la double authentification ; tarif selon le jour ; adresse de facturation d'une entreprise.
+- Suppression d'un compte jamais confirmé après sept jours ; recours contre une décision sur une demande exceptionnelle.
+- Contrôle complet WCAG 2.1 AA, tests de bout en bout avec Playwright, balises hreflang et plan du site.
 
-### Après la remise (27/11 jusqu'à la défense)
-
-F16 rappels et F21 préférences, F19 codes de secours, F31 absences, F33 export comptable, F34 détail du tableau de bord, F35 (fin) contenus, référencement (T17), contrôle WCAG 2.1 AA, tests de bout en bout. S'y ajoutent trois points relevés le 15/11 en relisant les documents : le recours contre la décision d'une demande exceptionnelle, la suppression d'un compte jamais confirmé après sept jours et les codes de secours de la double authentification. Le rapport du 26/11 les présente comme « v1.1, après la remise », avec la raison. L'erratum remis au jury et la version `v1.0.0` arrivent avant la défense.
-
-### À faire par Salim
-
-| Pour le | Tâche |
-|---|---|
-| 18/11 | Clés de test Stripe dans `.env` |
-| 20/11 | Comptes Render et Brevo |
-| 22/11 | Publication GitHub relancée : le dépôt doit montrer un travail régulier |
-| 25/11 | Page de garde conforme au modèle officiel ; attestation anti-plagiat remplie et signée |
-
-## Idées à étudier après la bêta
+## Idées à étudier plus tard
 
 | Idée | Intérêt | Difficulté |
 |---|---|---|
