@@ -9,6 +9,7 @@ use App\Services\Clock;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -60,6 +61,25 @@ class LocaleTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->where('bookings', fn ($bookings) => collect($bookings)->contains('date', 'vrijdag 23 oktober 2026')));
         $this->post('/bookings', ['court_id' => $court->id, 'starts_at' => $start->toIso8601String()])
             ->assertSessionHasErrors(['booking' => 'Iemand anders heeft dit tijdslot net gereserveerd.']);
+    }
+
+    public function test_the_staff_works_in_dutch_and_in_english(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        Notification::fake();
+        $lucas = User::where('email', 'lucas.martin@example.test')->firstOrFail();
+        $marc = User::where('email', 'marc.dumont@example.test')->firstOrFail();
+        $marc->forceFill(['locale' => 'nl'])->save();
+        $admin = User::factory()->create(['name' => 'Sofia Admin', 'locale' => 'en']);
+        $admin->forceFill(['role' => 'admin'])->save();
+
+        // Les écrans reçoivent la langue du membre du personnel et la traduisent eux-mêmes.
+        $this->actingAs($marc)->get('/admin')->assertInertia(fn (Assert $page) => $page->where('locale', 'nl'));
+        $this->post("/admin/users/{$lucas->id}/suspend", ['reason' => 'Trois absences sans prévenir ce mois-ci.', 'days' => 7])
+            ->assertSessionHas('success', 'Het account van Lucas Martin is geschorst. De reden wordt per e-mail verstuurd.');
+
+        $this->actingAs($admin)->post("/admin/users/{$lucas->id}/reactivate")
+            ->assertSessionHas('success', 'The account of Lucas Martin is active again.');
     }
 
     public function test_a_player_finds_his_language_again_at_the_next_login(): void
