@@ -44,7 +44,7 @@ class AdminStaffController extends Controller
             return back()->withErrors(['staff' => $e->getMessage()]);
         }
 
-        return back()->with('success', "{$user->name} fait partie du personnel. Un e-mail lui est envoyé.");
+        return back()->with('success', __(':name fait partie du personnel. Un e-mail lui est envoyé.', ['name' => $user->name]));
     }
 
     public function update(Request $request, User $user, StaffService $staff): RedirectResponse
@@ -69,6 +69,6 @@ class AdminStaffController extends Controller
             return back()->withErrors(['staff' => $e->getMessage()]);
         }
 
-        return back()->with('success', "Nouveau lien envoyé à {$user->email}.");
+        return back()->with('success', __('Nouveau lien envoyé à :email.', ['email' => $user->email]));
     }
 }

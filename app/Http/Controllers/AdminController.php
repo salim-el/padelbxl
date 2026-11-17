@@ -155,7 +155,7 @@ class AdminController extends Controller
         activity('staff')->performedOn($booking)->causedBy($request->user())->event('booking-cancelled-by-club')
             ->withProperties(['reason' => $data['reason']])->log('Réservation annulée par le club');
 
-        return back()->with('success', 'Réservation annulée et remboursée. Les joueurs sont prévenus par e-mail.');
+        return back()->with('success', __('Réservation annulée et remboursée. Les joueurs sont prévenus par e-mail.'));
     }
 
     /** F28 : suspension motivée, pour une durée fixe ou jusqu'à nouvelle décision. Le joueur reçoit le motif. */
@@ -169,7 +169,7 @@ class AdminController extends Controller
         ]);
         $accounts->suspend($user, $request->user(), $data['reason'], $data['days'] ?? null);
 
-        return back()->with('success', "Le compte de {$user->name} est suspendu. Le motif lui est envoyé par e-mail.");
+        return back()->with('success', __('Le compte de :name est suspendu. Le motif lui est envoyé par e-mail.', ['name' => $user->name]));
     }
 
     public function reactivate(Request $request, User $user, AccountStatusService $accounts): RedirectResponse
@@ -182,7 +182,7 @@ class AdminController extends Controller
             return back()->withErrors(['account' => $e->getMessage()]);
         }
 
-        return back()->with('success', "Le compte de {$user->name} est réactivé.");
+        return back()->with('success', __('Le compte de :name est réactivé.', ['name' => $user->name]));
     }
 
     /** F28 : révocation définitive pour fraude, après vérification. */
@@ -193,7 +193,7 @@ class AdminController extends Controller
         $data = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:1000']]);
         $accounts->revoke($user, $request->user(), $data['reason']);
 
-        return back()->with('success', "Le compte de {$user->name} est révoqué.");
+        return back()->with('success', __('Le compte de :name est révoqué.', ['name' => $user->name]));
     }
 
     // Chiffre d'affaires TTC encaissé : factures émises moins notes de crédit sur la période.
@@ -214,7 +214,7 @@ class AdminController extends Controller
         activity('staff')->performedOn($rule)->event('price-updated')
             ->withProperties(['old_cents' => $old, 'new_cents' => $rule->price_cents])->log('Tarif modifié');
 
-        return back()->with('success', "Tarif « {$rule->name} » mis à jour.");
+        return back()->with('success', __('Tarif « :name » mis à jour.', ['name' => $rule->name]));
     }
 
     /**
@@ -236,13 +236,13 @@ class AdminController extends Controller
         $overlap = PricingRule::whereDate('valid_from', $data['valid_from'])
             ->where('start_time', '<', $data['end_time'].':00')->where('end_time', '>', $data['start_time'].':00')->exists();
         if ($overlap) {
-            return back()->withErrors(['pricing' => 'Un autre tarif commence le même jour sur ces heures.']);
+            return back()->withErrors(['pricing' => __('Un autre tarif commence le même jour sur ces heures.')]);
         }
         $rule = PricingRule::create($data);
         activity('staff')->performedOn($rule)->event('price-rule-created')
             ->withProperties(['price_cents' => $rule->price_cents, 'vat_rate' => $data['vat_rate'], 'valid_from' => $data['valid_from']])->log('Tarif créé');
 
-        return back()->with('success', "Tarif « {$rule->name} » enregistré.");
+        return back()->with('success', __('Tarif « :name » enregistré.', ['name' => $rule->name]));
     }
 
     /** F24 : clôturer un tarif à une date ; les réservations déjà payées gardent leur prix. */
@@ -253,7 +253,7 @@ class AdminController extends Controller
         $rule->update($data);
         activity('staff')->performedOn($rule)->event('price-rule-closed')->withProperties($data)->log('Tarif clôturé');
 
-        return back()->with('success', "Tarif « {$rule->name} » valable jusqu'au ".CarbonImmutable::parse($data['valid_until'])->format('d/m/Y').'.');
+        return back()->with('success', __('Tarif « :name » valable jusqu’au :date.', ['name' => $rule->name, 'date' => CarbonImmutable::parse($data['valid_until'])->format('d/m/Y')]));
     }
 
     /**
@@ -270,13 +270,13 @@ class AdminController extends Controller
         ]);
         $next = new ClubSetting($data);
         if ($next->slots() === []) {
-            return back()->withErrors(['settings' => 'Aucun créneau ne tient entre ces heures.']);
+            return back()->withErrors(['settings' => __('Aucun créneau ne tient entre ces heures.')]);
         }
         $misplaced = Booking::whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->get(['starts_at', 'ends_at'])
             ->filter(fn (Booking $b) => ! in_array(Clock::local($b->starts_at)->format('H:i'), $next->slots(), true)
                 || $b->starts_at->diffInMinutes($b->ends_at) !== $next->slot_minutes)->count();
         if ($misplaced > 0) {
-            return back()->withErrors(['settings' => "$misplaced réservation(s) à venir ne tomberai(en)t plus sur un créneau. Déplacez-les ou annulez-les d’abord."]);
+            return back()->withErrors(['settings' => __(':count réservation(s) à venir ne tomberai(en)t plus sur un créneau. Déplacez-les ou annulez-les d’abord.', ['count' => $misplaced])]);
         }
         $settings = ClubSetting::firstOrFail();
         $old = $settings->only(['opens_at', 'closes_at', 'slot_minutes']);
@@ -284,7 +284,7 @@ class AdminController extends Controller
         app()->forgetScopedInstances();
         activity('staff')->performedOn($settings)->event('club-settings-updated')->withProperties(['old' => $old, 'new' => $data])->log('Horaires modifiés');
 
-        return back()->with('success', 'Horaires enregistrés.');
+        return back()->with('success', __('Horaires enregistrés.'));
     }
 
     public function storeClosure(Request $request): RedirectResponse
@@ -308,11 +308,11 @@ class AdminController extends Controller
             return $conflicts > 0 ? $conflicts : CourtClosure::create(['court_id' => $data['court_id'], 'starts_at' => $from, 'ends_at' => $to, 'reason' => $data['reason'], 'created_by' => $request->user()->id]);
         });
         if (is_int($closure)) {
-            return back()->withErrors(['closure' => "$closure réservation(s) active(s) sur cette période. Annulez-les d’abord."]);
+            return back()->withErrors(['closure' => __(':count réservation(s) active(s) sur cette période. Annulez-les d’abord.', ['count' => $closure])]);
         }
         activity('staff')->performedOn($closure)->event('closure-created')->log('Fermeture de terrain ajoutée');
 
-        return back()->with('success', 'Fermeture enregistrée. Le planning n’affiche plus ces créneaux.');
+        return back()->with('success', __('Fermeture enregistrée. Le planning n’affiche plus ces créneaux.'));
     }
 
     public function destroyClosure(Request $request, CourtClosure $closure): RedirectResponse
@@ -322,7 +322,7 @@ class AdminController extends Controller
         activity('staff')->performedOn($closure)->event('closure-deleted')
             ->withProperties(['court_id' => $closure->court_id, 'from' => $closure->starts_at, 'to' => $closure->ends_at])->log('Fermeture de terrain supprimée');
 
-        return back()->with('success', 'Fermeture supprimée. Les créneaux sont de nouveau réservables.');
+        return back()->with('success', __('Fermeture supprimée. Les créneaux sont de nouveau réservables.'));
     }
 
     private function ensureStaff(Request $request): void
