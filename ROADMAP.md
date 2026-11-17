@@ -49,6 +49,7 @@ Elle compte 78 tests, dont 5 pour le mode Arcade, retiré le 9 novembre 2026.
 
 Le code est gelé au commit `e1e5aef`. La suite compte 250 tests et 1536 vérifications.
 Le 16 novembre 2026, ce fichier et le README ont été mis à jour, sans changer le code.
+Le 17 novembre 2026, un réglage des tests (`config/inertia.php`) a corrigé l'intégration continue sous Linux. Il ne change pas l'application.
 
 | Fusion | Branche | Contenu |
 |---|---|---|
@@ -89,6 +90,7 @@ Le 16 novembre 2026, ce fichier et le README ont été mis à jour, sans changer
 | 14/11 | `feature/staff-accounts` | F35 : comptes du personnel et rôles |
 | 14/11 | `feature/level-matching` | F11 : appel aux joueurs d'un niveau proche |
 | 15/11 | `bugfix/refund-gaps`, `bugfix/terms-late-cancellation` | Remboursements partiels, annulation par le club, comptes suspendus ; annulation tardive dans les conditions |
+| 17/11 | `fix/ci-inertia-page-paths` | Dossier des écrans écrit en minuscules dans la configuration des tests : Linux distingue la casse, Windows non |
 
 ## Après la remise — version 1.1 (27 novembre au 11 décembre 2026)
 
