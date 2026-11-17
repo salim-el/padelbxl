@@ -1,6 +1,7 @@
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
+import { useT } from '@/lib/i18n';
 import { DISPUTE_LABELS } from '@/pages/disputes/index';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -29,6 +30,7 @@ const DECISIONS: [string, string][] = [
 
 // F27 : le gérant lit la demande, la pièce éventuelle, puis décide avec une motivation.
 export default function AdminDispute({ dispute }: { dispute: Dispute }) {
+    const t = useT();
     const open = ['received', 'in_review'].includes(dispute.status);
     const { data, setData, post, processing, errors } = useForm({ decision: 'accepted_full', decision_note: '', amount: '' });
 
@@ -40,30 +42,30 @@ export default function AdminDispute({ dispute }: { dispute: Dispute }) {
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Demandes', href: '/admin/disputes' },
-                { title: `Demande ${dispute.id}`, href: `/admin/disputes/${dispute.id}` },
+                { title: t('Demandes'), href: '/admin/disputes' },
+                { title: t('Demande :id', { id: dispute.id }), href: `/admin/disputes/${dispute.id}` },
             ]}
         >
-            <Head title={`Demande ${dispute.id}`} />
+            <Head title={t('Demande :id', { id: dispute.id })} />
             <div className="flex max-w-3xl flex-col gap-6 p-4">
-                <PageHeader eyebrow={`${dispute.court} · ${dispute.starts_at}`} title={`Demande de ${dispute.player}`} />
+                <PageHeader eyebrow={`${dispute.court} · ${dispute.starts_at}`} title={t('Demande de :name', { name: dispute.player })} />
                 <section className="bg-card rounded-2xl border p-5 text-sm">
                     <p className="text-[#5F6B78]">
-                        Reçue le {dispute.created_at} · {DISPUTE_LABELS[dispute.status] ?? dispute.status}
+                        {t('Reçue le :date', { date: dispute.created_at })} · {t(DISPUTE_LABELS[dispute.status] ?? dispute.status)}
                     </p>
                     <p className="mt-3 whitespace-pre-line">{dispute.reason}</p>
                     {dispute.has_attachment && (
                         <a href={`/admin/disputes/${dispute.id}/attachment`} className="mt-3 inline-block font-semibold text-[#1D5C7A] underline">
-                            Télécharger la pièce justificative
+                            {t('Télécharger la pièce justificative')}
                         </a>
                     )}
                 </section>
 
                 {open ? (
                     <form onSubmit={submit} className="bg-card flex flex-col gap-4 rounded-2xl border p-5 text-sm">
-                        <p>Encore remboursable sur ses paiements : {euros(dispute.refundable_cents)}.</p>
+                        <p>{t('Encore remboursable sur ses paiements : :amount.', { amount: euros(dispute.refundable_cents) })}</p>
                         <fieldset className="flex flex-col gap-2">
-                            <legend className="mb-1 font-medium">Décision</legend>
+                            <legend className="mb-1 font-medium">{t('Décision')}</legend>
                             {DECISIONS.map(([value, label]) => (
                                 <label key={value} className="flex items-center gap-2">
                                     <input
@@ -73,13 +75,13 @@ export default function AdminDispute({ dispute }: { dispute: Dispute }) {
                                         checked={data.decision === value}
                                         onChange={() => setData('decision', value)}
                                     />
-                                    {label}
+                                    {t(label)}
                                 </label>
                             ))}
                         </fieldset>
                         {data.decision === 'accepted_partial' && (
                             <label className="flex flex-col gap-1 font-medium">
-                                Montant à rembourser (€)
+                                {t('Montant à rembourser (€)')}
                                 <input
                                     type="number"
                                     min="0.01"
@@ -92,7 +94,7 @@ export default function AdminDispute({ dispute }: { dispute: Dispute }) {
                             </label>
                         )}
                         <label className="flex flex-col gap-1 font-medium">
-                            Motivation (envoyée au joueur)
+                            {t('Motivation (envoyée au joueur)')}
                             <textarea
                                 required
                                 minLength={10}
@@ -108,14 +110,14 @@ export default function AdminDispute({ dispute }: { dispute: Dispute }) {
                             </p>
                         )}
                         <Button type="submit" disabled={processing}>
-                            Enregistrer la décision
+                            {t('Enregistrer la décision')}
                         </Button>
                     </form>
                 ) : (
                     <section className="bg-card rounded-2xl border p-5 text-sm">
                         <p className="font-semibold">
-                            Décision de {dispute.decided_by}
-                            {dispute.refunded_cents ? ` · ${euros(dispute.refunded_cents)} remboursés` : ''}
+                            {t('Décision de :name', { name: dispute.decided_by ?? '' })}
+                            {dispute.refunded_cents ? ` · ${t(':amount remboursés', { amount: euros(dispute.refunded_cents) })}` : ''}
                         </p>
                         <p className="mt-2 whitespace-pre-line">{dispute.decision_note}</p>
                     </section>
