@@ -152,5 +152,9 @@
     "Fermeture supprimée. Les créneaux sont de nouveau réservables.": "Closure removed. The slots can be booked again.",
     ":name fait partie du personnel. Un e-mail lui est envoyé.": ":name is now a staff member. An e-mail has been sent.",
     "Nouveau lien envoyé à :email.": "New link sent to :email.",
-    "Réservation payée et confirmée. Imprimez le ticket ; un client qui a donné son e-mail reçoit aussi le lien vers son QR code.": "Booking paid and confirmed. Print the ticket. A customer who gave an e-mail address also receives the link to their QR code."
+    "Réservation payée et confirmée. Imprimez le ticket ; un client qui a donné son e-mail reçoit aussi le lien vers son QR code.": "Booking paid and confirmed. Print the ticket. A customer who gave an e-mail address also receives the link to their QR code.",
+    ":name ne fait plus partie du personnel.": ":name is no longer a staff member.",
+    "Rôle de :name modifié.": "Role of :name changed.",
+    "Annulée. Rendez le montant au client : une note de crédit a été émise.": "Cancelled. Give the amount back to the customer: a credit note has been issued.",
+    "Annulée moins de 24 h avant : pas de remboursement.": "Cancelled less than 24 hours before: no refund."
 }

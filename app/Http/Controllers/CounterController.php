@@ -98,9 +98,9 @@ class CounterController extends Controller
         }
         activity('staff')->performedOn($booking)->event('counter-booking-cancelled')->log('Réservation au comptoir annulée');
 
-        return back()->with('success', $booking->status === 'cancelled_refunded'
+        return back()->with('success', __($booking->status === 'cancelled_refunded'
             ? 'Annulée. Rendez le montant au client : une note de crédit a été émise.'
-            : 'Annulée moins de 24 h avant : pas de remboursement.');
+            : 'Annulée moins de 24 h avant : pas de remboursement.'));
     }
 
     private function ensureStaff(Request $request): void

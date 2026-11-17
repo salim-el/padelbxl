@@ -168,5 +168,9 @@
     "Fermeture supprimée. Les créneaux sont de nouveau réservables.": "Sluiting verwijderd. De tijdsloten zijn opnieuw te reserveren.",
     ":name fait partie du personnel. Un e-mail lui est envoyé.": ":name maakt nu deel uit van het personeel. Er is een e-mail verstuurd.",
     "Nouveau lien envoyé à :email.": "Nieuwe link verstuurd naar :email.",
-    "Réservation payée et confirmée. Imprimez le ticket ; un client qui a donné son e-mail reçoit aussi le lien vers son QR code.": "Reservering betaald en bevestigd. Druk het ticket af. Een klant die zijn e-mailadres gaf, krijgt ook de link naar zijn QR-code."
+    "Réservation payée et confirmée. Imprimez le ticket ; un client qui a donné son e-mail reçoit aussi le lien vers son QR code.": "Reservering betaald en bevestigd. Druk het ticket af. Een klant die zijn e-mailadres gaf, krijgt ook de link naar zijn QR-code.",
+    ":name ne fait plus partie du personnel.": ":name maakt geen deel meer uit van het personeel.",
+    "Rôle de :name modifié.": "Rol van :name gewijzigd.",
+    "Annulée. Rendez le montant au client : une note de crédit a été émise.": "Geannuleerd. Geef het bedrag terug aan de klant: er is een creditnota opgemaakt.",
+    "Annulée moins de 24 h avant : pas de remboursement.": "Minder dan 24 uur vooraf geannuleerd: geen terugbetaling."
 }

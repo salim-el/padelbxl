@@ -57,7 +57,7 @@ class AdminStaffController extends Controller
             return back()->withErrors(['staff' => $e->getMessage()]);
         }
 
-        return back()->with('success', $data['role'] === 'player' ? "{$user->name} ne fait plus partie du personnel." : "Rôle de {$user->name} modifié.");
+        return back()->with('success', __($data['role'] === 'player' ? ':name ne fait plus partie du personnel.' : 'Rôle de :name modifié.', ['name' => $user->name]));
     }
 
     public function resend(Request $request, User $user, StaffService $staff): RedirectResponse
