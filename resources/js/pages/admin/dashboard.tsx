@@ -2,6 +2,7 @@ import { PageHeader } from '@/components/page-header';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
+import { useT } from '@/lib/i18n';
 import { euros } from '@/lib/money';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { CalendarCheck, Gauge, TrendingUp, Wallet } from 'lucide-react';
@@ -49,6 +50,7 @@ type Rule = {
 
 // F24 : heures d'ouverture et durée des créneaux.
 function Settings({ settings }: { settings: { opens_at: string; closes_at: string; slot_minutes: number } }) {
+    const t = useT();
     const form = useForm({ ...settings, slot_minutes: String(settings.slot_minutes) });
     const field = 'bg-card mt-1 block w-full rounded-md border px-2 py-1.5';
     return (
@@ -60,11 +62,11 @@ function Settings({ settings }: { settings: { opens_at: string; closes_at: strin
             className="grid gap-2 text-sm sm:grid-cols-4"
         >
             <label>
-                Ouverture
+                {t('Ouverture')}
                 <input type="time" required value={form.data.opens_at} onChange={(e) => form.setData('opens_at', e.target.value)} className={field} />
             </label>
             <label>
-                Fermeture
+                {t('Fermeture')}
                 <input
                     type="time"
                     required
@@ -74,16 +76,16 @@ function Settings({ settings }: { settings: { opens_at: string; closes_at: strin
                 />
             </label>
             <label>
-                Créneau
+                {t('Créneau')}
                 <select value={form.data.slot_minutes} onChange={(e) => form.setData('slot_minutes', e.target.value)} className={field}>
-                    <option value="60">60 minutes</option>
-                    <option value="90">90 minutes</option>
-                    <option value="120">120 minutes</option>
+                    <option value="60">{t(':n minutes', { n: 60 })}</option>
+                    <option value="90">{t(':n minutes', { n: 90 })}</option>
+                    <option value="120">{t(':n minutes', { n: 120 })}</option>
                 </select>
             </label>
             <div className="flex items-end">
                 <Button type="submit" variant="outline" disabled={form.processing} className="w-full">
-                    Enregistrer
+                    {t('Enregistrer')}
                 </Button>
             </div>
             {Object.values(form.errors)[0] && (
@@ -97,6 +99,7 @@ function Settings({ settings }: { settings: { opens_at: string; closes_at: strin
 
 // F24 : nouveau tarif, tout de suite ou à une date future.
 function NewRule() {
+    const t = useT();
     const today = new Date().toISOString().slice(0, 10);
     const form = useForm({ name: '', start_time: '09:00', end_time: '17:00', price: '', vat_rate: '6', valid_from: today });
     const submit = (e: React.FormEvent) => {
@@ -107,19 +110,19 @@ function NewRule() {
     const field = 'bg-card mt-1 block w-full rounded-md border px-2 py-1.5';
     return (
         <form onSubmit={submit} className="mt-4 grid gap-2 border-t pt-4 text-sm sm:grid-cols-3">
-            <p className="font-semibold sm:col-span-3">Nouveau tarif</p>
+            <p className="font-semibold sm:col-span-3">{t('Nouveau tarif')}</p>
             <label className="sm:col-span-3">
-                Nom
+                {t('Nom')}
                 <input
                     required
                     value={form.data.name}
                     onChange={(e) => form.setData('name', e.target.value)}
                     className={field}
-                    placeholder="Heures creuses hiver"
+                    placeholder={t('Heures creuses hiver')}
                 />
             </label>
             <label>
-                De
+                {t('De')}
                 <input
                     type="time"
                     required
@@ -129,11 +132,11 @@ function NewRule() {
                 />
             </label>
             <label>
-                À
+                {t('À')}
                 <input type="time" required value={form.data.end_time} onChange={(e) => form.setData('end_time', e.target.value)} className={field} />
             </label>
             <label>
-                Prix TTC (€)
+                {t('Prix TTC (€)')}
                 <input
                     required
                     inputMode="decimal"
@@ -143,14 +146,14 @@ function NewRule() {
                 />
             </label>
             <label>
-                TVA
+                {t('TVA')}
                 <select value={form.data.vat_rate} onChange={(e) => form.setData('vat_rate', e.target.value)} className={field}>
-                    <option value="6">6 % (accès au terrain)</option>
+                    <option value="6">{t('6 % (accès au terrain)')}</option>
                     <option value="21">21 %</option>
                 </select>
             </label>
             <label>
-                À partir du
+                {t('À partir du')}
                 <input
                     type="date"
                     required
@@ -162,7 +165,7 @@ function NewRule() {
             </label>
             <div className="flex items-end">
                 <Button type="submit" disabled={form.processing} className="w-full">
-                    Ajouter
+                    {t('Ajouter')}
                 </Button>
             </div>
             {Object.values(form.errors)[0] && (
@@ -176,6 +179,7 @@ function NewRule() {
 type Closure = { id: number; court: string; reason: string; from: string; to: string };
 
 function PriceRow({ rule }: { rule: Rule }) {
+    const t = useT();
     const [value, setValue] = useState((rule.price_cents / 100).toFixed(2));
     const save = (e: React.FormEvent) => {
         e.preventDefault();
@@ -188,10 +192,10 @@ function PriceRow({ rule }: { rule: Rule }) {
     return (
         <form onSubmit={save} className="flex flex-wrap items-center justify-between gap-2 border-b py-2 last:border-0">
             <label htmlFor={`rule-${rule.id}`} className="text-sm">
-                <span className="font-semibold">{rule.name}</span> · {rule.start} – {rule.end} · TVA {rule.vat_rate} %
+                <span className="font-semibold">{rule.name}</span> · {rule.start} – {rule.end} · {t('TVA :rate %', { rate: rule.vat_rate })}
                 <span className="text-muted-foreground block text-xs">
-                    {rule.upcoming ? `À partir du ${rule.valid_from}` : `Depuis le ${rule.valid_from}`}
-                    {rule.valid_until ? ` · jusqu’au ${rule.valid_until}` : ''}
+                    {rule.upcoming ? t('À partir du :date', { date: rule.valid_from }) : t('Depuis le :date', { date: rule.valid_from })}
+                    {rule.valid_until ? ` · ${t('jusqu’au :date', { date: rule.valid_until })}` : ''}
                 </span>
             </label>
             <span className="flex items-center gap-2">
@@ -204,7 +208,7 @@ function PriceRow({ rule }: { rule: Rule }) {
                 />
                 <span className="text-sm">€</span>
                 <Button type="submit" variant="outline" size="sm">
-                    Enregistrer
+                    {t('Enregistrer')}
                 </Button>
                 {!rule.valid_until && (
                     <Button
@@ -212,11 +216,11 @@ function PriceRow({ rule }: { rule: Rule }) {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                            const until = prompt('Dernier jour de ce tarif (AAAA-MM-JJ) :', new Date().toISOString().slice(0, 10));
+                            const until = prompt(t('Dernier jour de ce tarif (AAAA-MM-JJ) :'), new Date().toISOString().slice(0, 10));
                             if (until) router.post(`/admin/pricing-rules/${rule.id}/close`, { valid_until: until }, { preserveScroll: true });
                         }}
                     >
-                        Clôturer
+                        {t('Clôturer')}
                     </Button>
                 )}
             </span>
@@ -245,6 +249,7 @@ export default function Dashboard({
     settings: { opens_at: string; closes_at: string; slot_minutes: number };
     closures: Closure[];
 }) {
+    const t = useT();
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
     const closure = useForm({ court_id: courts[0]?.id ?? 0, from: '', to: '', reason: '' });
     const [q, setQ] = useState(search);
@@ -259,13 +264,18 @@ export default function Dashboard({
     // Annulation par le club : tout est remboursé, le motif part chez les joueurs.
     const cancelBooking = (b: Row) => {
         const reason = prompt(
-            `Annuler la réservation de ${b.player} (${b.court}, ${b.time}) ?\nTout est remboursé. Motif envoyé aux joueurs, dix caractères au moins :`,
+            t('Annuler la réservation de :player (:court, :time) ?\nTout est remboursé. Motif envoyé aux joueurs, dix caractères au moins :', {
+                player: b.player,
+                court: b.court,
+                time: b.time,
+            }),
         );
         if (reason) router.post(`/admin/bookings/${b.id}/cancel`, { reason }, { preserveScroll: true });
     };
 
     const reactivate = (u: Account) => {
-        if (confirm(`Réactiver le compte de ${u.name} ?`)) router.post(`/admin/users/${u.id}/reactivate`, {}, { preserveScroll: true });
+        if (confirm(t('Réactiver le compte de :name ?', { name: u.name })))
+            router.post(`/admin/users/${u.id}/reactivate`, {}, { preserveScroll: true });
     };
     // F28 : suspension et révocation toujours motivées ; le motif part chez le joueur.
     const [target, setTarget] = useState<{ user: Account; action: 'suspend' | 'revoke' } | null>(null);
@@ -286,23 +296,23 @@ export default function Dashboard({
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Tableau de bord', href: '/admin' }]}>
-            <Head title="Tableau de bord" />
+        <AppLayout breadcrumbs={[{ title: t('Tableau de bord'), href: '/admin' }]}>
+            <Head title={t('Tableau de bord')} />
             <div className="flex flex-col gap-6 p-4">
-                <PageHeader eyebrow="Espace gérant" title="Tableau de bord" />
+                <PageHeader eyebrow={t('Espace gérant')} title={t('Tableau de bord')} />
 
-                <section aria-label="Chiffres du jour" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <Stat icon={CalendarCheck} label="Réservations aujourd’hui" value={String(stats.bookings_today)} />
-                    <Stat icon={Gauge} label="Occupation des terrains" value={`${stats.occupancy} %`} />
-                    <Stat icon={Wallet} label="Encaissé aujourd’hui (TTC)" value={euros(stats.revenue_today_cents)} />
-                    <Stat icon={TrendingUp} label="Encaissé ce mois (TTC)" value={euros(stats.revenue_month_cents)} />
+                <section aria-label={t('Chiffres du jour')} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <Stat icon={CalendarCheck} label={t('Réservations aujourd’hui')} value={String(stats.bookings_today)} />
+                    <Stat icon={Gauge} label={t('Occupation des terrains')} value={`${stats.occupancy} %`} />
+                    <Stat icon={Wallet} label={t('Encaissé aujourd’hui (TTC)')} value={euros(stats.revenue_today_cents)} />
+                    <Stat icon={TrendingUp} label={t('Encaissé ce mois (TTC)')} value={euros(stats.revenue_month_cents)} />
                 </section>
 
                 <section className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h2 className="text-lg font-semibold">Réservations du jour</h2>
+                        <h2 className="text-lg font-semibold">{t('Réservations du jour')}</h2>
                         <label className="flex items-center gap-2 text-sm">
-                            Jour affiché
+                            {t('Jour affiché')}
                             <input
                                 type="date"
                                 value={day}
@@ -317,18 +327,18 @@ export default function Dashboard({
                         </p>
                     )}
                     {today.length === 0 ? (
-                        <p className="text-muted-foreground text-sm">Aucune réservation ce jour-là.</p>
+                        <p className="text-muted-foreground text-sm">{t('Aucune réservation ce jour-là.')}</p>
                     ) : (
                         <div className="bg-card relative overflow-x-auto rounded-xl border">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b text-left">
-                                        <th className="p-2">Heure</th>
-                                        <th className="p-2">Terrain</th>
-                                        <th className="p-2">Joueur</th>
-                                        <th className="p-2">État</th>
+                                        <th className="p-2">{t('Heure')}</th>
+                                        <th className="p-2">{t('Terrain')}</th>
+                                        <th className="p-2">{t('Joueur')}</th>
+                                        <th className="p-2">{t('État')}</th>
                                         <th className="p-2">
-                                            <span className="sr-only">Action</span>
+                                            <span className="sr-only">{t('Action')}</span>
                                         </th>
                                     </tr>
                                 </thead>
@@ -349,7 +359,7 @@ export default function Dashboard({
                                                         className="border-[#CC3342]/40 text-[#9E2833] hover:bg-[#FCE6E8]"
                                                         onClick={() => cancelBooking(b)}
                                                     >
-                                                        Annuler et rembourser
+                                                        {t('Annuler et rembourser')}
                                                     </Button>
                                                 )}
                                             </td>
@@ -364,22 +374,22 @@ export default function Dashboard({
                 <section className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <h2 className="text-lg font-semibold">
-                            Comptes <span className="text-muted-foreground text-sm font-normal">({users.total})</span>
+                            {t('Comptes')} <span className="text-muted-foreground text-sm font-normal">({users.total})</span>
                         </h2>
                         <form onSubmit={find} role="search" className="flex gap-2">
                             <label htmlFor="q" className="sr-only">
-                                Rechercher un compte
+                                {t('Rechercher un compte')}
                             </label>
                             <input
                                 id="q"
                                 type="search"
                                 value={q}
                                 onChange={(e) => setQ(e.target.value)}
-                                placeholder="Nom ou e-mail"
+                                placeholder={t('Nom ou e-mail')}
                                 className="bg-card rounded-md border px-3 py-1.5 text-sm"
                             />
                             <Button type="submit" variant="outline" size="sm">
-                                Rechercher
+                                {t('Rechercher')}
                             </Button>
                         </form>
                     </div>
@@ -387,14 +397,14 @@ export default function Dashboard({
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b text-left">
-                                    <th className="p-2">Nom</th>
-                                    <th className="p-2">E-mail</th>
-                                    <th className="p-2">E-mail confirmé</th>
-                                    <th className="p-2">Rôle</th>
-                                    <th className="p-2">Statut</th>
-                                    <th className="p-2">Inscrit le</th>
+                                    <th className="p-2">{t('Nom')}</th>
+                                    <th className="p-2">{t('E-mail')}</th>
+                                    <th className="p-2">{t('E-mail confirmé')}</th>
+                                    <th className="p-2">{t('Rôle')}</th>
+                                    <th className="p-2">{t('Statut')}</th>
+                                    <th className="p-2">{t('Inscrit le')}</th>
                                     <th className="p-2">
-                                        <span className="sr-only">Action</span>
+                                        <span className="sr-only">{t('Action')}</span>
                                     </th>
                                 </tr>
                             </thead>
@@ -402,7 +412,7 @@ export default function Dashboard({
                                 {users.data.length === 0 && (
                                     <tr>
                                         <td colSpan={7} className="text-muted-foreground p-3 text-center">
-                                            Aucun compte ne correspond à « {search} ».
+                                            {t('Aucun compte ne correspond à « :search ».', { search })}
                                         </td>
                                     </tr>
                                 )}
@@ -416,18 +426,18 @@ export default function Dashboard({
                                                 <span
                                                     className={`${pill} ${u.verified ? 'bg-[#EEF4D6] text-[#4E6600]' : 'bg-[#ECEAE3] text-[#6B7480]'}`}
                                                 >
-                                                    {u.verified ? 'Confirmé' : 'Non confirmé'}
+                                                    {u.verified ? t('Confirmé') : t('Non confirmé')}
                                                 </span>
                                             </td>
-                                            <td className="p-2">{ROLES[u.role] ?? u.role}</td>
+                                            <td className="p-2">{t(ROLES[u.role] ?? u.role)}</td>
                                             <td className="p-2">
-                                                <span className={`${pill} ${style}`}>{label}</span>
+                                                <span className={`${pill} ${style}`}>{t(label)}</span>
                                             </td>
                                             <td className="p-2 whitespace-nowrap">{u.created_at}</td>
                                             <td className="p-2 text-right">
                                                 {u.role === 'player' && u.status === 'suspended' && (
                                                     <Button variant="outline" size="sm" onClick={() => reactivate(u)}>
-                                                        Réactiver
+                                                        {t('Réactiver')}
                                                     </Button>
                                                 )}
                                                 {u.role === 'player' && u.status === 'active' && (
@@ -437,7 +447,7 @@ export default function Dashboard({
                                                         className="border-[#CC3342]/40 text-[#9E2833] hover:bg-[#FCE6E8]"
                                                         onClick={() => setTarget({ user: u, action: 'suspend' })}
                                                     >
-                                                        Suspendre
+                                                        {t('Suspendre')}
                                                     </Button>
                                                 )}
                                                 {u.role === 'player' && ['active', 'suspended'].includes(u.status) && (
@@ -447,7 +457,7 @@ export default function Dashboard({
                                                         className="ml-1 text-[#9E2833]"
                                                         onClick={() => setTarget({ user: u, action: 'revoke' })}
                                                     >
-                                                        Révoquer
+                                                        {t('Révoquer')}
                                                     </Button>
                                                 )}
                                             </td>
@@ -464,11 +474,11 @@ export default function Dashboard({
                         >
                             <p className="font-semibold">
                                 {target.action === 'suspend'
-                                    ? `Suspendre le compte de ${target.user.name}`
-                                    : `Révoquer définitivement le compte de ${target.user.name}`}
+                                    ? t('Suspendre le compte de :name', { name: target.user.name })
+                                    : t('Révoquer définitivement le compte de :name', { name: target.user.name })}
                             </p>
                             <label className="flex flex-col gap-1">
-                                Motif (envoyé au joueur)
+                                {t('Motif (envoyé au joueur)')}
                                 <textarea
                                     required
                                     minLength={10}
@@ -480,7 +490,7 @@ export default function Dashboard({
                             </label>
                             {target.action === 'suspend' && (
                                 <label className="flex flex-col gap-1">
-                                    Durée
+                                    {t('Durée')}
                                     <select
                                         value={decision.data.days}
                                         onChange={(e) => decision.setData('days', e.target.value)}
@@ -488,10 +498,10 @@ export default function Dashboard({
                                     >
                                         {[1, 3, 7, 14, 30, 90].map((d) => (
                                             <option key={d} value={d}>
-                                                {d} jour{d > 1 ? 's' : ''}
+                                                {d > 1 ? t(':n jours', { n: d }) : t(':n jour', { n: d })}
                                             </option>
                                         ))}
-                                        <option value="">Jusqu’à nouvelle décision</option>
+                                        <option value="">{t('Jusqu’à nouvelle décision')}</option>
                                     </select>
                                 </label>
                             )}
@@ -502,32 +512,30 @@ export default function Dashboard({
                             )}
                             <div className="flex gap-2">
                                 <Button type="submit" disabled={decision.processing} className="bg-[#9E2833] text-white hover:bg-[#82202A]">
-                                    {target.action === 'suspend' ? 'Suspendre' : 'Révoquer'}
+                                    {target.action === 'suspend' ? t('Suspendre') : t('Révoquer')}
                                 </Button>
                                 <Button type="button" variant="outline" onClick={() => setTarget(null)}>
-                                    Annuler
+                                    {t('Annuler')}
                                 </Button>
                             </div>
                         </form>
                     )}
                     {users.last_page > 1 && (
-                        <nav aria-label="Pages des comptes" className="flex items-center justify-end gap-3 text-sm">
+                        <nav aria-label={t('Pages des comptes')} className="flex items-center justify-end gap-3 text-sm">
                             {users.prev_page_url ? (
                                 <Link href={users.prev_page_url} preserveScroll className="underline">
-                                    ‹ Précédent
+                                    ‹ {t('Précédent')}
                                 </Link>
                             ) : (
-                                <span className="text-muted-foreground">‹ Précédent</span>
+                                <span className="text-muted-foreground">‹ {t('Précédent')}</span>
                             )}
-                            <span>
-                                Page {users.current_page} sur {users.last_page}
-                            </span>
+                            <span>{t('Page :current sur :last', { current: users.current_page, last: users.last_page })}</span>
                             {users.next_page_url ? (
                                 <Link href={users.next_page_url} preserveScroll className="underline">
-                                    Suivant ›
+                                    {t('Suivant')} ›
                                 </Link>
                             ) : (
-                                <span className="text-muted-foreground">Suivant ›</span>
+                                <span className="text-muted-foreground">{t('Suivant')} ›</span>
                             )}
                         </nav>
                     )}
@@ -535,11 +543,13 @@ export default function Dashboard({
 
                 <section className="grid gap-4 lg:grid-cols-2">
                     <div className="bg-card rounded-2xl border p-5">
-                        <h2 className="text-lg font-semibold">Horaires</h2>
-                        <p className="text-muted-foreground mb-2 text-sm">Les réservations déjà faites gardent leurs heures.</p>
+                        <h2 className="text-lg font-semibold">{t('Horaires')}</h2>
+                        <p className="text-muted-foreground mb-2 text-sm">{t('Les réservations déjà faites gardent leurs heures.')}</p>
                         <Settings settings={settings} />
-                        <h2 className="mt-6 text-lg font-semibold">Tarifs</h2>
-                        <p className="text-muted-foreground mb-2 text-sm">Prix TTC par créneau. Les réservations déjà payées gardent leur prix.</p>
+                        <h2 className="mt-6 text-lg font-semibold">{t('Tarifs')}</h2>
+                        <p className="text-muted-foreground mb-2 text-sm">
+                            {t('Prix TTC par créneau. Les réservations déjà payées gardent leur prix.')}
+                        </p>
                         {rules.map((r) => (
                             <PriceRow key={r.id} rule={r} />
                         ))}
@@ -557,7 +567,7 @@ export default function Dashboard({
                     </div>
 
                     <div className="bg-card rounded-2xl border p-5">
-                        <h2 className="text-lg font-semibold">Fermer un terrain</h2>
+                        <h2 className="text-lg font-semibold">{t('Fermer un terrain')}</h2>
                         <form
                             onSubmit={(e) => {
                                 e.preventDefault();
@@ -566,7 +576,7 @@ export default function Dashboard({
                             className="mt-2 grid gap-2 sm:grid-cols-2"
                         >
                             <label className="text-sm">
-                                Terrain
+                                {t('Terrain')}
                                 <select
                                     value={closure.data.court_id}
                                     onChange={(e) => closure.setData('court_id', Number(e.target.value))}
@@ -580,16 +590,16 @@ export default function Dashboard({
                                 </select>
                             </label>
                             <label className="text-sm">
-                                Motif
+                                {t('Motif')}
                                 <input
                                     value={closure.data.reason}
                                     onChange={(e) => closure.setData('reason', e.target.value)}
-                                    placeholder="Réparation du gazon"
+                                    placeholder={t('Réparation du gazon')}
                                     className="bg-card mt-1 block w-full rounded-md border px-2 py-1.5"
                                 />
                             </label>
                             <label className="text-sm">
-                                Du
+                                {t('Du')}
                                 <input
                                     type="datetime-local"
                                     value={closure.data.from}
@@ -598,7 +608,7 @@ export default function Dashboard({
                                 />
                             </label>
                             <label className="text-sm">
-                                Au
+                                {t('Au')}
                                 <input
                                     type="datetime-local"
                                     value={closure.data.to}
@@ -608,11 +618,11 @@ export default function Dashboard({
                             </label>
                             {(errors.closure || Object.keys(closure.errors).length > 0) && (
                                 <p role="alert" className="text-sm text-[#9E2833] sm:col-span-2">
-                                    {errors.closure ?? 'Vérifiez le terrain, les dates et le motif.'}
+                                    {errors.closure ?? t('Vérifiez le terrain, les dates et le motif.')}
                                 </p>
                             )}
                             <Button type="submit" disabled={closure.processing} className="sm:col-span-2">
-                                Fermer ce terrain
+                                {t('Fermer ce terrain')}
                             </Button>
                         </form>
                         {closures.length > 0 && (
@@ -630,7 +640,7 @@ export default function Dashboard({
                                             onClick={() => router.delete(`/admin/closures/${c.id}`, { preserveScroll: true })}
                                             className="font-semibold underline"
                                         >
-                                            Rouvrir
+                                            {t('Rouvrir')}
                                         </button>
                                     </li>
                                 ))}
