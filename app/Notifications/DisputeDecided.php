@@ -27,6 +27,7 @@ class DisputeDecided extends Notification
         $mail = match ($this->dispute->status) {
             'accepted_full' => $mail->line(__('Elle est acceptée. Vous êtes remboursé de :amount.', ['amount' => self::euros($this->dispute->refunded_cents)])),
             'accepted_partial' => $mail->line(__('Elle est acceptée en partie. Vous êtes remboursé de :amount.', ['amount' => self::euros($this->dispute->refunded_cents)])),
+            'accepted_credit' => $mail->line(__('Elle est acceptée. Vous recevez un avoir de :amount, valable un an et déduit de votre prochain paiement.', ['amount' => self::euros($this->dispute->refunded_cents)])),
             default => $mail->line(__('Elle est refusée.')),
         };
 
