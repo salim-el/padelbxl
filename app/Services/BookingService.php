@@ -47,7 +47,7 @@ class BookingService
 
     private const LOCK_PLAYER = 2;
 
-    public function __construct(private SlotService $slots) {}
+    public function __construct(private SlotService $slots, private StoreCreditService $credits) {}
 
     /** Sérialise ce qui touche au planning d'un terrain : réservations et fermetures. À appeler dans une transaction. */
     public static function lockCourt(int $courtId): void
@@ -179,7 +179,8 @@ class BookingService
             foreach ($this->reserveItems($booking, array_filter($items)) as $item) {
                 $lines[] = ['label' => $item->product->name, 'quantity' => $item->quantity, 'unit' => $item->unit_price_cents, 'vat' => (float) $item->vat_rate];
             }
-            $this->charge($booking, $player, $user, $lines, $method);
+            // Au comptoir, le payeur est le membre du personnel : aucun avoir n'entre en jeu.
+            $this->charge($booking, $player, $user, $lines, $method, useCredit: $method === 'card');
             $player->update(['status' => 'paid']);
             $booking->update(['hold_expires_at' => null]);
             $this->transition($booking, 'confirmed', 'Paiement reçu.', $user->id);
@@ -209,7 +210,7 @@ class BookingService
             }
             // Une invitation envoyée à une adresse sans compte est rattachée au compte créé ensuite avec cette adresse.
             $player->update(['user_id' => $user->id]);
-            $this->charge($booking, $player, $user, [$this->courtLine($booking, $player)], 'card');
+            $this->charge($booking, $player, $user, [$this->courtLine($booking, $player)], 'card', useCredit: true);
             $player->update(['status' => 'paid']);
 
             return $player->fresh();
@@ -288,7 +289,7 @@ class BookingService
                 ->where('status', 'invited')->lockForUpdate()->first()
                 ?? throw new BookingException(__('Cette partie est complète. Inscrivez-vous sur la liste d’attente.'));
             $spot->update(['user_id' => $user->id]);
-            $this->charge($booking, $spot, $user, [$this->courtLine($booking, $spot)], 'card');
+            $this->charge($booking, $spot, $user, [$this->courtLine($booking, $spot)], 'card', useCredit: true);
             $spot->update(['status' => 'paid']);
             WaitlistEntry::where('booking_id', $booking->id)->where('user_id', $user->id)->delete();
 
@@ -399,9 +400,15 @@ class BookingService
      *
      * @param  list<array{label: string, quantity: int, unit: int, vat: float}>  $lines
      */
-    private function charge(Booking $booking, BookingPlayer $player, User $payer, array $lines, string $method): Payment
+    private function charge(Booking $booking, BookingPlayer $player, User $payer, array $lines, string $method, bool $useCredit = false): Payment
     {
         $amount = array_sum(array_map(fn ($l) => $l['quantity'] * $l['unit'], $lines));
+        // F15 : l'avoir du joueur se déduit en priorité ; la carte ne paie que le reste. La garantie n'y touche pas.
+        $credits = $useCredit ? $this->credits->lockUsable($payer) : collect();
+        $byCredit = min($amount, (int) $credits->sum('remaining_cents'));
+        if ($byCredit === $amount) {
+            $method = 'store_credit';
+        }
         $payment = Payment::create([
             'booking_id' => $booking->id,
             'booking_player_id' => $player->id,
@@ -413,6 +420,7 @@ class BookingService
             'status' => 'succeeded',
             'paid_at' => now(),
         ]);
+        $this->credits->spend($credits, $payment, $byCredit);
         // La TVA se calcule ligne par ligne : 6 % sur le terrain, 21 % sur le matériel.
         foreach ($lines as &$l) {
             $l['total'] = $l['quantity'] * $l['unit'];
@@ -453,8 +461,10 @@ class BookingService
      * Rembourse tout ou partie d'un paiement : note de crédit qui renvoie à la facture, puis remboursement.
      * Un montant partiel se répartit entre net et TVA dans la même proportion que la facture (6 % et 21 % mêlés).
      * À appeler dans une transaction.
+     *
+     * @param  bool  $asCredit  tout rendre en avoir (demande exceptionnelle acceptée en avoir)
      */
-    public function refund(Payment $payment, int $amount, string $note, string $code): CreditNote
+    public function refund(Payment $payment, int $amount, string $note, string $code, bool $asCredit = false): CreditNote
     {
         // Verrou sur le paiement : deux remboursements simultanés ne peuvent pas dépasser le montant payé.
         $payment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
@@ -477,7 +487,21 @@ class BookingService
             'total_cents' => $amount,
             'reason' => $note,
         ]);
-        Refund::create(['payment_id' => $payment->id, 'amount_cents' => $amount, 'reason' => $code, 'status' => 'succeeded', 'credit_note_id' => $creditNote->id]);
+        // F15 : ce qu'un avoir a payé revient en avoir, le reste retourne au moyen de paiement d'origine.
+        // Une seule note de crédit couvre les deux remboursements.
+        $toCredit = $asCredit ? $amount : min($amount, StoreCreditService::creditPart($payment));
+        foreach (['store_credit' => $toCredit, 'original_payment' => $amount - $toCredit] as $method => $part) {
+            if ($part === 0) {
+                continue;
+            }
+            $refund = Refund::create([
+                'payment_id' => $payment->id, 'amount_cents' => $part, 'reason' => $code, 'method' => $method,
+                'status' => 'succeeded', 'credit_note_id' => $creditNote->id,
+            ]);
+            if ($method === 'store_credit') {
+                $this->credits->grant(User::findOrFail($payment->payer_id), $part, $asCredit ? 'dispute' : 'refund', $refund);
+            }
+        }
         $payment->update(['status' => $amount === $refundable ? 'refunded' : 'partially_refunded']);
 
         return $creditNote;
