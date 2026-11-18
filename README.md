@@ -39,6 +39,7 @@ Pour le personnel :
 - Suspension des comptes. Journal des actions sensibles, gardé un an.
 - Double authentification obligatoire. Comptes du personnel et rôles gérés par l'administratrice.
 - Borne d'accès simulée, qui lit le QR code.
+- Écrans du personnel en français, en néerlandais et en anglais.
 
 Pour les logiciels partenaires :
 
@@ -50,11 +51,11 @@ Pour les logiciels partenaires :
 Ces points viennent après la remise, avant la défense de mi-décembre 2026.
 
 - Paiement par Stripe en mode test, avec la carte gardée en garantie. Contestation bancaire (F30).
-- Mise en ligne sur Render, e-mails par Brevo. Fichier Docker. Audits des dépendances dans l'intégration continue.
+- Mise en ligne sur Render, e-mails par Brevo. Audits des dépendances dans l'intégration continue.
 - Déplacer une réservation (F14), avoirs (F15), codes de secours de la borne (F19), suivi des absences (F31), export comptable (F33).
 - Créneau libéré par une annulation proposé à la liste d'attente.
 - E-mail de confirmation de réservation, rappels et préférences de notification.
-- Écrans du personnel en néerlandais et en anglais. Textes, documents légaux et clés d'API modifiables par l'administrateur.
+- Textes, documents légaux et clés d'API modifiables par l'administrateur.
 - Codes de secours de la double authentification. Tarif selon le jour. Adresse de facturation d'une entreprise.
 - Suppression d'un compte jamais confirmé après sept jours. Recours contre une décision sur une demande exceptionnelle.
 - Contrôle complet WCAG 2.1 AA, tests de bout en bout avec Playwright, balises hreflang et plan du site.
@@ -89,6 +90,19 @@ Elle passe par les règles de l'application et se lance une fois, sur une base f
 ```bash
 php artisan db:seed --class=DemoSeeder
 ```
+
+## Lancer avec Docker
+
+Prérequis : Docker avec Compose. Le fichier `.env` doit contenir `APP_KEY` et `DB_PASSWORD`.
+
+```bash
+docker compose up --build
+docker compose exec app php artisan db:seed --force
+```
+
+L'application répond sur http://localhost:8080. Le conteneur `app` met le schéma de la base à jour à chaque démarrage.
+Le conteneur `scheduler` lance les tâches planifiées. PostgreSQL 16 garde ses données dans le volume `donnees`.
+`docker compose down -v` arrête tout et efface ce volume.
 
 ## Restaurer la base de démonstration
 
