@@ -1,0 +1,42 @@
+# PadelBxl en local : l'application, le planificateur et PostgreSQL 16.
+# docker compose up --build, puis http://localhost:8080
+# Les secrets viennent du fichier .env (APP_KEY, DB_PASSWORD, ...).
+
+x-app: &app
+  build: .
+  image: padelbxl
+  env_file: .env
+  environment:
+    DB_HOST: db
+    DB_PORT: 5432
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  app:
+    <<: *app
+    ports:
+      - '8080:8080'
+
+  # Réservations expirées, suspensions levées, journaux purgés (routes/console.php).
+  scheduler:
+    <<: *app
+    command: ['php', 'artisan', 'schedule:work']
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-padelbxl_app}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Renseignez DB_PASSWORD dans .env}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - donnees:/var/lib/postgresql/data
+
+volumes:
+  donnees:
