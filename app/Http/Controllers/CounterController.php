@@ -57,7 +57,7 @@ class CounterController extends Controller
             Notification::route('mail', $data['contact'])->notify(new AccessPassLink($booking->players()->where('is_organizer', true)->firstOrFail()));
         }
 
-        return to_route('admin.counter.show', $booking)->with('success', 'Réservation payée et confirmée. Imprimez le ticket ; un client qui a donné son e-mail reçoit aussi le lien vers son QR code.');
+        return to_route('admin.counter.show', $booking)->with('success', __('Réservation payée et confirmée. Imprimez le ticket ; un client qui a donné son e-mail reçoit aussi le lien vers son QR code.'));
     }
 
     public function show(Request $request, Booking $booking): Response
@@ -98,9 +98,9 @@ class CounterController extends Controller
         }
         activity('staff')->performedOn($booking)->event('counter-booking-cancelled')->log('Réservation au comptoir annulée');
 
-        return back()->with('success', $booking->status === 'cancelled_refunded'
+        return back()->with('success', __($booking->status === 'cancelled_refunded'
             ? 'Annulée. Rendez le montant au client : une note de crédit a été émise.'
-            : 'Annulée moins de 24 h avant : pas de remboursement.');
+            : 'Annulée moins de 24 h avant : pas de remboursement.'));
     }
 
     private function ensureStaff(Request $request): void

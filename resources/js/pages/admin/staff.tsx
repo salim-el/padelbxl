@@ -1,6 +1,7 @@
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
+import { useT } from '@/lib/i18n';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 
 type Member = { id: number; name: string; email: string; role: 'manager' | 'admin'; two_factor: boolean; is_me: boolean };
@@ -8,6 +9,7 @@ const ROLES = { manager: 'Gérant', admin: 'Administrateur' };
 const field = 'bg-card mt-1 block w-full rounded-md border px-2 py-1.5';
 
 function Invite() {
+    const t = useT();
     const form = useForm({ name: '', email: '', role: 'manager' });
 
     return (
@@ -19,11 +21,11 @@ function Invite() {
             className="grid gap-2 text-sm sm:grid-cols-4"
         >
             <label>
-                Nom
+                {t('Nom')}
                 <input required value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} className={field} />
             </label>
             <label>
-                E-mail
+                {t('E-mail')}
                 <input
                     type="email"
                     required
@@ -33,15 +35,15 @@ function Invite() {
                 />
             </label>
             <label>
-                Rôle
+                {t('Rôle')}
                 <select value={form.data.role} onChange={(e) => form.setData('role', e.target.value)} className={field}>
-                    <option value="manager">Gérant</option>
-                    <option value="admin">Administrateur</option>
+                    <option value="manager">{t('Gérant')}</option>
+                    <option value="admin">{t('Administrateur')}</option>
                 </select>
             </label>
             <div className="flex items-end">
                 <Button type="submit" disabled={form.processing} className="w-full">
-                    Ajouter
+                    {t('Ajouter')}
                 </Button>
             </div>
         </form>
@@ -50,27 +52,29 @@ function Invite() {
 
 // F35 : l'administrateur gère les comptes du personnel. Un joueur existant peut être promu avec son e-mail.
 export default function Staff({ staff }: { staff: Member[] }) {
+    const t = useT();
     const { errors } = usePage().props as { errors: Record<string, string> };
     const setRole = (m: Member, role: string) => {
-        if (role === 'player' && !confirm(`${m.name} quittera le personnel et gardera un compte joueur. Continuer ?`)) return;
+        if (role === 'player' && !confirm(t(':name quittera le personnel et gardera un compte joueur. Continuer ?', { name: m.name }))) return;
         router.patch(`/admin/staff/${m.id}`, { role }, { preserveScroll: true });
     };
 
     return (
         <AppLayout
             breadcrumbs={[
-                { title: 'Tableau de bord', href: '/admin' },
-                { title: 'Personnel', href: '/admin/staff' },
+                { title: t('Tableau de bord'), href: '/admin' },
+                { title: t('Personnel'), href: '/admin/staff' },
             ]}
         >
-            <Head title="Personnel" />
+            <Head title={t('Personnel')} />
             <div className="flex flex-col gap-6 p-4">
-                <PageHeader eyebrow="Administration" title="Personnel du club" />
+                <PageHeader eyebrow={t('Administration')} title={t('Personnel du club')} />
                 <section>
-                    <h2 className="text-lg font-semibold">Ajouter un membre</h2>
+                    <h2 className="text-lg font-semibold">{t('Ajouter un membre')}</h2>
                     <p className="mb-2 text-sm text-[#5F6B78]">
-                        Un nouveau compte reçoit un lien pour choisir son mot de passe. La double authentification est demandée à la première
-                        connexion.
+                        {t(
+                            'Un nouveau compte reçoit un lien pour choisir son mot de passe. La double authentification est demandée à la première connexion.',
+                        )}
                     </p>
                     <Invite />
                 </section>
@@ -82,12 +86,12 @@ export default function Staff({ staff }: { staff: Member[] }) {
                 <table className="w-full text-left text-sm">
                     <thead>
                         <tr className="border-b">
-                            <th className="py-2">Nom</th>
-                            <th>E-mail</th>
-                            <th>Double authentification</th>
-                            <th>Rôle</th>
+                            <th className="py-2">{t('Nom')}</th>
+                            <th>{t('E-mail')}</th>
+                            <th>{t('Double authentification')}</th>
+                            <th>{t('Rôle')}</th>
                             <th>
-                                <span className="sr-only">Actions</span>
+                                <span className="sr-only">{t('Actions')}</span>
                             </th>
                         </tr>
                     </thead>
@@ -96,20 +100,20 @@ export default function Staff({ staff }: { staff: Member[] }) {
                             <tr key={m.id} className="border-b">
                                 <td className="py-2">{m.name}</td>
                                 <td>{m.email}</td>
-                                <td>{m.two_factor ? 'Activée' : 'Pas encore'}</td>
+                                <td>{m.two_factor ? t('Activée') : t('Pas encore')}</td>
                                 <td>
                                     {m.is_me ? (
-                                        ROLES[m.role]
+                                        t(ROLES[m.role])
                                     ) : (
                                         <select
-                                            aria-label={`Rôle de ${m.name}`}
+                                            aria-label={t('Rôle de :name', { name: m.name })}
                                             value={m.role}
                                             onChange={(e) => setRole(m, e.target.value)}
                                             className="rounded-md border px-2 py-1"
                                         >
-                                            <option value="manager">Gérant</option>
-                                            <option value="admin">Administrateur</option>
-                                            <option value="player">Retirer du personnel</option>
+                                            <option value="manager">{t('Gérant')}</option>
+                                            <option value="admin">{t('Administrateur')}</option>
+                                            <option value="player">{t('Retirer du personnel')}</option>
                                         </select>
                                     )}
                                 </td>
@@ -120,7 +124,7 @@ export default function Staff({ staff }: { staff: Member[] }) {
                                             variant="outline"
                                             onClick={() => router.post(`/admin/staff/${m.id}/resend`, {}, { preserveScroll: true })}
                                         >
-                                            Renvoyer le lien
+                                            {t('Renvoyer le lien')}
                                         </Button>
                                     )}
                                 </td>

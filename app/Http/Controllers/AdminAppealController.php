@@ -48,6 +48,6 @@ class AdminAppealController extends Controller
             return back()->withErrors(['appeal' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Décision enregistrée. Le joueur est prévenu par e-mail.');
+        return back()->with('success', __('Décision enregistrée. Le joueur est prévenu par e-mail.'));
     }
 }
