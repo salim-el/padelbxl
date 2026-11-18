@@ -638,6 +638,13 @@ const nl: Record<string, string> = {
     'À partir du :date': 'Vanaf :date',
     État: 'Status',
     '‹ Précédent': '‹ Vorige',
+    // Avoirs (F15)
+    'Votre avoir : :amount': 'Uw tegoed: :amount',
+    'Il se déduit en priorité de votre prochain paiement. Le premier expire le :date.':
+        'Het wordt eerst van uw volgende betaling afgetrokken. Het eerste vervalt op :date.',
+    'Votre avoir paie :credit. Reste à payer par carte : :card.': 'Uw tegoed betaalt :credit. Nog te betalen met kaart: :card.',
+    'Payer avec mon avoir': 'Betalen met mijn tegoed',
+    'Accepter en avoir, valable un an': 'Aanvaarden als tegoed, een jaar geldig',
 };
 
 export default nl;
