@@ -25,6 +25,7 @@ const euros = (cents: number) => (cents / 100).toLocaleString('fr-BE', { style: 
 const DECISIONS: [string, string][] = [
     ['accepted_full', 'Accepter et rembourser tout'],
     ['accepted_partial', 'Accepter et rembourser une partie'],
+    ['accepted_credit', 'Accepter en avoir, valable un an'],
     ['rejected', 'Refuser'],
 ];
 

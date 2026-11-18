@@ -10,10 +10,13 @@ use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\StoreCredit;
+use App\Models\User;
 use App\Services\BookingService;
 use App\Services\Clock;
 use App\Services\InvoicePdf;
 use App\Services\MatchCallService;
+use App\Services\StoreCreditService;
 use App\Services\UblInvoice;
 use Carbon\CarbonImmutable;
 use chillerlan\QRCode\QRCode;
@@ -39,6 +42,7 @@ class BookingController extends Controller
         return Inertia::render('bookings/index', [
             'bookings' => $items->map(fn ($b) => $this->present($b))->all(),
             'invitations' => $invited->map(fn ($p) => [...$this->present($p->booking), 'organizer' => $p->guest_email === null ? strtok($p->booking->organizer->name, ' ') : $p->booking->organizer->name, 'share_cents' => $p->share_cents, 'share_status' => $p->status])->all(),
+            'store_credit' => $this->credit($user),
         ]);
     }
 
@@ -66,6 +70,8 @@ class BookingController extends Controller
             'products' => Product::where('is_active', true)->orderBy('kind')->orderBy('name')->get(['id', 'name', 'kind', 'price_cents'])->all(),
             // F11 : l'appel propose par défaut le niveau de l'organisateur, à un point près.
             'my_level' => $request->user()->level !== null ? (int) round((float) $request->user()->level) : null,
+            // F15 : l'avoir se déduit en priorité, la page annonce ce qui reste à payer par carte.
+            'credit_cents' => StoreCreditService::balance($request->user()),
         ]);
     }
 
@@ -270,6 +276,17 @@ class BookingController extends Controller
     private function ensureOwner(Request $request, Booking $booking): void
     {
         abort_unless($booking->organizer_id === $request->user()->id, 404);
+    }
+
+    /** F15 : solde de l'avoir du joueur et date à laquelle le premier de ses avoirs expire. */
+    private function credit(User $user): array
+    {
+        $first = StoreCredit::usable()->where('user_id', $user->id)->min('expires_at');
+
+        return [
+            'cents' => StoreCreditService::balance($user),
+            'first_expires' => $first ? Clock::local(CarbonImmutable::parse($first))->locale(app()->getLocale())->isoFormat(__('D MMMM YYYY')) : null,
+        ];
     }
 
     private function present(Booking $b): array

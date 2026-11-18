@@ -172,5 +172,6 @@
     ":name ne fait plus partie du personnel.": ":name maakt geen deel meer uit van het personeel.",
     "Rôle de :name modifié.": "Rol van :name gewijzigd.",
     "Annulée. Rendez le montant au client : une note de crédit a été émise.": "Geannuleerd. Geef het bedrag terug aan de klant: er is een creditnota opgemaakt.",
-    "Annulée moins de 24 h avant : pas de remboursement.": "Minder dan 24 uur vooraf geannuleerd: geen terugbetaling."
+    "Annulée moins de 24 h avant : pas de remboursement.": "Minder dan 24 uur vooraf geannuleerd: geen terugbetaling.",
+    "Elle est acceptée. Vous recevez un avoir de :amount, valable un an et déduit de votre prochain paiement.": "Ze is aanvaard. U krijgt een tegoed van :amount, een jaar geldig en afgetrokken van uw volgende betaling."
 }

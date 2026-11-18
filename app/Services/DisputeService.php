@@ -53,7 +53,7 @@ class DisputeService
         }
     }
 
-    /** Décision motivée : remboursement total ou partiel des paiements du joueur, ou refus. Le joueur est prévenu. */
+    /** Décision motivée : remboursement total ou partiel des paiements du joueur, avoir, ou refus. Le joueur est prévenu. */
     public function decide(Dispute $dispute, User $staff, string $decision, string $note, ?int $amountCents = null): Dispute
     {
         $dispute = DB::transaction(function () use ($dispute, $staff, $decision, $note, $amountCents) {
@@ -64,7 +64,7 @@ class DisputeService
             $payments = $this->payments($dispute->booking, $dispute->user);
             $refundable = $payments->sum(fn (Payment $p) => $p->amount_cents - $p->refunds()->where('status', '<>', 'failed')->sum('amount_cents'));
             $amount = match ($decision) {
-                'accepted_full' => $refundable,
+                'accepted_full', 'accepted_credit' => $refundable,
                 'accepted_partial' => (int) $amountCents,
                 default => 0,
             };
@@ -75,13 +75,14 @@ class DisputeService
             foreach ($payments as $payment) {
                 $part = min($left, $payment->amount_cents - $payment->refunds()->where('status', '<>', 'failed')->sum('amount_cents'));
                 if ($part > 0) {
-                    $this->bookings->refund($payment, $part, 'Demande exceptionnelle acceptée.', 'dispute_accepted');
+                    // F15 : acceptée en avoir, tout le montant revient en avoir, valable un an.
+                    $this->bookings->refund($payment, $part, 'Demande exceptionnelle acceptée.', 'dispute_accepted', asCredit: $decision === 'accepted_credit');
                     $left -= $part;
                 }
             }
             $dispute->update(['status' => $decision, 'decision_note' => $note, 'refunded_cents' => $amount ?: null, 'decided_by' => $staff->id, 'decided_at' => now()]);
             // Acceptée en entier avant le match : le joueur est remboursé, il ne joue donc plus. Son QR code ne passe plus.
-            if ($decision === 'accepted_full') {
+            if (in_array($decision, ['accepted_full', 'accepted_credit'], true)) {
                 $this->bookings->withdraw($dispute->booking, $dispute->user, $staff, 'Demande exceptionnelle acceptée.', 'dispute_accepted');
             }
             activity('staff')->performedOn($dispute)->causedBy($staff)->event('dispute-decided')

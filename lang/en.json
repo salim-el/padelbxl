@@ -156,5 +156,6 @@
     ":name ne fait plus partie du personnel.": ":name is no longer a staff member.",
     "Rôle de :name modifié.": "Role of :name changed.",
     "Annulée. Rendez le montant au client : une note de crédit a été émise.": "Cancelled. Give the amount back to the customer: a credit note has been issued.",
-    "Annulée moins de 24 h avant : pas de remboursement.": "Cancelled less than 24 hours before: no refund."
+    "Annulée moins de 24 h avant : pas de remboursement.": "Cancelled less than 24 hours before: no refund.",
+    "Elle est acceptée. Vous recevez un avoir de :amount, valable un an et déduit de votre prochain paiement.": "It is accepted. You receive a credit of :amount, valid for one year and taken from your next payment."
 }

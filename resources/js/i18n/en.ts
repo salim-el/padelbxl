@@ -635,6 +635,13 @@ const en: Record<string, string> = {
     'À partir du :date': 'From :date',
     État: 'Status',
     '‹ Précédent': '‹ Previous',
+    // Avoirs (F15)
+    'Votre avoir : :amount': 'Your credit: :amount',
+    'Il se déduit en priorité de votre prochain paiement. Le premier expire le :date.':
+        'It is taken first from your next payment. The first one expires on :date.',
+    'Votre avoir paie :credit. Reste à payer par carte : :card.': 'Your credit pays :credit. Left to pay by card: :card.',
+    'Payer avec mon avoir': 'Pay with my credit',
+    'Accepter en avoir, valable un an': 'Accept as credit, valid for one year',
 };
 
 export default en;
