@@ -12,7 +12,7 @@ class Dispute extends Model
 
     public const OPEN = ['received', 'in_review'];
 
-    public const DECISIONS = ['accepted_full', 'accepted_partial', 'rejected'];
+    public const DECISIONS = ['accepted_full', 'accepted_partial', 'accepted_credit', 'rejected'];
 
     protected $fillable = ['booking_id', 'user_id', 'reason', 'attachment_path', 'status', 'decision_note', 'refunded_cents', 'decided_by', 'decided_at'];
 
