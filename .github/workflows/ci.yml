@@ -37,6 +37,13 @@ jobs:
           composer install --no-interaction --no-progress --prefer-dist --no-scripts
           npm ci
 
+      # Échoue si une dépendance a une faille connue (ou, pour Composer, si un paquet est abandonné).
+      - name: Failles connues des dépendances PHP (composer audit)
+        run: composer audit --no-interaction
+
+      - name: Failles connues des dépendances JavaScript (npm audit)
+        run: npm audit --audit-level=high
+
       - name: Style PHP (Pint)
         run: vendor/bin/pint --test
 
