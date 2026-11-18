@@ -17,6 +17,7 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 /** F15 : l'avoir se déduit en priorité au paiement, vaut un an, et ce qu'il a payé revient en avoir. */
@@ -112,6 +113,17 @@ class StoreCreditTest extends TestCase
         $back = StoreCredit::where('refund_id', $refunds['store_credit']->id)->sole();
         $this->assertSame(['refund', 1000], [$back->origin, $back->remaining_cents]);
         $this->assertSame(1000, StoreCreditService::balance($this->lucas));
+    }
+
+    public function test_the_player_sees_his_credit_in_his_space_and_at_checkout(): void
+    {
+        $this->credit(1000);
+        $this->actingAs($this->lucas)->get('/bookings')
+            ->assertInertia(fn (Assert $page) => $page->where('store_credit.cents', 1000)->where('store_credit.first_expires', '20 octobre 2027'));
+
+        $court = Court::where('name', 'Terrain 1')->firstOrFail();
+        $booking = $this->bookings->hold($this->lucas, $court, Clock::slotStart('2026-10-23', '19:30'));
+        $this->get("/bookings/{$booking->getRouteKey()}/checkout")->assertInertia(fn (Assert $page) => $page->where('credit_cents', 1000));
     }
 
     public function test_the_manager_can_accept_a_request_as_credit(): void
