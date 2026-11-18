@@ -8,6 +8,7 @@ use App\Models\BookingPlayer;
 use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\StoreCredit;
 use App\Models\WaitlistEntry;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
@@ -75,6 +76,13 @@ class DataExportController extends Controller
             'invoices' => $invoices->map(fn (Invoice $i) => ['number' => $i->number, 'issued_at' => $i->issued_at->toIso8601String(), 'total_cents' => $i->total_cents])->all(),
             'credit_notes' => CreditNote::whereIn('invoice_id', $invoices->pluck('id'))->orderBy('issued_at')->get()
                 ->map(fn (CreditNote $n) => ['number' => $n->number, 'issued_at' => $n->issued_at->toIso8601String(), 'total_cents' => $n->total_cents])->all(),
+            'store_credits' => StoreCredit::where('user_id', $user->id)->orderBy('created_at')->get()->map(fn (StoreCredit $c) => [
+                'amount_cents' => $c->amount_cents,
+                'remaining_cents' => $c->remaining_cents,
+                'origin' => $c->origin,
+                'created_at' => $c->created_at?->toIso8601String(),
+                'expires_at' => $c->expires_at->toIso8601String(),
+            ])->all(),
             'waitlist' => WaitlistEntry::with('booking.court')->where('user_id', $user->id)->get()->map(fn (WaitlistEntry $w) => [
                 'booking' => $booking($w->booking),
                 'joined_at' => $w->created_at?->toIso8601String(),
