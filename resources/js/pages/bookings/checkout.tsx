@@ -23,7 +23,17 @@ type Booking = {
 
 type Product = { id: number; name: string; kind: 'rental' | 'sale'; price_cents: number };
 
-export default function Checkout({ booking, products, my_level }: { booking: Booking; products: Product[]; my_level: number | null }) {
+export default function Checkout({
+    booking,
+    products,
+    my_level,
+    credit_cents,
+}: {
+    booking: Booking;
+    products: Product[];
+    my_level: number | null;
+    credit_cents: number;
+}) {
     const t = useT();
     const { data, setData, post, processing, errors } = useForm<{
         accept_terms: boolean;
@@ -53,6 +63,9 @@ export default function Checkout({ booking, products, my_level }: { booking: Boo
     const share = Math.floor(court / (partners + 1));
     const myShare = court - share * partners;
     const total = myShare + extras;
+    // F15 : même règle que le serveur, l'avoir paie d'abord et la carte le reste.
+    const byCredit = Math.min(credit_cents, total);
+    const byCard = total - byCredit;
     const setGuest = (i: number, email: string) =>
         setData(
             'guests',
@@ -110,6 +123,11 @@ export default function Checkout({ booking, products, my_level }: { booking: Boo
                         <span className="text-sm text-[#5F6B78]">{t('Total TTC, TVA :rate % comprise', { rate: booking.vat_rate })}</span>
                         <span className="text-3xl font-extrabold">{euros(total)}</span>
                     </div>
+                    {byCredit > 0 && (
+                        <p className="mt-3 rounded-lg bg-[#F4F9E1] p-3 text-sm text-[#17304A]">
+                            {t('Votre avoir paie :credit. Reste à payer par carte : :card.', { credit: euros(byCredit), card: euros(byCard) })}
+                        </p>
+                    )}
                 </section>
 
                 <p className="rounded-lg bg-[#E6ECF2] p-3 text-sm text-[#17304A]">
@@ -300,7 +318,7 @@ export default function Checkout({ booking, products, my_level }: { booking: Boo
                     <TermsLink />
                     {errors.accept_terms && <p className="text-sm text-[#9E2833]">{t('Vous devez accepter les conditions pour réserver.')}</p>}
                     <Button type="submit" size="lg" className="h-12 text-base font-bold" disabled={processing || left === 0}>
-                        {t('Payer :amount', { amount: euros(total) })}
+                        {byCard === 0 ? t('Payer avec mon avoir') : t('Payer :amount', { amount: euros(byCard) })}
                     </Button>
                     {left === 0 && (
                         <p className="text-sm text-[#9E2833]">{t('Les dix minutes sont écoulées. Revenez au planning pour choisir un créneau.')}</p>

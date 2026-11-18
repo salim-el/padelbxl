@@ -4,12 +4,22 @@ import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
 import { euros, SHARE_LABELS, shortMonth, ucfirst } from '@/lib/money';
 import { Head, Link } from '@inertiajs/react';
-import { ChevronRight, Ticket, Users } from 'lucide-react';
+import { ChevronRight, Ticket, Users, Wallet } from 'lucide-react';
 
 type Booking = { id: string; court: string; date: string; time: string; status: string; price_cents: number };
 type Invitation = Booking & { organizer: string; share_cents: number; share_status: string };
 
-export default function Index({ bookings, invitations }: { bookings: Booking[]; invitations: Invitation[] }) {
+type StoreCredit = { cents: number; first_expires: string | null };
+
+export default function Index({
+    bookings,
+    invitations,
+    store_credit,
+}: {
+    bookings: Booking[];
+    invitations: Invitation[];
+    store_credit: StoreCredit;
+}) {
     const t = useT();
     return (
         <AppLayout breadcrumbs={[{ title: t('Mes réservations'), href: '/bookings' }]}>
@@ -23,6 +33,22 @@ export default function Index({ bookings, invitations }: { bookings: Booking[]; 
                         {t('Réserver un terrain')}
                     </Link>
                 </PageHeader>
+
+                {store_credit.cents > 0 && (
+                    <section aria-labelledby="avoir" className="flex items-center gap-4 rounded-2xl border border-[#C8E64A] bg-[#F4F9E1] p-4">
+                        <Wallet className="size-8 shrink-0 text-[#1D5C7A]" aria-hidden />
+                        <div className="min-w-0 flex-1">
+                            <h2 id="avoir" className="font-bold">
+                                {t('Votre avoir : :amount', { amount: euros(store_credit.cents) })}
+                            </h2>
+                            <p className="text-sm text-[#5F6B78]">
+                                {t('Il se déduit en priorité de votre prochain paiement. Le premier expire le :date.', {
+                                    date: store_credit.first_expires ?? '',
+                                })}
+                            </p>
+                        </div>
+                    </section>
+                )}
 
                 {invitations.length > 0 && (
                     <section aria-labelledby="invitations" className="flex flex-col gap-3">
