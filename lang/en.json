@@ -166,5 +166,9 @@
     "C’est déjà le créneau de votre réservation.": "This is already the slot of your booking.",
     "Réservation déplacée. Le supplément de :amount est payé.": "Booking moved. The extra :amount has been paid.",
     "Réservation déplacée. :amount vous sont remboursés, avec une note de crédit.": "Booking moved. :amount is refunded to you, with a credit note.",
-    "Réservation déplacée, sans frais.": "Booking moved, at no cost."
+    "Réservation déplacée, sans frais.": "Booking moved, at no cost.",
+    "Un créneau s’est libéré au club": "A slot has opened up at the club",
+    "La partie que vous attendiez sur le :court le :date à :time est annulée. Le créneau est libre.": "The game you were waiting for on :court on :date at :time is cancelled. The slot is free.",
+    "Réserver ce créneau": "Book this slot",
+    "Le créneau revient au premier joueur qui le réserve.": "The slot goes to the first player who books it."
 }
