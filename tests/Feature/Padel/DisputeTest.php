@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Padel;
 
+use App\Exceptions\BookingException;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CreditNote;
@@ -145,5 +146,30 @@ class DisputeTest extends TestCase
         $this->actingAs($this->lucas)->get('/admin/disputes')->assertForbidden();
         $this->actingAs($this->lucas)->post("/admin/disputes/{$dispute->id}/decision", ['decision' => 'accepted_full', 'decision_note' => 'Je m’accepte moi-même.'])->assertForbidden();
         $this->assertSame('received', $dispute->fresh()->status);
+    }
+
+    public function test_a_counter_booking_paid_in_the_name_of_the_staff_cannot_be_disputed(): void
+    {
+        $booking = app(BookingService::class)->counter($this->marc, Court::where('name', 'Terrain 2')->first(), Clock::slotStart('2026-10-25', '19:30'), 'Client du comptoir', '0470 00 00 00', 'cash');
+
+        $this->expectException(BookingException::class);
+        $this->expectExceptionMessage('encodée au comptoir');
+        app(DisputeService::class)->open($this->marc, $booking, self::REASON, null);
+    }
+
+    public function test_a_staff_member_who_plays_cannot_decide_his_own_request(): void
+    {
+        $service = app(BookingService::class);
+        $own = $service->confirmPayment($service->hold($this->marc, Court::where('name', 'Terrain 2')->first(), Clock::slotStart('2026-10-24', '19:30')), $this->marc);
+        $this->travelTo(CarbonImmutable::parse('2026-10-25 09:00', Clock::ZONE));
+        $dispute = app(DisputeService::class)->open($this->marc, $own, self::REASON, null);
+        $url = "/admin/disputes/{$dispute->id}/decision";
+
+        $this->actingAs($this->marc)->post($url, ['decision' => 'accepted_credit', 'decision_note' => 'Je m’accorde un avoir.'])->assertSessionHasErrors('decision');
+        $this->assertSame('received', $dispute->fresh()->status);
+
+        $claire = User::where('email', 'claire.vermeulen@example.test')->first();
+        $this->actingAs($claire)->post($url, ['decision' => 'rejected', 'decision_note' => 'Aucun justificatif d’un imprévu grave.'])->assertSessionHasNoErrors();
+        $this->assertSame('rejected', $dispute->fresh()->status);
     }
 }
