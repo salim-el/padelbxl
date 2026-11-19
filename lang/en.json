@@ -92,6 +92,8 @@
     "Voir mes demandes": "See my requests",
     "Ce montant dépasse ce qui reste remboursable sur ce paiement.": "This amount exceeds what can still be refunded on this payment.",
     "Cette demande a déjà reçu une décision.": "This request has already been decided.",
+    "Une réservation encodée au comptoir ne fait pas l’objet d’une demande en ligne.": "A booking made at the front desk cannot be the subject of an online request.",
+    "Un autre membre du personnel doit décider de votre demande.": "Another staff member must decide on your request.",
     "Le montant partiel doit être supérieur à zéro et inférieur à :max.": "The partial amount must be above zero and below :max.",
     "Votre compte PadelBxl est suspendu": "Your PadelBxl account is suspended",
     "Le club a suspendu votre compte. Vous ne pouvez plus vous connecter ni réserver.": "The club has suspended your account. You can no longer log in or book.",
