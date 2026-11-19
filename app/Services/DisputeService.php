@@ -28,6 +28,10 @@ class DisputeService
 
     public function open(User $user, Booking $booking, string $reason, ?UploadedFile $file): Dispute
     {
+        // Au comptoir, le paiement est au nom du personnel : il pourrait sinon s'accorder un avoir.
+        if ($booking->walk_in_name !== null) {
+            throw new BookingException(__('Une réservation encodée au comptoir ne fait pas l’objet d’une demande en ligne.'));
+        }
         if ($this->payments($booking, $user)->isEmpty()) {
             throw new BookingException(__('Aucun paiement à votre nom sur cette réservation.'));
         }
@@ -56,6 +60,10 @@ class DisputeService
     /** Décision motivée : remboursement total ou partiel des paiements du joueur, avoir, ou refus. Le joueur est prévenu. */
     public function decide(Dispute $dispute, User $staff, string $decision, string $note, ?int $amountCents = null): Dispute
     {
+        // Séparation des tâches : un membre du personnel qui joue aussi ne tranche pas sa propre demande.
+        if ($dispute->user_id === $staff->id) {
+            throw new BookingException(__('Un autre membre du personnel doit décider de votre demande.'));
+        }
         $dispute = DB::transaction(function () use ($dispute, $staff, $decision, $note, $amountCents) {
             $dispute = Dispute::whereKey($dispute->id)->lockForUpdate()->firstOrFail();
             if (! $dispute->isOpen()) {

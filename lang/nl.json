@@ -108,6 +108,8 @@
     "Voir mes demandes": "Mijn aanvragen bekijken",
     "Ce montant dépasse ce qui reste remboursable sur ce paiement.": "Dit bedrag is hoger dan wat nog terugbetaald kan worden op deze betaling.",
     "Cette demande a déjà reçu une décision.": "Over deze aanvraag is al beslist.",
+    "Une réservation encodée au comptoir ne fait pas l’objet d’une demande en ligne.": "Voor een reservering aan de balie kunt u geen online aanvraag indienen.",
+    "Un autre membre du personnel doit décider de votre demande.": "Een ander personeelslid moet over uw aanvraag beslissen.",
     "Le montant partiel doit être supérieur à zéro et inférieur à :max.": "Het gedeeltelijke bedrag moet groter zijn dan nul en kleiner dan :max.",
     "Votre compte PadelBxl est suspendu": "Uw PadelBxl-account is geschorst",
     "Le club a suspendu votre compte. Vous ne pouvez plus vous connecter ni réserver.": "De club heeft uw account geschorst. U kunt niet meer inloggen of reserveren.",
