@@ -570,12 +570,16 @@ class BookingService
                 throw new BookingException(__('Ce terrain est fermé sur ce créneau.'));
             }
             // Le matériel loué suit la partie : il doit rester libre sur le nouveau créneau.
-            foreach ($booking->items()->with('product')->get() as $item) {
-                $used = (int) BookingItem::where('product_id', $item->product_id)
+            // Articles verrouillés avant de compter, comme dans reserveItems() : deux déplacements ne prennent pas la même raquette.
+            $items = $booking->items()->get();
+            $products = Product::whereIn('id', $items->pluck('product_id'))->lockForUpdate()->get()->keyBy('id');
+            foreach ($items as $item) {
+                $product = $products[$item->product_id];
+                $used = (int) BookingItem::where('product_id', $product->id)
                     ->whereHas('booking', fn ($q) => $q->whereIn('status', Booking::ACTIVE)->where('id', '!=', $booking->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc))
                     ->sum('quantity');
-                if ($item->product->kind === 'rental' && $used + $item->quantity > $item->product->stock) {
-                    throw new BookingException(__('Plus assez de « :product » sur ce créneau : il en reste :left.', ['product' => $item->product->name, 'left' => max(0, $item->product->stock - $used)]));
+                if ($product->kind === 'rental' && $used + $item->quantity > $product->stock) {
+                    throw new BookingException(__('Plus assez de « :product » sur ce créneau : il en reste :left.', ['product' => $product->name, 'left' => max(0, $product->stock - $used)]));
                 }
             }
             $from = $booking->court->name.' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i');
