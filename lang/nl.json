@@ -175,5 +175,12 @@
     "Rôle de :name modifié.": "Rol van :name gewijzigd.",
     "Annulée. Rendez le montant au client : une note de crédit a été émise.": "Geannuleerd. Geef het bedrag terug aan de klant: er is een creditnota opgemaakt.",
     "Annulée moins de 24 h avant : pas de remboursement.": "Minder dan 24 uur vooraf geannuleerd: geen terugbetaling.",
-    "Elle est acceptée. Vous recevez un avoir de :amount, valable un an et déduit de votre prochain paiement.": "Ze is aanvaard. U krijgt een tegoed van :amount, een jaar geldig en afgetrokken van uw volgende betaling."
+    "Elle est acceptée. Vous recevez un avoir de :amount, valable un an et déduit de votre prochain paiement.": "Ze is aanvaard. U krijgt een tegoed van :amount, een jaar geldig en afgetrokken van uw volgende betaling.",
+    "Cette réservation ne peut plus être déplacée.": "Deze reservering kan niet meer verplaatst worden.",
+    "Une réservation se déplace au plus tard 24 h avant le match.": "Een reservering verplaatst u uiterlijk 24 uur voor de wedstrijd.",
+    "Une partie partagée ne se déplace pas : vos partenaires ont payé ce créneau.": "Een gedeelde wedstrijd kan niet verplaatst worden: uw partners hebben dit tijdslot betaald.",
+    "C’est déjà le créneau de votre réservation.": "Dit is al het tijdslot van uw reservering.",
+    "Réservation déplacée. Le supplément de :amount est payé.": "Reservering verplaatst. De toeslag van :amount is betaald.",
+    "Réservation déplacée. :amount vous sont remboursés, avec une note de crédit.": "Reservering verplaatst. U krijgt :amount terug, met een creditnota.",
+    "Réservation déplacée, sans frais.": "Reservering verplaatst, zonder kosten."
 }

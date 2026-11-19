@@ -533,6 +533,92 @@ class BookingService
         return $total;
     }
 
+    /**
+     * F14 : l'organisateur déplace sa réservation vers un autre créneau libre, au plus tard 24 h avant le match.
+     * La même réservation change de créneau : l'ancien est libéré, le QR code ne vaut plus que pour le nouveau.
+     * La différence de prix est encaissée (l'avoir d'abord) ou remboursée avec une note de crédit.
+     */
+    public function move(Booking $booking, User $user, Court $court, CarbonImmutable $startUtc): Booking
+    {
+        if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::slots(), true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
+            throw new BookingException(__('Ce créneau n’existe pas ou n’est plus réservable.'));
+        }
+        $rule = $this->slots->priceFor($startUtc);
+        if ($rule === null || ! $court->is_active) {
+            throw new BookingException(__('Ce terrain n’est pas réservable à cette heure.'));
+        }
+        $end = $startUtc->addMinutes(Clock::slotMinutes());
+
+        return DB::transaction(function () use ($booking, $user, $court, $startUtc, $end, $rule) {
+            // Même ordre de verrous que hold() : le terrain d'arrivée, puis la réservation.
+            self::lockCourt($court->id);
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            if ($booking->organizer_id !== $user->id || $booking->walk_in_name !== null || $booking->status !== 'confirmed') {
+                throw new BookingException(__('Cette réservation ne peut plus être déplacée.'));
+            }
+            if (now()->gt($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS))) {
+                throw new BookingException(__('Une réservation se déplace au plus tard 24 h avant le match.'));
+            }
+            // Les partenaires ont payé ce créneau-là : on ne leur impose pas une autre heure.
+            if ($booking->players()->count() > 1) {
+                throw new BookingException(__('Une partie partagée ne se déplace pas : vos partenaires ont payé ce créneau.'));
+            }
+            if ($booking->court_id === $court->id && $booking->starts_at->equalTo($startUtc)) {
+                throw new BookingException(__('C’est déjà le créneau de votre réservation.'));
+            }
+            if (CourtClosure::where('court_id', $court->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc)->exists()) {
+                throw new BookingException(__('Ce terrain est fermé sur ce créneau.'));
+            }
+            // Le matériel loué suit la partie : il doit rester libre sur le nouveau créneau.
+            // Articles verrouillés avant de compter, comme dans reserveItems() : deux déplacements ne prennent pas la même raquette.
+            $items = $booking->items()->get();
+            $products = Product::whereIn('id', $items->pluck('product_id'))->lockForUpdate()->get()->keyBy('id');
+            foreach ($items as $item) {
+                $product = $products[$item->product_id];
+                $used = (int) BookingItem::where('product_id', $product->id)
+                    ->whereHas('booking', fn ($q) => $q->whereIn('status', Booking::ACTIVE)->where('id', '!=', $booking->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc))
+                    ->sum('quantity');
+                if ($product->kind === 'rental' && $used + $item->quantity > $product->stock) {
+                    throw new BookingException(__('Plus assez de « :product » sur ce créneau : il en reste :left.', ['product' => $product->name, 'left' => max(0, $product->stock - $used)]));
+                }
+            }
+            $from = $booking->court->name.' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i');
+            $price = $this->slots->priceCents($rule, $startUtc);
+            $diff = $price - $booking->price_cents;
+            try {
+                // Point de sauvegarde, comme dans hold() : la contrainte d'exclusion refuse un créneau pris entre-temps.
+                DB::transaction(fn () => $booking->update([
+                    'court_id' => $court->id, 'pricing_rule_id' => $rule->id, 'starts_at' => $startUtc, 'ends_at' => $end, 'price_cents' => $price, 'vat_rate' => $rule->vat_rate,
+                ]));
+            } catch (QueryException $e) {
+                if ($e->getCode() === '23P01') {
+                    throw new BookingException(__('Ce créneau vient d’être réservé par quelqu’un d’autre.'));
+                }
+                throw $e;
+            }
+            $booking->setRelation('court', $court);
+            $player = $booking->players()->firstOrFail();
+            $player->update(['share_cents' => $price]);
+            if ($diff > 0) {
+                $line = $this->courtLine($booking, $player);
+                $this->charge($booking, $player, $user, [[...$line, 'label' => 'Supplément de déplacement : '.$line['label'], 'unit' => $diff]], 'card', useCredit: true);
+            }
+            // Moins cher : la différence revient sur les derniers paiements de l'organisateur, avec une note de crédit.
+            $left = -$diff;
+            foreach ($this->openPayments($booking)->where('payer_id', $user->id)->sortByDesc('id') as $payment) {
+                $part = min($left, self::refundable($payment));
+                if ($part > 0) {
+                    $this->refund($payment, $part, 'Réservation déplacée sur un créneau moins cher.', 'booking_moved');
+                    $left -= $part;
+                }
+            }
+            AccessPass::where('booking_player_id', $player->id)->update(['valid_from' => $startUtc->subMinutes(15), 'valid_until' => $end]);
+            $this->history($booking, 'confirmed', 'confirmed', 'Déplacée depuis '.$from.'.', $user->id);
+
+            return $booking->fresh();
+        });
+    }
+
     public function cancel(Booking $booking, User $user): Booking
     {
         return DB::transaction(function () use ($booking, $user) {

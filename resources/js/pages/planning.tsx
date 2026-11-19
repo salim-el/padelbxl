@@ -9,17 +9,20 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 type Cell = { court_id: number; available: boolean; price_cents: number | null; past: boolean; off_peak: boolean; flash: boolean; closed: boolean };
 type Row = { time: string; end: string; starts_at: string; cells: Cell[] };
 type Court = { id: number; name: string };
-type Props = { date: string; today: string; max: string; courts: Court[]; rows: Row[] };
+type Moving = { id: string; court: string; when: string };
+type Props = { date: string; today: string; max: string; courts: Court[]; rows: Row[]; moving: Moving | null };
 
 const NAV =
     'inline-flex size-9 items-center justify-center rounded-lg border border-[#F7F6F1]/30 text-[#F7F6F1] transition hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent';
 
-export default function Planning({ date, today, max, courts, rows }: Props) {
+export default function Planning({ date, today, max, courts, rows, moving }: Props) {
     const t = useT();
     const { auth, errors, locale } = usePage<SharedData & { errors: Record<string, string> }>().props;
     const label = new Date(`${date}T12:00:00`).toLocaleDateString(`${locale}-BE`, { weekday: 'long', day: 'numeric', month: 'long' });
 
-    const goTo = (d: string) => router.get('/planning', { date: d }, { preserveScroll: true, preserveState: true });
+    // En déplacement (F14), changer de jour garde la réservation à déplacer.
+    const goTo = (d: string) =>
+        router.get('/planning', moving ? { date: d, move: moving.id } : { date: d }, { preserveScroll: true, preserveState: true });
     // Décalage en jours sur la date locale, sans passer par le fuseau UTC.
     const shift = (n: number) => {
         const [y, m, d] = date.split('-').map(Number);
@@ -29,7 +32,9 @@ export default function Planning({ date, today, max, courts, rows }: Props) {
 
     const book = (cell: Cell, row: Row) => {
         if (!auth.user) return router.visit('/login');
-        router.post('/bookings', { court_id: cell.court_id, starts_at: row.starts_at });
+        const slot = { court_id: cell.court_id, starts_at: row.starts_at };
+        if (moving) return router.post(`/bookings/${moving.id}/move`, slot);
+        router.post('/bookings', slot);
     };
 
     const slotClass = (cell: Cell) => {
@@ -42,7 +47,10 @@ export default function Planning({ date, today, max, courts, rows }: Props) {
         <AppLayout breadcrumbs={[{ title: t('Planning'), href: '/planning' }]}>
             <Head title={t('Planning')} />
             <div className="flex flex-col gap-5 p-4">
-                <PageHeader eyebrow={t('Réserver un terrain')} title={t('Choisissez un créneau')}>
+                <PageHeader
+                    eyebrow={t(moving ? 'Déplacer une réservation' : 'Réserver un terrain')}
+                    title={t(moving ? 'Choisissez le nouveau créneau' : 'Choisissez un créneau')}
+                >
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
@@ -71,6 +79,19 @@ export default function Planning({ date, today, max, courts, rows }: Props) {
                     </div>
                 </PageHeader>
 
+                {moving && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#C8E64A] bg-[#F4F9E1] p-4 text-sm text-[#0E1B2C]">
+                        <p>
+                            {t('Réservation actuelle : :court, :when. La différence de prix est payée ou remboursée.', {
+                                court: moving.court,
+                                when: moving.when,
+                            })}
+                        </p>
+                        <Link href={`/bookings/${moving.id}`} className="font-semibold underline">
+                            {t('Garder ce créneau')}
+                        </Link>
+                    </div>
+                )}
                 {errors.date && (
                     <p role="alert" className="rounded-lg border border-[#9E2833]/30 bg-[#FCE6E8] p-3 text-sm text-[#9E2833]">
                         {t('Choisissez une date entre aujourd’hui et le :date.', { date: max.split('-').reverse().join('/') })}

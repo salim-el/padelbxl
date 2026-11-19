@@ -159,5 +159,12 @@
     "Rôle de :name modifié.": "Role of :name changed.",
     "Annulée. Rendez le montant au client : une note de crédit a été émise.": "Cancelled. Give the amount back to the customer: a credit note has been issued.",
     "Annulée moins de 24 h avant : pas de remboursement.": "Cancelled less than 24 hours before: no refund.",
-    "Elle est acceptée. Vous recevez un avoir de :amount, valable un an et déduit de votre prochain paiement.": "It is accepted. You receive a credit of :amount, valid for one year and taken from your next payment."
+    "Elle est acceptée. Vous recevez un avoir de :amount, valable un an et déduit de votre prochain paiement.": "It is accepted. You receive a credit of :amount, valid for one year and taken from your next payment.",
+    "Cette réservation ne peut plus être déplacée.": "This booking can no longer be moved.",
+    "Une réservation se déplace au plus tard 24 h avant le match.": "A booking can be moved up to 24 hours before the match.",
+    "Une partie partagée ne se déplace pas : vos partenaires ont payé ce créneau.": "A shared match cannot be moved: your partners paid for this slot.",
+    "C’est déjà le créneau de votre réservation.": "This is already the slot of your booking.",
+    "Réservation déplacée. Le supplément de :amount est payé.": "Booking moved. The extra :amount has been paid.",
+    "Réservation déplacée. :amount vous sont remboursés, avec une note de crédit.": "Booking moved. :amount is refunded to you, with a credit note.",
+    "Réservation déplacée, sans frais.": "Booking moved, at no cost."
 }
