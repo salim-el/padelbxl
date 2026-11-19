@@ -22,12 +22,14 @@ type Props = {
     booking: Booking;
     qr: string | null;
     qr_window: string | null;
+    movable: boolean;
+    date_local: string;
     items: { name: string; quantity: number; total_cents: number }[];
     invoices: { number: string; total_cents: number; vat_cents: number; ubl: boolean; credit_notes: string[] }[];
     players: { name: string | null; is_organizer: boolean; open: boolean; taken: boolean; share_cents: number; status: string }[];
 };
 
-export default function Show({ booking, qr, qr_window, items, invoices, players }: Props) {
+export default function Show({ booking, qr, qr_window, movable, date_local, items, invoices, players }: Props) {
     const t = useT();
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
 
@@ -172,6 +174,14 @@ export default function Show({ booking, qr, qr_window, items, invoices, players 
                                 ? t('Remboursement complet si vous annulez avant le :date.', { date: booking.free_cancellation_until })
                                 : t('Le match commence dans moins de 24 h : une annulation ne sera pas remboursée.')}
                         </p>
+                        {movable && (
+                            <Link
+                                href={`/planning?move=${booking.id}&date=${date_local}`}
+                                className="flex items-center justify-center gap-2 rounded-lg border border-[#1D5C7A] px-4 py-2.5 text-sm font-semibold text-[#1D5C7A] transition hover:bg-[#E3F0F7] focus-visible:ring-2 focus-visible:ring-[#1D5C7A] focus-visible:outline-none"
+                            >
+                                <CalendarDays className="size-4" aria-hidden /> {t('Déplacer vers un autre créneau')}
+                            </Link>
+                        )}
                         <button
                             type="button"
                             onClick={cancel}
