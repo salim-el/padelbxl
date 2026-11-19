@@ -642,6 +642,12 @@ const en: Record<string, string> = {
     'Votre avoir paie :credit. Reste à payer par carte : :card.': 'Your credit pays :credit. Left to pay by card: :card.',
     'Payer avec mon avoir': 'Pay with my credit',
     'Accepter en avoir, valable un an': 'Accept as credit, valid for one year',
+    'Déplacer une réservation': 'Move a booking',
+    'Choisissez le nouveau créneau': 'Choose the new slot',
+    'Réservation actuelle : :court, :when. La différence de prix est payée ou remboursée.':
+        'Current booking: :court, :when. The price difference is paid or refunded.',
+    'Garder ce créneau': 'Keep this slot',
+    'Déplacer vers un autre créneau': 'Move to another slot',
 };
 
 export default en;

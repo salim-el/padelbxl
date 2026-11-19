@@ -645,6 +645,12 @@ const nl: Record<string, string> = {
     'Votre avoir paie :credit. Reste à payer par carte : :card.': 'Uw tegoed betaalt :credit. Nog te betalen met kaart: :card.',
     'Payer avec mon avoir': 'Betalen met mijn tegoed',
     'Accepter en avoir, valable un an': 'Aanvaarden als tegoed, een jaar geldig',
+    'Déplacer une réservation': 'Een reservering verplaatsen',
+    'Choisissez le nouveau créneau': 'Kies het nieuwe tijdslot',
+    'Réservation actuelle : :court, :when. La différence de prix est payée ou remboursée.':
+        'Huidige reservering: :court, :when. Het prijsverschil wordt betaald of terugbetaald.',
+    'Garder ce créneau': 'Dit tijdslot houden',
+    'Déplacer vers un autre créneau': 'Naar een ander tijdslot verplaatsen',
 };
 
 export default nl;
