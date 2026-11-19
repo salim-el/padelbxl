@@ -62,6 +62,8 @@ Route::middleware(['auth', 'verified', 'consented'])->group(function () {
     // Limité : le paiement peut envoyer jusqu'à trois invitations par e-mail.
     Route::post('bookings/{booking}/pay', [BookingController::class, 'pay'])->middleware('throttle:10,1')->name('bookings.pay');
     Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+    // Limité : un déplacement peut encaisser un supplément.
+    Route::post('bookings/{booking}/move', [BookingController::class, 'move'])->middleware('throttle:10,1')->name('bookings.move');
     Route::get('bookings/{booking}/share', [BookingController::class, 'share'])->name('bookings.share');
     Route::post('bookings/{booking}/share', [BookingController::class, 'payShare'])->middleware('throttle:10,1')->name('bookings.share.pay');
     Route::post('bookings/{booking}/share/decline', [BookingController::class, 'declineShare'])->middleware('throttle:10,1')->name('bookings.share.decline');

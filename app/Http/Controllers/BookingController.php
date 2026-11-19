@@ -180,6 +180,10 @@ class BookingController extends Controller
             'booking' => $this->present($booking),
             'qr' => $qr,
             'qr_window' => $pass ? Clock::local($pass->valid_from)->format('H:i').' – '.Clock::local($pass->valid_until)->format('H:i') : null,
+            // F14 : seule une partie jouée seul se déplace, et jusqu'à 24 h avant.
+            'movable' => $booking->status === 'confirmed' && $booking->walk_in_name === null && $booking->players->count() < 2
+                && now()->lte($booking->starts_at->subHours(BookingService::FREE_CANCELLATION_HOURS)),
+            'date_local' => Clock::local($booking->starts_at)->toDateString(),
             'items' => $booking->items->map(fn ($i) => ['name' => $i->product->name, 'quantity' => $i->quantity, 'total_cents' => $i->quantity * $i->unit_price_cents])->all(),
             // Liste vide quand l'organisateur a tout payé seul : l'écran n'affiche alors pas le partage.
             'players' => $booking->players->count() < 2 ? [] : $booking->players->sortByDesc('is_organizer')->values()->map(fn ($p) => [
@@ -268,6 +272,28 @@ class BookingController extends Controller
         $message = $booking->status === 'cancelled_refunded'
             ? __('Réservation annulée et remboursée. Une note de crédit a été émise.')
             : __('Réservation annulée. Moins de 24 h avant le match, elle n’est pas remboursée.');
+
+        return to_route('bookings.show', $booking)->with('success', $message);
+    }
+
+    /** F14 : le nouveau créneau est choisi dans le planning, ouvert avec ?move=. */
+    public function move(Request $request, Booking $booking): RedirectResponse
+    {
+        $this->ensureOwner($request, $booking);
+        $data = $request->validate(['court_id' => ['required', 'integer', 'exists:courts,id'], 'starts_at' => ['required', 'date']]);
+        $before = $booking->price_cents;
+        try {
+            $booking = $this->bookings->move($booking, $request->user(), Court::findOrFail($data['court_id']), CarbonImmutable::parse($data['starts_at'])->utc());
+        } catch (BookingException $e) {
+            return back()->withErrors(['booking' => $e->getMessage()]);
+        }
+        $diff = $booking->price_cents - $before;
+        $amount = number_format(abs($diff) / 100, 2, ',', ' ').' €';
+        $message = match (true) {
+            $diff > 0 => __('Réservation déplacée. Le supplément de :amount est payé.', ['amount' => $amount]),
+            $diff < 0 => __('Réservation déplacée. :amount vous sont remboursés, avec une note de crédit.', ['amount' => $amount]),
+            default => __('Réservation déplacée, sans frais.'),
+        };
 
         return to_route('bookings.show', $booking)->with('success', $message);
     }
