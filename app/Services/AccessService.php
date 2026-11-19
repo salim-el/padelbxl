@@ -18,6 +18,8 @@ class AccessService
         $reason = match (true) {
             $pass === null => 'unknown',
             $pass->revoked_at !== null || ! in_array($booking->status, ['confirmed', 'used'], true) => 'revoked',
+            // Compte suspendu après coup : sa place payée par la garantie (covered) garde son QR code, la borne le refuse quand même.
+            $pass->bookingPlayer->user !== null && $pass->bookingPlayer->user->status !== 'active' => 'revoked',
             $booking->court_id !== $court->id => 'wrong_court',
             now()->lt($pass->valid_from) => 'too_early',
             now()->gt($pass->valid_until) => 'expired',
