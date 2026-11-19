@@ -182,5 +182,9 @@
     "C’est déjà le créneau de votre réservation.": "Dit is al het tijdslot van uw reservering.",
     "Réservation déplacée. Le supplément de :amount est payé.": "Reservering verplaatst. De toeslag van :amount is betaald.",
     "Réservation déplacée. :amount vous sont remboursés, avec une note de crédit.": "Reservering verplaatst. U krijgt :amount terug, met een creditnota.",
-    "Réservation déplacée, sans frais.": "Reservering verplaatst, zonder kosten."
+    "Réservation déplacée, sans frais.": "Reservering verplaatst, zonder kosten.",
+    "Un créneau s’est libéré au club": "Er is een tijdslot vrijgekomen in de club",
+    "La partie que vous attendiez sur le :court le :date à :time est annulée. Le créneau est libre.": "De wedstrijd waarop u wachtte op :court op :date om :time is geannuleerd. Het tijdslot is vrij.",
+    "Réserver ce créneau": "Dit tijdslot reserveren",
+    "Le créneau revient au premier joueur qui le réserve.": "Het tijdslot gaat naar de eerste speler die het reserveert."
 }

@@ -20,6 +20,7 @@ use App\Models\WaitlistEntry;
 use App\Notifications\AccessPassLink;
 use App\Notifications\MatchCancelled;
 use App\Notifications\ShareInvitation;
+use App\Notifications\SlotFreed;
 use App\Notifications\SpotAvailable;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -764,6 +765,27 @@ class BookingService
         AccessPass::whereIn('booking_player_id', $booking->players()->pluck('id'))->whereNull('revoked_at')->update(['revoked_at' => now()]);
         $booking->update(['cancelled_at' => now()]);
         $this->transition($booking, $status, $reason, $by);
+        $this->offerFreedSlot($booking);
+    }
+
+    /**
+     * F13 : le créneau libéré par une annulation est proposé à la liste d'attente de la partie.
+     * Tous les inscrits sont prévenus, le premier qui réserve le créneau le prend. La partie n'existe plus, sa liste non plus.
+     */
+    private function offerFreedSlot(Booking $booking): void
+    {
+        $entries = WaitlistEntry::with('user')->where('booking_id', $booking->id)->get();
+        WaitlistEntry::where('booking_id', $booking->id)->delete();
+        if ($entries->isEmpty() || ! $booking->starts_at->isFuture()) {
+            return;
+        }
+        DB::afterCommit(function () use ($booking, $entries) {
+            foreach ($entries as $entry) {
+                if ($entry->user?->status === 'active') {
+                    $entry->user->notify((new SlotFreed($booking))->locale($entry->user->locale ?? app()->getLocale()));
+                }
+            }
+        });
     }
 
     /** Prévient un joueur que sa partie est annulée, dans sa langue, une fois la transaction validée. */
