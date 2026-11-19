@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Court;
 use App\Models\User;
 use App\Models\WaitlistEntry;
+use App\Notifications\SlotFreed;
 use App\Notifications\SpotAvailable;
 use App\Services\BookingService;
 use App\Services\Clock;
@@ -101,6 +102,23 @@ class OpenMatchTest extends TestCase
         $this->actingAs($waiting)->post("/open-matches/{$booking->public_id}/join", ['accept_terms' => '1'])->assertSessionHasNoErrors();
         $this->assertSame('paid', $booking->players()->where('user_id', $waiting->id)->value('status'));
         $this->assertFalse(WaitlistEntry::where('booking_id', $booking->id)->exists());
+    }
+
+    public function test_a_cancelled_match_offers_its_freed_slot_to_the_waitlist(): void
+    {
+        $booking = $this->open(1);
+        $this->actingAs($this->ines)->post("/open-matches/{$booking->public_id}/join", ['accept_terms' => '1']);
+        $waiting = User::factory()->create();
+        $this->actingAs($waiting)->post("/open-matches/{$booking->public_id}/waitlist")->assertSessionHasNoErrors();
+
+        $this->actingAs($this->lucas)->post("/bookings/{$booking->public_id}/cancel")->assertSessionHasNoErrors();
+
+        // F13 : l'inscrit est prévenu et renvoyé au planning du jour ; les joueurs de la partie, eux, reçoivent l'annulation.
+        Notification::assertSentTo($waiting, SlotFreed::class, fn (SlotFreed $n) => $n->toMail($waiting)->actionUrl === route('planning', ['date' => '2026-10-23']));
+        Notification::assertNotSentTo($this->ines, SlotFreed::class);
+        $this->assertFalse(WaitlistEntry::where('booking_id', $booking->id)->exists());
+        // Le créneau est libre : le premier qui le réserve le prend.
+        $this->assertSame('pending_payment', app(BookingService::class)->hold($waiting, Court::where('name', 'Terrain 1')->first(), Clock::slotStart('2026-10-23', '19:30'))->status);
     }
 
     public function test_the_waitlist_is_refused_while_a_spot_is_still_free_and_can_be_left(): void
