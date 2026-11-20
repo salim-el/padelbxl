@@ -445,11 +445,15 @@ class BookingService
         if ($byCredit === $amount) {
             $method = 'store_credit';
         }
-        // F9 : la carte gardée en garantie est débitée chez Stripe, hors session. Une partie partagée avant
-        // l'arrivée des clés Stripe n'a pas de carte gardée : son débit reste simulé.
+        // F9 : la carte gardée en garantie est débitée chez Stripe, hors session.
         if ($guarantee && $this->stripe->enabled() && $booking->guarantee_payment_method_id !== null) {
             $reference = $this->stripe->chargeGuarantee($payer, $booking->guarantee_payment_method_id, $amount,
                 'Garantie – '.$lines[0]['label'], 'guarantee-'.$player->id.'-'.$amount);
+        }
+        // F9 : Stripe actif, une carte n'est jamais débitée « pour de faux ». Sans référence Stripe, seul l'avoir peut
+        // payer : sinon la place serait gratuite (part d'invité, partie ouverte, supplément, partie partagée sans carte gardée).
+        if ($method === 'card' && $reference === null && $this->stripe->enabled()) {
+            throw new BookingException(__('Ce paiement n’est pas encore possible par carte en ligne. Rien n’a été débité.'));
         }
         $payment = Payment::create([
             'booking_id' => $booking->id,

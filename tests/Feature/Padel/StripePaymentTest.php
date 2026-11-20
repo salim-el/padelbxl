@@ -124,6 +124,21 @@ class StripePaymentTest extends TestCase
         $this->assertSame(0, Payment::count());
     }
 
+    public function test_with_stripe_no_card_is_charged_for_pretend_but_a_full_credit_still_pays(): void
+    {
+        $this->stripe(function (MockInterface $mock) {
+            $mock->shouldNotReceive('checkout');
+        });
+        // L'avoir de Lucas couvre sa part de 24 € : rien ne passe par Stripe.
+        app(StoreCreditService::class)->grant($this->lucas, 6000, 'goodwill');
+        $this->pay(['guests' => ['ines.laurent@example.test'], 'accept_guarantee' => '1'])->assertSessionHasNoErrors();
+        $this->assertSame('store_credit', Payment::sole()->method);
+
+        // La part d'Inès passerait par une carte simulée : refusée, sa place n'est pas offerte.
+        $this->expectExceptionMessage('pas encore possible par carte en ligne');
+        app(BookingService::class)->payShare($this->booking, User::where('email', 'ines.laurent@example.test')->firstOrFail());
+    }
+
     public function test_an_unpaid_session_or_another_booking_confirms_nothing(): void
     {
         $this->stripe(function (MockInterface $mock) {
