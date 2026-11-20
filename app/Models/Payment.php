@@ -10,11 +10,11 @@ class Payment extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ['booking_id', 'booking_player_id', 'payer_id', 'method', 'provider_reference', 'amount_cents', 'status', 'paid_at'];
+    protected $fillable = ['booking_id', 'booking_player_id', 'payer_id', 'method', 'provider_reference', 'amount_cents', 'status', 'paid_at', 'is_guarantee_charge'];
 
     protected function casts(): array
     {
-        return ['paid_at' => 'immutable_datetime'];
+        return ['paid_at' => 'immutable_datetime', 'is_guarantee_charge' => 'boolean'];
     }
 
     public function booking(): BelongsTo
