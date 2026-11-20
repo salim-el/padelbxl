@@ -180,10 +180,11 @@ class BookingService
      * @param  int  $openSpots  places proposées aux autres membres du club, en plus des invités
      * @param  string|null  $reference  F9 : paiement Stripe déjà encaissé (pi_…) ; null, paiement simulé
      * @param  string|null  $guaranteeMethod  F9 : carte Stripe gardée en garantie d'un prix partagé
+     * @param  int|null  $received  F9 : montant que Stripe a encaissé ; la commande doit tomber juste, avoir compris
      */
-    public function confirmPayment(Booking $booking, User $user, array $items = [], string $method = 'card', array $guests = [], int $openSpots = 0, ?string $reference = null, ?string $guaranteeMethod = null): Booking
+    public function confirmPayment(Booking $booking, User $user, array $items = [], string $method = 'card', array $guests = [], int $openSpots = 0, ?string $reference = null, ?string $guaranteeMethod = null, ?int $received = null): Booking
     {
-        return DB::transaction(function () use ($booking, $user, $items, $method, $guests, $openSpots, $reference, $guaranteeMethod) {
+        return DB::transaction(function () use ($booking, $user, $items, $method, $guests, $openSpots, $reference, $guaranteeMethod, $received) {
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ($user->status !== 'active') {
                 throw new BookingException(__('Votre compte est suspendu. Le paiement est refusé.'));
@@ -202,7 +203,7 @@ class BookingService
                 $lines[] = ['label' => $item->product->name, 'quantity' => $item->quantity, 'unit' => $item->unit_price_cents, 'vat' => (float) $item->vat_rate];
             }
             // Au comptoir, le payeur est le membre du personnel : aucun avoir n'entre en jeu.
-            $this->charge($booking, $player, $user, $lines, $method, useCredit: $method === 'card', reference: $reference);
+            $this->charge($booking, $player, $user, $lines, $method, useCredit: $method === 'card', reference: $reference, received: $received);
             $player->update(['status' => 'paid']);
             $booking->update(['hold_expires_at' => null]);
             $this->transition($booking, 'confirmed', 'Paiement reçu.', $user->id);
@@ -428,13 +429,19 @@ class BookingService
      * @param  list<array{label: string, quantity: int, unit: int, vat: float}>  $lines
      * @param  string|null  $reference  paiement Stripe déjà encaissé sur la page de paiement
      * @param  bool  $guarantee  débit de la carte de garantie de l'organisateur pour une part restée impayée
+     * @param  int|null  $received  montant déjà encaissé par Stripe pour ces lignes
      */
-    private function charge(Booking $booking, BookingPlayer $player, User $payer, array $lines, string $method, bool $useCredit = false, ?string $reference = null, bool $guarantee = false): Payment
+    private function charge(Booking $booking, BookingPlayer $player, User $payer, array $lines, string $method, bool $useCredit = false, ?string $reference = null, bool $guarantee = false, ?int $received = null): Payment
     {
         $amount = array_sum(array_map(fn ($l) => $l['quantity'] * $l['unit'], $lines));
         // F15 : l'avoir du joueur se déduit en priorité ; la carte ne paie que le reste. La garantie n'y touche pas.
         $credits = $useCredit ? $this->credits->lockUsable($payer) : collect();
         $byCredit = min($amount, (int) $credits->sum('remaining_cents'));
+        // F9 : avoirs verrouillés, la part de la carte doit égaler ce que Stripe a encaissé. Un avoir utilisé entre-temps
+        // ailleurs ferait sinon payer moins que la commande ; la transaction est annulée et le paiement remboursé.
+        if ($received !== null && $amount - $byCredit !== $received) {
+            throw new BookingException(__('Le montant payé ne correspond plus à la commande.'));
+        }
         if ($byCredit === $amount) {
             $method = 'store_credit';
         }

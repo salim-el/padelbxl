@@ -142,10 +142,16 @@ class BookingController extends Controller
         if (Payment::where('provider_reference', $intent->id)->exists()) {
             return to_route('bookings.show', $booking);
         }
-        $order = Cache::pull('checkout:'.$session->id) ?? ['items' => [], 'guests' => [], 'open' => 0, 'level_min' => null, 'level_max' => null];
-        $shared = $order['guests'] !== [] || $order['open'] > 0;
+        // Commande retenue au départ vers Stripe. Introuvable, rien n'est deviné : le paiement est rendu.
+        $order = Cache::get('checkout:'.$session->id);
         try {
-            $this->bookings->confirmPayment($booking, $request->user(), $order['items'], 'card', $order['guests'], $order['open'], $intent->id, $shared ? $intent->payment_method : null);
+            if (! is_array($order) || $session->currency !== config('services.stripe.currency')) {
+                throw new BookingException(__('Le montant payé ne correspond plus à la commande.'));
+            }
+            $shared = $order['guests'] !== [] || $order['open'] > 0;
+            $this->bookings->confirmPayment($booking, $request->user(), $order['items'], 'card', $order['guests'], $order['open'],
+                $intent->id, $shared ? $intent->payment_method : null, received: $intent->amount_received);
+            Cache::forget('checkout:'.$session->id);
         } catch (BookingException $e) {
             // Deux retours simultanés : le premier a confirmé, le second n'a rien à rendre.
             if (Payment::where('provider_reference', $intent->id)->exists()) {
