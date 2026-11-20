@@ -63,6 +63,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'remember_token',
         'two_factor_secret',
+        'stripe_customer_id',
     ];
 
     /**

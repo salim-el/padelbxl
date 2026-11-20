@@ -10,7 +10,7 @@ class Booking extends Model
 {
     public const ACTIVE = ['pending_payment', 'confirmed', 'used', 'frozen'];
 
-    protected $fillable = ['public_id', 'court_id', 'organizer_id', 'pricing_rule_id', 'starts_at', 'ends_at', 'status', 'price_cents', 'vat_rate', 'hold_expires_at', 'cancelled_at', 'walk_in_name', 'walk_in_contact', 'level_min', 'level_max'];
+    protected $fillable = ['public_id', 'court_id', 'organizer_id', 'pricing_rule_id', 'starts_at', 'ends_at', 'status', 'price_cents', 'vat_rate', 'hold_expires_at', 'cancelled_at', 'walk_in_name', 'walk_in_contact', 'level_min', 'level_max', 'guarantee_payment_method_id', 'guarantee_accepted_at'];
 
     protected function casts(): array
     {
@@ -19,6 +19,7 @@ class Booking extends Model
             'ends_at' => 'immutable_datetime',
             'hold_expires_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
+            'guarantee_accepted_at' => 'immutable_datetime',
             'vat_rate' => 'decimal:2',
         ];
     }

@@ -48,7 +48,24 @@ class BookingService
 
     private const LOCK_PLAYER = 2;
 
-    public function __construct(private SlotService $slots, private StoreCreditService $credits) {}
+    public function __construct(private SlotService $slots, private StoreCreditService $credits, private StripePayments $stripe) {}
+
+    /**
+     * F9 : ce que la carte paiera à la confirmation, calculé avant d'ouvrir la page de Stripe :
+     * part de l'organisateur (les centimes indivisibles lui restent, comme dans splitShares) et articles, moins l'avoir.
+     *
+     * @param  array<int, int>  $items
+     */
+    public function cardAmount(Booking $booking, User $user, array $items, int $others): int
+    {
+        $total = $booking->price_cents - intdiv($booking->price_cents, $others + 1) * $others;
+        $items = array_filter($items);
+        foreach (Product::whereIn('id', array_keys($items))->where('is_active', true)->get() as $product) {
+            $total += $product->price_cents * $items[$product->id];
+        }
+
+        return max(0, $total - StoreCreditService::balance($user));
+    }
 
     /** Sérialise ce qui touche au planning d'un terrain : réservations et fermetures. À appeler dans une transaction. */
     public static function lockCourt(int $courtId): void
@@ -161,10 +178,13 @@ class BookingService
      * @param  array<int, int>  $items  quantité par identifiant d'article
      * @param  list<string>  $guests  e-mails des joueurs qui paient leur part, trois au plus
      * @param  int  $openSpots  places proposées aux autres membres du club, en plus des invités
+     * @param  string|null  $reference  F9 : paiement Stripe déjà encaissé (pi_…) ; null, paiement simulé
+     * @param  string|null  $guaranteeMethod  F9 : carte Stripe gardée en garantie d'un prix partagé
+     * @param  int|null  $received  F9 : montant que Stripe a encaissé ; la commande doit tomber juste, avoir compris
      */
-    public function confirmPayment(Booking $booking, User $user, array $items = [], string $method = 'card', array $guests = [], int $openSpots = 0): Booking
+    public function confirmPayment(Booking $booking, User $user, array $items = [], string $method = 'card', array $guests = [], int $openSpots = 0, ?string $reference = null, ?string $guaranteeMethod = null, ?int $received = null): Booking
     {
-        return DB::transaction(function () use ($booking, $user, $items, $method, $guests, $openSpots) {
+        return DB::transaction(function () use ($booking, $user, $items, $method, $guests, $openSpots, $reference, $guaranteeMethod, $received) {
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ($user->status !== 'active') {
                 throw new BookingException(__('Votre compte est suspendu. Le paiement est refusé.'));
@@ -175,13 +195,15 @@ class BookingService
             $player = $booking->players()->where('is_organizer', true)->firstOrFail();
             if ($guests !== [] || $openSpots > 0) {
                 $this->splitShares($booking, $player, $user, $guests, $openSpots);
+                // L'organisateur a accepté la garantie avant de payer ; avec Stripe, sa carte est gardée pour la débiter.
+                $booking->update(['guarantee_accepted_at' => now(), 'guarantee_payment_method_id' => $guaranteeMethod]);
             }
             $lines = [$this->courtLine($booking, $player)];
             foreach ($this->reserveItems($booking, array_filter($items)) as $item) {
                 $lines[] = ['label' => $item->product->name, 'quantity' => $item->quantity, 'unit' => $item->unit_price_cents, 'vat' => (float) $item->vat_rate];
             }
             // Au comptoir, le payeur est le membre du personnel : aucun avoir n'entre en jeu.
-            $this->charge($booking, $player, $user, $lines, $method, useCredit: $method === 'card');
+            $this->charge($booking, $player, $user, $lines, $method, useCredit: $method === 'card', reference: $reference, received: $received);
             $player->update(['status' => 'paid']);
             $booking->update(['hold_expires_at' => null]);
             $this->transition($booking, 'confirmed', 'Paiement reçu.', $user->id);
@@ -229,21 +251,26 @@ class BookingService
             ->pluck('id');
         $charged = 0;
         foreach ($ids as $id) {
-            $charged += DB::transaction(function () use ($id) {
-                $booking = Booking::whereKey(BookingPlayer::whereKey($id)->value('booking_id'))->lockForUpdate()->firstOrFail();
-                $player = BookingPlayer::findOrFail($id);
-                // Relu sous verrou : le joueur a pu payer entre la recherche et le verrou.
-                if ($player->status !== 'invited' || $booking->status !== 'confirmed') {
-                    return 0;
-                }
-                $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card');
-                $player->update(['status' => 'covered']);
-                if ($player->user_id === null && $player->guest_email !== null) {
-                    DB::afterCommit(fn () => Notification::route('mail', $player->guest_email)->notify(new AccessPassLink($player)));
-                }
+            try {
+                $charged += DB::transaction(function () use ($id) {
+                    $booking = Booking::whereKey(BookingPlayer::whereKey($id)->value('booking_id'))->lockForUpdate()->firstOrFail();
+                    $player = BookingPlayer::findOrFail($id);
+                    // Relu sous verrou : le joueur a pu payer entre la recherche et le verrou.
+                    if ($player->status !== 'invited' || $booking->status !== 'confirmed') {
+                        return 0;
+                    }
+                    $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card', guarantee: true);
+                    $player->update(['status' => 'covered']);
+                    if ($player->user_id === null && $player->guest_email !== null) {
+                        DB::afterCommit(fn () => Notification::route('mail', $player->guest_email)->notify(new AccessPassLink($player)));
+                    }
 
-                return 1;
-            });
+                    return 1;
+                });
+            } catch (BookingException $e) {
+                // F9 : carte de garantie refusée. Les autres parts sont quand même débitées ; celle-ci est retentée au passage suivant.
+                report($e);
+            }
         }
 
         return $charged;
@@ -400,15 +427,29 @@ class BookingService
      * Encaisse les lignes, émet la facture au nom de celui qui paie et le QR code du joueur.
      *
      * @param  list<array{label: string, quantity: int, unit: int, vat: float}>  $lines
+     * @param  string|null  $reference  paiement Stripe déjà encaissé sur la page de paiement
+     * @param  bool  $guarantee  débit de la carte de garantie de l'organisateur pour une part restée impayée
+     * @param  int|null  $received  montant déjà encaissé par Stripe pour ces lignes
      */
-    private function charge(Booking $booking, BookingPlayer $player, User $payer, array $lines, string $method, bool $useCredit = false): Payment
+    private function charge(Booking $booking, BookingPlayer $player, User $payer, array $lines, string $method, bool $useCredit = false, ?string $reference = null, bool $guarantee = false, ?int $received = null): Payment
     {
         $amount = array_sum(array_map(fn ($l) => $l['quantity'] * $l['unit'], $lines));
         // F15 : l'avoir du joueur se déduit en priorité ; la carte ne paie que le reste. La garantie n'y touche pas.
         $credits = $useCredit ? $this->credits->lockUsable($payer) : collect();
         $byCredit = min($amount, (int) $credits->sum('remaining_cents'));
+        // F9 : avoirs verrouillés, la part de la carte doit égaler ce que Stripe a encaissé. Un avoir utilisé entre-temps
+        // ailleurs ferait sinon payer moins que la commande ; la transaction est annulée et le paiement remboursé.
+        if ($received !== null && $amount - $byCredit !== $received) {
+            throw new BookingException(__('Le montant payé ne correspond plus à la commande.'));
+        }
         if ($byCredit === $amount) {
             $method = 'store_credit';
+        }
+        // F9 : la carte gardée en garantie est débitée chez Stripe, hors session. Une partie partagée avant
+        // l'arrivée des clés Stripe n'a pas de carte gardée : son débit reste simulé.
+        if ($guarantee && $this->stripe->enabled() && $booking->guarantee_payment_method_id !== null) {
+            $reference = $this->stripe->chargeGuarantee($payer, $booking->guarantee_payment_method_id, $amount,
+                'Garantie – '.$lines[0]['label'], 'guarantee-'.$player->id.'-'.$amount);
         }
         $payment = Payment::create([
             'booking_id' => $booking->id,
@@ -416,10 +457,11 @@ class BookingService
             'payer_id' => $payer->id,
             'method' => $method,
             // Espèces et terminal du club n'ont pas de référence chez un prestataire de paiement.
-            'provider_reference' => $method === 'card' ? 'test_'.Str::uuid() : null,
+            'provider_reference' => $reference ?? ($method === 'card' ? 'test_'.Str::uuid() : null),
             'amount_cents' => $amount,
             'status' => 'succeeded',
             'paid_at' => now(),
+            'is_guarantee_charge' => $guarantee,
         ]);
         $this->credits->spend($credits, $payment, $byCredit);
         // La TVA se calcule ligne par ligne : 6 % sur le terrain, 21 % sur le matériel.
@@ -495,9 +537,14 @@ class BookingService
             if ($part === 0) {
                 continue;
             }
+            // F9 : un paiement encaissé par Stripe est remboursé chez Stripe. Si Stripe refuse, la transaction
+            // est annulée et rien n'est noté ; la clé d'idempotence évite un second remboursement si on rejoue.
+            $stripeRefund = $method === 'original_payment' && $this->stripe->enabled() && str_starts_with((string) $payment->provider_reference, 'pi_')
+                ? $this->stripe->refund($payment->provider_reference, $part, 'refund-'.$payment->id.'-'.$creditNote->id)
+                : null;
             $refund = Refund::create([
                 'payment_id' => $payment->id, 'amount_cents' => $part, 'reason' => $code, 'method' => $method,
-                'status' => 'succeeded', 'credit_note_id' => $creditNote->id,
+                'status' => 'succeeded', 'credit_note_id' => $creditNote->id, 'stripe_refund_id' => $stripeRefund,
             ]);
             if ($method === 'store_credit') {
                 $this->credits->grant(User::findOrFail($payment->payer_id), $part, $asCredit ? 'dispute' : 'refund', $refund);
@@ -639,7 +686,7 @@ class BookingService
                 // Annulée trop tard : l'organisateur supporte seul le prix du terrain.
                 // La garantie encaisse ici les parts impayées, sans attendre la tâche planifiée.
                 foreach ($booking->players()->where('is_organizer', false)->where('status', 'invited')->get() as $player) {
-                    $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card');
+                    $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card', guarantee: true);
                     $player->update(['status' => 'covered']);
                 }
                 // Un partenaire qui avait payé sa part n'a rien décidé : elle lui est rendue et passe sur la garantie.
@@ -649,7 +696,7 @@ class BookingService
                     if ($back === 0) {
                         continue;
                     }
-                    $this->charge($booking, $player, $booking->organizer, [[...$this->courtLine($booking, $player), 'unit' => $back]], 'card');
+                    $this->charge($booking, $player, $booking->organizer, [[...$this->courtLine($booking, $player), 'unit' => $back]], 'card', guarantee: true);
                     $player->update(['status' => 'covered']);
                     $this->notifyCancelled($booking, $player, $back, 'L’organisateur a annulé la partie.');
                 }

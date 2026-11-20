@@ -61,6 +61,8 @@ Route::middleware(['auth', 'verified', 'consented'])->group(function () {
     Route::get('bookings/{booking}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
     // Limité : le paiement peut envoyer jusqu'à trois invitations par e-mail.
     Route::post('bookings/{booking}/pay', [BookingController::class, 'pay'])->middleware('throttle:10,1')->name('bookings.pay');
+    // F9 : retour de la page de paiement de Stripe ; la session est relue chez Stripe.
+    Route::get('bookings/{booking}/paid', [BookingController::class, 'paid'])->middleware('throttle:10,1')->name('bookings.paid');
     Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
     // Limité : un déplacement peut encaisser un supplément.
     Route::post('bookings/{booking}/move', [BookingController::class, 'move'])->middleware('throttle:10,1')->name('bookings.move');
