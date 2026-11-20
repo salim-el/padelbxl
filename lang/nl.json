@@ -186,5 +186,12 @@
     "Un créneau s’est libéré au club": "Er is een tijdslot vrijgekomen in de club",
     "La partie que vous attendiez sur le :court le :date à :time est annulée. Le créneau est libre.": "De wedstrijd waarop u wachtte op :court op :date om :time is geannuleerd. Het tijdslot is vrij.",
     "Réserver ce créneau": "Dit tijdslot reserveren",
-    "Le créneau revient au premier joueur qui le réserve.": "Het tijdslot gaat naar de eerste speler die het reserveert."
+    "Le créneau revient au premier joueur qui le réserve.": "Het tijdslot gaat naar de eerste speler die het reserveert.",
+    "La carte de garantie a été refusée.": "De garantiekaart is geweigerd.",
+    "Le remboursement n’a pas abouti. Réessayez dans un instant.": "De terugbetaling is niet gelukt. Probeer het zo meteen opnieuw.",
+    "Le paiement en ligne est indisponible pour le moment. Rien n’a été débité.": "Online betalen is momenteel niet mogelijk. Er is niets afgeschreven.",
+    "Le paiement n’a pas abouti. Rien n’a été débité.": "De betaling is niet gelukt. Er is niets afgeschreven.",
+    "Le paiement est arrivé après les dix minutes : le créneau a été libéré et le paiement vous est remboursé en entier.": "De betaling kwam na de tien minuten binnen: het tijdslot is vrijgegeven en u krijgt het volledige bedrag terug.",
+    ":reason Le paiement vous est remboursé en entier.": ":reason U krijgt de betaling volledig terug.",
+    "Le montant payé ne correspond plus à la commande.": "Het betaalde bedrag komt niet meer overeen met de bestelling."
 }

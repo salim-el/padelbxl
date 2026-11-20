@@ -170,5 +170,12 @@
     "Un créneau s’est libéré au club": "A slot has opened up at the club",
     "La partie que vous attendiez sur le :court le :date à :time est annulée. Le créneau est libre.": "The game you were waiting for on :court on :date at :time is cancelled. The slot is free.",
     "Réserver ce créneau": "Book this slot",
-    "Le créneau revient au premier joueur qui le réserve.": "The slot goes to the first player who books it."
+    "Le créneau revient au premier joueur qui le réserve.": "The slot goes to the first player who books it.",
+    "La carte de garantie a été refusée.": "The guarantee card was declined.",
+    "Le remboursement n’a pas abouti. Réessayez dans un instant.": "The refund did not go through. Try again in a moment.",
+    "Le paiement en ligne est indisponible pour le moment. Rien n’a été débité.": "Online payment is unavailable right now. Nothing was charged.",
+    "Le paiement n’a pas abouti. Rien n’a été débité.": "The payment did not go through. Nothing was charged.",
+    "Le paiement est arrivé après les dix minutes : le créneau a été libéré et le paiement vous est remboursé en entier.": "The payment arrived after the ten minutes: the slot was released and the payment is refunded to you in full.",
+    ":reason Le paiement vous est remboursé en entier.": ":reason The payment is refunded to you in full.",
+    "Le montant payé ne correspond plus à la commande.": "The amount paid no longer matches the order."
 }
