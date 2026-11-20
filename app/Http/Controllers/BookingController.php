@@ -111,7 +111,8 @@ class BookingController extends Controller
 
                 return Inertia::location($session->url);
             }
-            $this->bookings->confirmPayment($booking, $request->user(), $order['items'], 'card', $guests, $open);
+            // Avec Stripe, l'avoir doit encore tout couvrir à la confirmation : received 0 refuse un avoir dépensé entre-temps.
+            $this->bookings->confirmPayment($booking, $request->user(), $order['items'], 'card', $guests, $open, received: $stripe->enabled() ? 0 : null);
         } catch (BookingException $e) {
             return back()->withErrors(['booking' => $e->getMessage()]);
         }
