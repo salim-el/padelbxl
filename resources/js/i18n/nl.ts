@@ -651,6 +651,21 @@ const nl: Record<string, string> = {
         'Huidige reservering: :court, :when. Het prijsverschil wordt betaald of terugbetaald.',
     'Garder ce créneau': 'Dit tijdslot houden',
     'Déplacer vers un autre créneau': 'Naar een ander tijdslot verplaatsen',
+    'Contestation bancaire': 'Bankbetwisting',
+    'Absences répétées': 'Herhaalde afwezigheden',
+    'Même carte sur plusieurs comptes': 'Dezelfde kaart op meerdere accounts',
+    'Annulations répétées': 'Herhaalde annuleringen',
+    'Identité bloquée': 'Geblokkeerde identiteit',
+    'Paiement tardif': 'Laattijdige betaling',
+    'Signalements à examiner': 'Te onderzoeken meldingen',
+    'Le système signale, il ne sanctionne jamais seul. Vérifiez, puis classez le signalement ; une suspension se décide dans la liste des comptes.':
+        'Het systeem meldt, het straft nooit zelf. Controleer en sluit de melding af; een schorsing beslist u in de lijst van accounts.',
+    'Classer sans suite': 'Zonder gevolg afsluiten',
+    'Mesure prise': 'Maatregel genomen',
+    'Paiement sécurisé par Stripe, en mode test : aucune carte réelle n’est débitée.':
+        'Beveiligde betaling via Stripe, in testmodus: er wordt geen echte kaart gedebiteerd.',
+    'Le paiement en ligne passe par Stripe, en mode test : aucune carte réelle n’est débitée.':
+        'Online betalen verloopt via Stripe, in testmodus: er wordt geen echte kaart gedebiteerd.',
 };
 
 export default nl;

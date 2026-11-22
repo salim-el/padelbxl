@@ -178,5 +178,6 @@
     "Le paiement est arrivé après les dix minutes : le créneau a été libéré et le paiement vous est remboursé en entier.": "The payment arrived after the ten minutes: the slot was released and the payment is refunded to you in full.",
     ":reason Le paiement vous est remboursé en entier.": ":reason The payment is refunded to you in full.",
     "Le montant payé ne correspond plus à la commande.": "The amount paid no longer matches the order.",
-    "Ce paiement n’est pas encore possible par carte en ligne. Rien n’a été débité.": "This payment is not yet possible by card online. Nothing was charged."
+    "Ce paiement n’est pas encore possible par carte en ligne. Rien n’a été débité.": "This payment is not yet possible by card online. Nothing was charged.",
+    "Signalement classé.": "Flag closed."
 }
