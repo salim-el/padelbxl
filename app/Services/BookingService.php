@@ -67,28 +67,42 @@ class BookingService
         return max(0, $total - StoreCreditService::balance($user));
     }
 
-    /** F9 : ce que la carte paiera pour la part de ce joueur invité, moins son avoir. */
+    // F9 : montants que la carte paiera sur la page de Stripe. 0 quand l'avoir couvre tout, ou quand la demande sera
+    // refusée de toute façon : elle passe alors par le chemin direct, qui refuse sans rien encaisser.
+
+    /** Part de ce joueur invité, moins son avoir. */
     public function shareAmount(Booking $booking, User $user): int
     {
         $player = self::invitedPlayer($booking, $user);
+        if ($player === null || $player->status !== 'invited' || $booking->status !== 'confirmed' || ! $booking->starts_at->isFuture()) {
+            return 0;
+        }
 
-        return $player === null ? 0 : max(0, $player->share_cents - StoreCreditService::balance($user));
+        return max(0, $player->share_cents - StoreCreditService::balance($user));
     }
 
-    /** F9 : ce que la carte paiera pour une place ouverte, moins l'avoir ; 0 s'il ne reste plus de place. */
+    /** Part d'une place ouverte encore libre, moins l'avoir. */
     public function openSpotAmount(Booking $booking, User $user): int
     {
+        if (! self::openMatches()->whereKey($booking->id)->exists() || $booking->organizer_id === $user->id || self::invitedPlayer($booking, $user) !== null) {
+            return 0;
+        }
         $share = $booking->players()->where('is_organizer', false)->whereNull('user_id')->whereNull('guest_email')->where('status', 'invited')->value('share_cents');
 
         return $share === null ? 0 : max(0, (int) $share - StoreCreditService::balance($user));
     }
 
-    /** F14 et F9 : supplément d'un déplacement que la carte paiera, moins l'avoir ; 0 si le nouveau créneau ne coûte pas plus. */
+    /** F14 : supplément d'un déplacement permis, moins l'avoir ; 0 si le nouveau créneau ne coûte pas plus. */
     public function moveAmount(Booking $booking, User $user, CarbonImmutable $startUtc): int
     {
         $rule = $this->slots->priceFor($startUtc);
+        $movable = $booking->organizer_id === $user->id && $booking->walk_in_name === null && $booking->status === 'confirmed'
+            && now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS)) && $booking->players()->count() < 2;
+        if ($rule === null || ! $movable) {
+            return 0;
+        }
 
-        return $rule === null ? 0 : max(0, $this->slots->priceCents($rule, $startUtc) - $booking->price_cents - StoreCreditService::balance($user));
+        return max(0, $this->slots->priceCents($rule, $startUtc) - $booking->price_cents - StoreCreditService::balance($user));
     }
 
     /** Sérialise ce qui touche au planning d'un terrain : réservations et fermetures. À appeler dans une transaction. */
