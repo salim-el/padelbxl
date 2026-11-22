@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\ClubSetting;
 use App\Models\Court;
 use App\Models\CourtClosure;
+use App\Models\FraudFlag;
 use App\Models\PricingRule;
 use App\Models\User;
 use App\Services\AccountStatusService;
@@ -16,6 +17,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Activitylog\Models\Activity;
@@ -36,7 +38,7 @@ class AdminController extends Controller
 
         $bookingsOf = fn (CarbonImmutable $d) => Booking::with('court', 'organizer')
             ->where('starts_at', '>=', $d->utc())->where('starts_at', '<', $d->addDay()->utc())
-            ->whereIn('status', ['pending_payment', 'confirmed', 'used', 'missed', 'cancelled_refunded', 'cancelled_unrefunded'])
+            ->whereIn('status', ['pending_payment', 'confirmed', 'used', 'missed', 'cancelled_refunded', 'cancelled_unrefunded', 'frozen'])
             ->orderBy('starts_at')->orderBy('court_id')->get();
         $today = $bookingsOf($day);
         $list = $listed->equalTo($day) ? $today : $bookingsOf($listed);
@@ -61,6 +63,12 @@ class AdminController extends Controller
                 'cancellable' => $b->walk_in_name === null && $b->status === 'confirmed' && $b->starts_at->isFuture(),
             ])->all(),
             'search' => $search,
+            // F30 et F18 : signalements à examiner. Le système signale, une personne décide (RGPD, art. 22).
+            'flags' => FraudFlag::with('user')->where('status', 'open')->latest('id')->limit(20)->get()->map(fn (FraudFlag $f) => [
+                'id' => $f->id, 'type' => $f->type, 'details' => $f->details,
+                'user' => ['id' => $f->user->id, 'name' => $f->user->name, 'email' => $f->user->email, 'status' => $f->user->status],
+                'created_at' => Clock::local($f->created_at)->format('d/m/Y H:i'),
+            ])->all(),
             'settings' => ['opens_at' => substr(app(ClubSetting::class)->opens_at, 0, 5), 'closes_at' => substr(app(ClubSetting::class)->closes_at, 0, 5),
                 'slot_minutes' => app(ClubSetting::class)->slot_minutes],
             'courts' => Court::orderBy('id')->get(['id', 'name'])->all(),
@@ -323,6 +331,19 @@ class AdminController extends Controller
             ->withProperties(['court_id' => $closure->court_id, 'from' => $closure->starts_at, 'to' => $closure->ends_at])->log('Fermeture de terrain supprimée');
 
         return back()->with('success', __('Fermeture supprimée. Les créneaux sont de nouveau réservables.'));
+    }
+
+    /** F30 et F18 : le gérant classe un signalement ; une mesure (suspension, révocation) se prend à part, toujours motivée. */
+    public function reviewFlag(Request $request, FraudFlag $flag): RedirectResponse
+    {
+        $this->ensureStaff($request);
+        $data = $request->validate(['status' => ['required', Rule::in(['dismissed', 'actioned'])]]);
+        abort_unless($flag->status === 'open', 422);
+        $flag->update(['status' => $data['status'], 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
+        activity('staff')->performedOn($flag)->causedBy($request->user())->event('flag-reviewed')
+            ->withProperties(['status' => $data['status']])->log('Signalement examiné');
+
+        return back()->with('success', __('Signalement classé.'));
     }
 
     private function ensureStaff(Request $request): void

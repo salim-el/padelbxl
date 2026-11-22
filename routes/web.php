@@ -96,6 +96,7 @@ Route::middleware(['auth', 'verified', 'consented'])->group(function () {
     Route::post('admin/users/{user}/suspend', [AdminController::class, 'suspend'])->name('admin.users.suspend');
     Route::post('admin/users/{user}/reactivate', [AdminController::class, 'reactivate'])->name('admin.users.reactivate');
     Route::post('admin/users/{user}/revoke', [AdminController::class, 'revoke'])->name('admin.users.revoke');
+    Route::post('admin/flags/{flag}/review', [AdminController::class, 'reviewFlag'])->name('admin.flags.review');
     Route::get('admin/appeals', [AdminAppealController::class, 'index'])->name('admin.appeals.index');
     Route::post('admin/appeals/{appeal}/decision', [AdminAppealController::class, 'decide'])->name('admin.appeals.decide');
     Route::patch('admin/pricing-rules/{rule}', [AdminController::class, 'updatePrice'])->name('admin.pricing-rules.update');
