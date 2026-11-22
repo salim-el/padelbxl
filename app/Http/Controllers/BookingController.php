@@ -17,6 +17,7 @@ use App\Services\Clock;
 use App\Services\InvoicePdf;
 use App\Services\MatchCallService;
 use App\Services\StoreCreditService;
+use App\Services\StripeCheckout;
 use App\Services\StripePayments;
 use App\Services\UblInvoice;
 use Carbon\CarbonImmutable;
@@ -24,7 +25,6 @@ use chillerlan\QRCode\QRCode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -78,7 +78,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function pay(Request $request, Booking $booking, MatchCallService $calls, StripePayments $stripe): SymfonyResponse
+    public function pay(Request $request, Booking $booking, MatchCallService $calls, StripePayments $stripe, StripeCheckout $checkout): SymfonyResponse
     {
         $this->ensureOwner($request, $booking);
         $data = $request->validate([
@@ -98,18 +98,16 @@ class BookingController extends Controller
         }
         $order = ['items' => $data['items'] ?? [], 'guests' => $guests, 'open' => $open, 'level_min' => $data['level_min'] ?? null, 'level_max' => $data['level_max'] ?? null];
         try {
-            // F9 : avec Stripe, le joueur paie sur la page de Stripe ; la réservation se confirme à son retour (paid()).
-            // Ce que l'avoir couvre en entier ne passe pas par Stripe.
+            // F9 : avec Stripe, le joueur paie sur la page de Stripe ; la réservation se confirme à son retour (paid())
+            // ou à la notification signée, selon ce qui arrive en premier. Ce que l'avoir couvre en entier ne passe pas par Stripe.
             $card = $stripe->enabled() ? $this->bookings->cardAmount($booking, $request->user(), $order['items'], count($guests) + $open) : 0;
             if ($card > 0) {
                 if ($booking->status !== 'pending_payment' || $booking->hold_expires_at?->isPast()) {
                     throw new BookingException(__('Les dix minutes sont écoulées. Le créneau a été libéré, rien n’a été débité.'));
                 }
-                $label = $booking->court->name.' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i');
-                $session = $stripe->checkout($booking, $request->user(), $card, $label, $guests !== [] || $open > 0);
-                Cache::put('checkout:'.$session->id, $order, now()->addDay());
 
-                return Inertia::location($session->url);
+                return Inertia::location($checkout->start($booking, $request->user(), 'booking', $card, $this->label($booking),
+                    $guests !== [] || $open > 0, route('bookings.checkout', $booking), $order)->url);
             }
             // Avec Stripe, l'avoir doit encore tout couvrir à la confirmation : received 0 refuse un avoir dépensé entre-temps.
             $this->bookings->confirmPayment($booking, $request->user(), $order['items'], 'card', $guests, $open, received: $stripe->enabled() ? 0 : null);
@@ -121,57 +119,45 @@ class BookingController extends Controller
     }
 
     /**
-     * F9 : retour de la page de Stripe. La session est relue chez Stripe, jamais crue sur parole.
-     * Un paiement arrivé après les dix minutes, ou refusé à la confirmation, est remboursé tout de suite.
+     * F9 : retour de la page de Stripe. La session est relue chez Stripe, jamais crue sur parole ; elle doit viser
+     * cette réservation et ce compte. Un paiement qui ne peut plus être honoré est remboursé tout de suite.
      */
-    public function paid(Request $request, Booking $booking, StripePayments $stripe, MatchCallService $calls): RedirectResponse
+    public function paid(Request $request, Booking $booking, StripePayments $stripe, StripeCheckout $checkout): RedirectResponse
     {
-        $this->ensureOwner($request, $booking);
         $id = $request->query('session_id');
         abort_unless($stripe->enabled() && is_string($id) && str_starts_with($id, 'cs_'), 404);
         try {
             $session = $stripe->session($id);
         } catch (BookingException $e) {
-            return to_route('bookings.show', $booking)->withErrors(['booking' => $e->getMessage()]);
+            return to_route('bookings.index')->withErrors(['booking' => $e->getMessage()]);
         }
-        abort_unless(($session->metadata['booking'] ?? null) === $booking->public_id, 404);
+        abort_unless(($session->metadata['booking'] ?? null) === $booking->public_id && ($session->metadata['user'] ?? null) === (string) $request->user()->id, 404);
+        $purpose = (string) ($session->metadata['purpose'] ?? 'booking');
+        $done = in_array($purpose, ['share', 'join'], true) ? route('bookings.share', $booking) : route('bookings.show', $booking);
+        $failed = match ($purpose) {
+            'booking' => route('bookings.checkout', $booking),
+            'join' => route('open-matches.index'),
+            default => $done,
+        };
         if ($session->payment_status !== 'paid') {
-            return to_route('bookings.checkout', $booking)->withErrors(['booking' => __('Le paiement n’a pas abouti. Rien n’a été débité.')]);
+            return redirect($failed)->withErrors(['booking' => __('Le paiement n’a pas abouti. Rien n’a été débité.')]);
         }
-        $intent = $session->payment_intent;
-        // Retour rejoué (rafraîchissement, double clic) : la réservation est déjà confirmée.
-        if (Payment::where('provider_reference', $intent->id)->exists()) {
-            return to_route('bookings.show', $booking);
-        }
-        // Commande retenue au départ vers Stripe. Introuvable, rien n'est deviné : le paiement est rendu.
-        $order = Cache::get('checkout:'.$session->id);
         try {
-            if (! is_array($order) || $session->currency !== config('services.stripe.currency')) {
-                throw new BookingException(__('Le montant payé ne correspond plus à la commande.'));
-            }
-            $shared = $order['guests'] !== [] || $order['open'] > 0;
-            $this->bookings->confirmPayment($booking, $request->user(), $order['items'], 'card', $order['guests'], $order['open'],
-                $intent->id, $shared ? $intent->payment_method : null, received: $intent->amount_received);
-            Cache::forget('checkout:'.$session->id);
+            $order = $checkout->complete($session);
         } catch (BookingException $e) {
-            // Deux retours simultanés : le premier a confirmé, le second n'a rien à rendre.
-            if (Payment::where('provider_reference', $intent->id)->exists()) {
-                return to_route('bookings.show', $booking);
-            }
-            try {
-                $stripe->refund($intent->id, $intent->amount_received, 'late-'.$intent->id);
-            } catch (BookingException $refusal) {
-                // Le remboursement sera rejoué par la notification de Stripe ; le joueur est prévenu ci-dessous.
-                report($refusal);
-            }
-            $late = $booking->fresh()->status !== 'pending_payment' || $booking->hold_expires_at?->isPast();
-
-            return to_route('bookings.show', $booking)->withErrors(['booking' => $late
-                ? __('Le paiement est arrivé après les dix minutes : le créneau a été libéré et le paiement vous est remboursé en entier.')
-                : __(':reason Le paiement vous est remboursé en entier.', ['reason' => $e->getMessage()])]);
+            return redirect($purpose === 'booking' ? $done : $failed)->withErrors(['booking' => $e->getMessage()]);
+        }
+        // null : déjà terminé par la notification de Stripe ou par un premier retour.
+        if ($order === null) {
+            return redirect($done);
         }
 
-        return $this->confirmed($booking, $order, $calls);
+        return redirect($done)->with('success', match ($purpose) {
+            'share' => __('Part réglée. Votre QR code est prêt.'),
+            'join' => __('Place réservée et part réglée. Votre QR code est prêt.'),
+            'move' => __('Réservation déplacée. Le supplément de :amount est payé.', ['amount' => $this->euros($session->payment_intent->amount_received)]),
+            default => $order['guests'] === [] ? __('Réservation confirmée. Votre facture est disponible.') : __('Réservation confirmée. Vos partenaires ont reçu leur invitation par e-mail.'),
+        });
     }
 
     /**
@@ -221,12 +207,17 @@ class BookingController extends Controller
         ]);
     }
 
-    public function payShare(Request $request, Booking $booking): RedirectResponse
+    public function payShare(Request $request, Booking $booking, StripePayments $stripe, StripeCheckout $checkout): SymfonyResponse
     {
         abort_if(BookingService::invitedPlayer($booking, $request->user()) === null, 404);
         $request->validate(['accept_terms' => ['accepted']]);
         try {
-            $this->bookings->payShare($booking, $request->user());
+            // F9 : avec Stripe, l'invité paie sa part sur la page de Stripe, sauf si son avoir la couvre.
+            $card = $stripe->enabled() ? $this->bookings->shareAmount($booking, $request->user()) : 0;
+            if ($card > 0) {
+                return Inertia::location($checkout->start($booking, $request->user(), 'share', $card, $this->label($booking), false, route('bookings.share', $booking))->url);
+            }
+            $this->bookings->payShare($booking, $request->user(), received: $stripe->enabled() ? 0 : null);
         } catch (BookingException $e) {
             return back()->withErrors(['booking' => $e->getMessage()]);
         }
@@ -359,18 +350,27 @@ class BookingController extends Controller
     }
 
     /** F14 : le nouveau créneau est choisi dans le planning, ouvert avec ?move=. */
-    public function move(Request $request, Booking $booking): RedirectResponse
+    public function move(Request $request, Booking $booking, StripePayments $stripe, StripeCheckout $checkout): SymfonyResponse
     {
         $this->ensureOwner($request, $booking);
         $data = $request->validate(['court_id' => ['required', 'integer', 'exists:courts,id'], 'starts_at' => ['required', 'date']]);
         $before = $booking->price_cents;
+        $court = Court::findOrFail($data['court_id']);
+        $start = CarbonImmutable::parse($data['starts_at'])->utc();
         try {
-            $booking = $this->bookings->move($booking, $request->user(), Court::findOrFail($data['court_id']), CarbonImmutable::parse($data['starts_at'])->utc());
+            // F9 : un supplément que l'avoir ne couvre pas se paie sur la page de Stripe ; le déplacement se fait au retour.
+            $card = $stripe->enabled() ? $this->bookings->moveAmount($booking, $request->user(), $start) : 0;
+            if ($card > 0) {
+                return Inertia::location($checkout->start($booking, $request->user(), 'move', $card,
+                    'Supplément de déplacement : '.$court->name.' – '.Clock::local($start)->format('d/m/Y H:i'), false,
+                    route('bookings.show', $booking), ['court' => $court->id, 'starts_at' => $start->toIso8601String()])->url);
+            }
+            $booking = $this->bookings->move($booking, $request->user(), $court, $start, received: $stripe->enabled() ? 0 : null);
         } catch (BookingException $e) {
             return back()->withErrors(['booking' => $e->getMessage()]);
         }
         $diff = $booking->price_cents - $before;
-        $amount = number_format(abs($diff) / 100, 2, ',', ' ').' €';
+        $amount = $this->euros(abs($diff));
         $message = match (true) {
             $diff > 0 => __('Réservation déplacée. Le supplément de :amount est payé.', ['amount' => $amount]),
             $diff < 0 => __('Réservation déplacée. :amount vous sont remboursés, avec une note de crédit.', ['amount' => $amount]),
@@ -378,6 +378,17 @@ class BookingController extends Controller
         };
 
         return to_route('bookings.show', $booking)->with('success', $message);
+    }
+
+    /** Libellé de la ligne payée chez Stripe : terrain et heure de Bruxelles. */
+    private function label(Booking $booking): string
+    {
+        return $booking->court->name.' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i');
+    }
+
+    private function euros(int $cents): string
+    {
+        return number_format($cents / 100, 2, ',', ' ').' €';
     }
 
     // La réservation d'un autre joueur répond 404 : un 403 confirmerait qu'elle existe.

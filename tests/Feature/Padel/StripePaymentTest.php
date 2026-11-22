@@ -47,7 +47,8 @@ class StripePaymentTest extends TestCase
     {
         return Session::constructFrom([
             'id' => 'cs_test_1', 'object' => 'checkout.session', 'url' => 'https://checkout.stripe.com/c/pay/cs_test_1',
-            'payment_status' => $status, 'currency' => 'eur', 'metadata' => ['booking' => $this->booking->public_id],
+            'payment_status' => $status, 'currency' => 'eur',
+            'metadata' => ['booking' => $this->booking->public_id, 'purpose' => 'booking', 'user' => (string) $this->lucas->id],
             'payment_intent' => ['id' => 'pi_test_1', 'object' => 'payment_intent', 'payment_method' => 'pm_card_visa', 'amount_received' => $amount],
         ]);
     }

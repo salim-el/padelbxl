@@ -14,6 +14,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\OpenMatchController;
 use App\Http\Controllers\PassController;
 use App\Http\Controllers\PlanningController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SuspensionAppealController;
 use App\Models\PricingRule;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,8 @@ Route::get('confidentialite', fn () => Inertia::render('legal/privacy', ['club' 
 Route::get('contact', [ContactController::class, 'create'])->name('contact');
 Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:3,1')->name('contact.store');
 Route::post('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
+// F9 et F30 : notifications signées de Stripe. Seule route exclue du CSRF (bootstrap/app.php) : la signature la remplace.
+Route::post('stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 // F18 et F25 : QR code d'un joueur sans compte, par son lien signé valable jusqu'à la fin du créneau.
 Route::get('pass/{player}', [PassController::class, 'show'])->middleware(['signed', 'throttle:30,1'])->name('pass.show');
 // F29 : le joueur suspendu ne se connecte plus ; il conteste par le lien signé reçu avec le motif.
@@ -93,6 +96,7 @@ Route::middleware(['auth', 'verified', 'consented'])->group(function () {
     Route::post('admin/users/{user}/suspend', [AdminController::class, 'suspend'])->name('admin.users.suspend');
     Route::post('admin/users/{user}/reactivate', [AdminController::class, 'reactivate'])->name('admin.users.reactivate');
     Route::post('admin/users/{user}/revoke', [AdminController::class, 'revoke'])->name('admin.users.revoke');
+    Route::post('admin/flags/{flag}/review', [AdminController::class, 'reviewFlag'])->name('admin.flags.review');
     Route::get('admin/appeals', [AdminAppealController::class, 'index'])->name('admin.appeals.index');
     Route::post('admin/appeals/{appeal}/decision', [AdminAppealController::class, 'decide'])->name('admin.appeals.decide');
     Route::patch('admin/pricing-rules/{rule}', [AdminController::class, 'updatePrice'])->name('admin.pricing-rules.update');

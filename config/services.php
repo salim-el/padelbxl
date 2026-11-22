@@ -32,6 +32,8 @@ return [
     'stripe' => [
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
+        // Secret de signature des notifications (whsec_…), propre à chaque point d'arrivée déclaré chez Stripe.
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
         'currency' => 'eur',
     ],
 

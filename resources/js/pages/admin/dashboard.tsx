@@ -11,6 +11,13 @@ import { useState } from 'react';
 type Stats = { bookings_today: number; occupancy: number; revenue_today_cents: number; revenue_month_cents: number };
 type Row = { id: string; court: string; time: string; player: string; status: string; cancellable: boolean };
 type Account = { id: number; name: string; email: string; verified: boolean; role: string; status: string; created_at: string | null };
+type Flag = {
+    id: number;
+    type: string;
+    details: string | null;
+    user: { id: number; name: string; email: string; status: string };
+    created_at: string;
+};
 type Page<T> = { data: T[]; current_page: number; last_page: number; total: number; prev_page_url: string | null; next_page_url: string | null };
 
 const ROLES: Record<string, string> = { player: 'Joueur', manager: 'Gérant', admin: 'Administrateur' };
@@ -19,6 +26,15 @@ const ACCOUNT: Record<string, [string, string]> = {
     suspended: ['Suspendu', 'bg-[#FCE6E8] text-[#9E2833]'],
     revoked: ['Révoqué', 'bg-[#0E1B2C] text-[#F7F6F1]'],
     pending: ['En attente', 'bg-[#E6ECF2] text-[#17304A]'],
+};
+// F30 et F18 : motifs des signalements, traduits à l'affichage.
+const FLAG_LABELS: Record<string, string> = {
+    chargeback: 'Contestation bancaire',
+    no_show: 'Absences répétées',
+    shared_card: 'Même carte sur plusieurs comptes',
+    repeated_cancellations: 'Annulations répétées',
+    blocked_identity: 'Identité bloquée',
+    late_payment: 'Paiement tardif',
 };
 const pill = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold';
 
@@ -238,6 +254,7 @@ export default function Dashboard({
     rules,
     settings,
     closures,
+    flags,
 }: {
     stats: Stats;
     day: string;
@@ -248,6 +265,7 @@ export default function Dashboard({
     rules: Rule[];
     settings: { opens_at: string; closes_at: string; slot_minutes: number };
     closures: Closure[];
+    flags: Flag[];
 }) {
     const t = useT();
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
@@ -307,6 +325,52 @@ export default function Dashboard({
                     <Stat icon={Wallet} label={t('Encaissé aujourd’hui (TTC)')} value={euros(stats.revenue_today_cents)} />
                     <Stat icon={TrendingUp} label={t('Encaissé ce mois (TTC)')} value={euros(stats.revenue_month_cents)} />
                 </section>
+
+                {flags.length > 0 && (
+                    <section aria-labelledby="signalements" className="flex flex-col gap-2 rounded-2xl border border-[#CC3342]/30 p-4">
+                        <h2 id="signalements" className="text-lg font-semibold">
+                            {t('Signalements à examiner')}
+                        </h2>
+                        <p className="text-sm text-[#5F6B78]">
+                            {t(
+                                'Le système signale, il ne sanctionne jamais seul. Vérifiez, puis classez le signalement ; une suspension se décide dans la liste des comptes.',
+                            )}
+                        </p>
+                        <ul className="flex flex-col gap-2">
+                            {flags.map((f) => (
+                                <li key={f.id} className="bg-card flex flex-wrap items-start justify-between gap-3 rounded-xl border p-3 text-sm">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-semibold">
+                                            {t(FLAG_LABELS[f.type] ?? f.type)} · {f.user.name} ({f.user.email})
+                                        </p>
+                                        {f.details && <p className="text-[#5F6B78]">{f.details}</p>}
+                                        <p className="text-xs text-[#6B7480]">{f.created_at}</p>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.post(`/admin/flags/${f.id}/review`, { status: 'dismissed' }, { preserveScroll: true })
+                                            }
+                                            className="font-semibold underline"
+                                        >
+                                            {t('Classer sans suite')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.post(`/admin/flags/${f.id}/review`, { status: 'actioned' }, { preserveScroll: true })
+                                            }
+                                            className="font-semibold text-[#9E2833] underline"
+                                        >
+                                            {t('Mesure prise')}
+                                        </button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
 
                 <section className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">

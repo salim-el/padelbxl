@@ -24,6 +24,8 @@ type Props = {
 
 export default function Share({ booking, organizer, share_cents, share_status, payable, declinable, qr, qr_window, invoices }: Props) {
     const t = useT();
+    // F9 : avec les clés Stripe, le paiement passe par la page de Stripe ; sinon il reste simulé.
+    const { stripe } = usePage<{ stripe: boolean }>().props;
     const { data, setData, post, processing, errors } = useForm<{ accept_terms: boolean }>({ accept_terms: false });
     const pageErrors = usePage<{ errors: Record<string, string> }>().props.errors;
 
@@ -74,7 +76,9 @@ export default function Share({ booking, organizer, share_cents, share_status, p
                         className="flex flex-col gap-3"
                     >
                         <p className="rounded-lg bg-[#E6ECF2] p-3 text-sm text-[#17304A]">
-                            {t('Version alpha : le paiement est simulé. Aucune carte n’est débitée.')}
+                            {stripe
+                                ? t('Paiement sécurisé par Stripe, en mode test : aucune carte réelle n’est débitée.')
+                                : t('Version alpha : le paiement est simulé. Aucune carte n’est débitée.')}
                         </p>
                         <label className="flex items-start gap-3 text-sm">
                             <input

@@ -7,10 +7,13 @@ use App\Models\Booking;
 use App\Models\WaitlistEntry;
 use App\Services\BookingService;
 use App\Services\Clock;
+use App\Services\StripeCheckout;
+use App\Services\StripePayments;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /** Parties où l'organisateur cherche des joueurs, et liste d'attente quand elles sont complètes. */
 class OpenMatchController extends Controller
@@ -46,11 +49,18 @@ class OpenMatchController extends Controller
         ]);
     }
 
-    public function join(Request $request, Booking $booking): RedirectResponse
+    public function join(Request $request, Booking $booking, StripePayments $stripe, StripeCheckout $checkout): SymfonyResponse
     {
         $request->validate(['accept_terms' => ['accepted']]);
         try {
-            $this->bookings->joinOpenMatch($booking, $request->user());
+            // F9 : avec Stripe, la part se paie sur la page de Stripe ; la place est prise au retour, si elle est encore libre.
+            $card = $stripe->enabled() ? $this->bookings->openSpotAmount($booking, $request->user()) : 0;
+            if ($card > 0) {
+                $label = $booking->court->name.' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i');
+
+                return Inertia::location($checkout->start($booking, $request->user(), 'join', $card, $label, false, route('open-matches.index'))->url);
+            }
+            $this->bookings->joinOpenMatch($booking, $request->user(), received: $stripe->enabled() ? 0 : null);
         } catch (BookingException $e) {
             return back()->withErrors(['booking' => $e->getMessage()]);
         }

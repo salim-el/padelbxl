@@ -648,6 +648,21 @@ const en: Record<string, string> = {
         'Current booking: :court, :when. The price difference is paid or refunded.',
     'Garder ce créneau': 'Keep this slot',
     'Déplacer vers un autre créneau': 'Move to another slot',
+    'Contestation bancaire': 'Bank dispute',
+    'Absences répétées': 'Repeated no-shows',
+    'Même carte sur plusieurs comptes': 'Same card on several accounts',
+    'Annulations répétées': 'Repeated cancellations',
+    'Identité bloquée': 'Blocked identity',
+    'Paiement tardif': 'Late payment',
+    'Signalements à examiner': 'Flags to review',
+    'Le système signale, il ne sanctionne jamais seul. Vérifiez, puis classez le signalement ; une suspension se décide dans la liste des comptes.':
+        'The system flags, it never sanctions on its own. Check, then close the flag; a suspension is decided in the account list.',
+    'Classer sans suite': 'Dismiss',
+    'Mesure prise': 'Action taken',
+    'Paiement sécurisé par Stripe, en mode test : aucune carte réelle n’est débitée.':
+        'Secure payment by Stripe, in test mode: no real card is charged.',
+    'Le paiement en ligne passe par Stripe, en mode test : aucune carte réelle n’est débitée.':
+        'Online payment goes through Stripe, in test mode: no real card is charged.',
 };
 
 export default en;

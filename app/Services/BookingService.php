@@ -67,6 +67,44 @@ class BookingService
         return max(0, $total - StoreCreditService::balance($user));
     }
 
+    // F9 : montants que la carte paiera sur la page de Stripe. 0 quand l'avoir couvre tout, ou quand la demande sera
+    // refusée de toute façon : elle passe alors par le chemin direct, qui refuse sans rien encaisser.
+
+    /** Part de ce joueur invité, moins son avoir. */
+    public function shareAmount(Booking $booking, User $user): int
+    {
+        $player = self::invitedPlayer($booking, $user);
+        if ($player === null || $player->status !== 'invited' || $booking->status !== 'confirmed' || ! $booking->starts_at->isFuture()) {
+            return 0;
+        }
+
+        return max(0, $player->share_cents - StoreCreditService::balance($user));
+    }
+
+    /** Part d'une place ouverte encore libre, moins l'avoir. */
+    public function openSpotAmount(Booking $booking, User $user): int
+    {
+        if (! self::openMatches()->whereKey($booking->id)->exists() || $booking->organizer_id === $user->id || self::invitedPlayer($booking, $user) !== null) {
+            return 0;
+        }
+        $share = $booking->players()->where('is_organizer', false)->whereNull('user_id')->whereNull('guest_email')->where('status', 'invited')->value('share_cents');
+
+        return $share === null ? 0 : max(0, (int) $share - StoreCreditService::balance($user));
+    }
+
+    /** F14 : supplément d'un déplacement permis, moins l'avoir ; 0 si le nouveau créneau ne coûte pas plus. */
+    public function moveAmount(Booking $booking, User $user, CarbonImmutable $startUtc): int
+    {
+        $rule = $this->slots->priceFor($startUtc);
+        $movable = $booking->organizer_id === $user->id && $booking->walk_in_name === null && $booking->status === 'confirmed'
+            && now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS)) && $booking->players()->count() < 2;
+        if ($rule === null || ! $movable) {
+            return 0;
+        }
+
+        return max(0, $this->slots->priceCents($rule, $startUtc) - $booking->price_cents - StoreCreditService::balance($user));
+    }
+
     /** Sérialise ce qui touche au planning d'un terrain : réservations et fermetures. À appeler dans une transaction. */
     public static function lockCourt(int $courtId): void
     {
@@ -213,9 +251,9 @@ class BookingService
     }
 
     /** Un joueur invité règle sa part : il reçoit sa propre facture et son propre QR code. */
-    public function payShare(Booking $booking, User $user): BookingPlayer
+    public function payShare(Booking $booking, User $user, ?string $reference = null, ?int $received = null): BookingPlayer
     {
-        return DB::transaction(function () use ($booking, $user) {
+        return DB::transaction(function () use ($booking, $user, $reference, $received) {
             // Le verrou sur la réservation sérialise ce paiement avec la garantie de l'organisateur.
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             $player = self::invitedPlayer($booking, $user) ?? throw new BookingException(__('Cette invitation n’existe pas.'));
@@ -233,7 +271,7 @@ class BookingService
             }
             // Une invitation envoyée à une adresse sans compte est rattachée au compte créé ensuite avec cette adresse.
             $player->update(['user_id' => $user->id]);
-            $this->charge($booking, $player, $user, [$this->courtLine($booking, $player)], 'card', useCredit: true);
+            $this->charge($booking, $player, $user, [$this->courtLine($booking, $player)], 'card', useCredit: true, reference: $reference, received: $received);
             $player->update(['status' => 'paid']);
 
             return $player->fresh();
@@ -309,15 +347,15 @@ class BookingService
     }
 
     /** Un membre du club prend une place ouverte et paie sa part tout de suite. */
-    public function joinOpenMatch(Booking $booking, User $user): BookingPlayer
+    public function joinOpenMatch(Booking $booking, User $user, ?string $reference = null, ?int $received = null): BookingPlayer
     {
-        return DB::transaction(function () use ($booking, $user) {
+        return DB::transaction(function () use ($booking, $user, $reference, $received) {
             $booking = $this->lockJoinable($booking, $user);
             $spot = $booking->players()->where('is_organizer', false)->whereNull('user_id')->whereNull('guest_email')
                 ->where('status', 'invited')->lockForUpdate()->first()
                 ?? throw new BookingException(__('Cette partie est complète. Inscrivez-vous sur la liste d’attente.'));
             $spot->update(['user_id' => $user->id]);
-            $this->charge($booking, $spot, $user, [$this->courtLine($booking, $spot)], 'card', useCredit: true);
+            $this->charge($booking, $spot, $user, [$this->courtLine($booking, $spot)], 'card', useCredit: true, reference: $reference, received: $received);
             $spot->update(['status' => 'paid']);
             WaitlistEntry::where('booking_id', $booking->id)->where('user_id', $user->id)->delete();
 
@@ -590,7 +628,7 @@ class BookingService
      * La même réservation change de créneau : l'ancien est libéré, le QR code ne vaut plus que pour le nouveau.
      * La différence de prix est encaissée (l'avoir d'abord) ou remboursée avec une note de crédit.
      */
-    public function move(Booking $booking, User $user, Court $court, CarbonImmutable $startUtc): Booking
+    public function move(Booking $booking, User $user, Court $court, CarbonImmutable $startUtc, ?string $reference = null, ?int $received = null): Booking
     {
         if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::slots(), true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
             throw new BookingException(__('Ce créneau n’existe pas ou n’est plus réservable.'));
@@ -601,7 +639,7 @@ class BookingService
         }
         $end = $startUtc->addMinutes(Clock::slotMinutes());
 
-        return DB::transaction(function () use ($booking, $user, $court, $startUtc, $end, $rule) {
+        return DB::transaction(function () use ($booking, $user, $court, $startUtc, $end, $rule, $reference, $received) {
             // Même ordre de verrous que hold() : le terrain d'arrivée, puis la réservation.
             self::lockCourt($court->id);
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
@@ -637,6 +675,10 @@ class BookingService
             $from = $booking->court->name.' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i');
             $price = $this->slots->priceCents($rule, $startUtc);
             $diff = $price - $booking->price_cents;
+            // F9 : un supplément payé chez Stripe pour un prix qui a baissé depuis (prix flash) n'est pas gardé : il est rendu.
+            if ($reference !== null && $diff <= 0) {
+                throw new BookingException(__('Le montant payé ne correspond plus à la commande.'));
+            }
             try {
                 // Point de sauvegarde, comme dans hold() : la contrainte d'exclusion refuse un créneau pris entre-temps.
                 DB::transaction(fn () => $booking->update([
@@ -653,7 +695,7 @@ class BookingService
             $player->update(['share_cents' => $price]);
             if ($diff > 0) {
                 $line = $this->courtLine($booking, $player);
-                $this->charge($booking, $player, $user, [[...$line, 'label' => 'Supplément de déplacement : '.$line['label'], 'unit' => $diff]], 'card', useCredit: true);
+                $this->charge($booking, $player, $user, [[...$line, 'label' => 'Supplément de déplacement : '.$line['label'], 'unit' => $diff]], 'card', useCredit: true, reference: $reference, received: $received);
             }
             // Moins cher : la différence revient sur les derniers paiements de l'organisateur, avec une note de crédit.
             $left = -$diff;
@@ -808,6 +850,26 @@ class BookingService
         foreach ($booking->items()->whereHas('product', fn ($q) => $q->where('kind', 'sale'))->get() as $item) {
             Product::whereKey($item->product_id)->increment('stock', $item->quantity);
         }
+    }
+
+    /** F30 : contestation bancaire ouverte. Une réservation confirmée est gelée ; la borne refuse alors ses QR codes. À appeler dans une transaction. */
+    public function freeze(Booking $booking, string $reason): void
+    {
+        if ($booking->status === 'confirmed') {
+            $this->transition($booking, 'frozen', $reason);
+        }
+    }
+
+    /**
+     * F30 : contestation close. Gagnée, la réservation redevient confirmée ; perdue, la banque a rendu l'argent au joueur :
+     * la réservation est remboursée et ses QR codes révoqués. À appeler dans une transaction.
+     */
+    public function thaw(Booking $booking, bool $won, string $reason): void
+    {
+        if ($booking->status !== 'frozen') {
+            return;
+        }
+        $won ? $this->transition($booking, 'confirmed', $reason) : $this->close($booking, 'cancelled_refunded', $reason, null);
     }
 
     /** Ferme une réservation annulée : plus aucun QR code ne passe, et le changement d'état est tracé. */

@@ -35,6 +35,8 @@ export default function Checkout({
     credit_cents: number;
 }) {
     const t = useT();
+    // F9 : avec les clés Stripe, le paiement passe par la page de Stripe ; sinon il reste simulé.
+    const { stripe } = usePage<{ stripe: boolean }>().props;
     const { data, setData, post, processing, errors } = useForm<{
         accept_terms: boolean;
         items: Record<number, number>;
@@ -131,7 +133,9 @@ export default function Checkout({
                 </section>
 
                 <p className="rounded-lg bg-[#E6ECF2] p-3 text-sm text-[#17304A]">
-                    {t('Version alpha : le paiement est simulé. Aucune carte n’est débitée.')}
+                    {stripe
+                        ? t('Paiement sécurisé par Stripe, en mode test : aucune carte réelle n’est débitée.')
+                        : t('Version alpha : le paiement est simulé. Aucune carte n’est débitée.')}
                 </p>
 
                 <form
