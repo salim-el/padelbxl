@@ -1,9 +1,11 @@
 import LegalLayout, { clubAddress, type Club } from '@/layouts/legal-layout';
 import { useT } from '@/lib/i18n';
+import { usePage } from '@inertiajs/react';
 
 // Chaque règle reprend ce que fait le code (BookingService) : si l'un change, l'autre suit.
 export default function Terms({ club }: { club: Club }) {
     const t = useT();
+    const { stripe } = usePage<{ stripe: boolean }>().props;
     const name = club.name ?? 'Arena Padel Club';
     const address = clubAddress(club);
 
@@ -47,7 +49,9 @@ export default function Terms({ club }: { club: Club }) {
                             'Le créneau choisi est bloqué 10 minutes pendant le paiement. Sans paiement dans ce délai, il est libéré et rien n’est débité.',
                         ),
                         t('Le paiement se fait par carte en ligne, ou en espèces et par terminal à l’accueil.'),
-                        t('Version alpha : le paiement est simulé. Aucune carte n’est débitée.'),
+                        stripe
+                            ? t('Le paiement en ligne passe par Stripe, en mode test : aucune carte réelle n’est débitée.')
+                            : t('Version alpha : le paiement est simulé. Aucune carte n’est débitée.'),
                         t(
                             'Chaque paiement donne une facture en PDF au nom de celui qui paie. Un remboursement donne une note de crédit en PDF. Une entreprise reçoit aussi sa facture au format électronique UBL.',
                         ),
