@@ -852,6 +852,26 @@ class BookingService
         }
     }
 
+    /** F30 : contestation bancaire ouverte. Une réservation confirmée est gelée ; la borne refuse alors ses QR codes. À appeler dans une transaction. */
+    public function freeze(Booking $booking, string $reason): void
+    {
+        if ($booking->status === 'confirmed') {
+            $this->transition($booking, 'frozen', $reason);
+        }
+    }
+
+    /**
+     * F30 : contestation close. Gagnée, la réservation redevient confirmée ; perdue, la banque a rendu l'argent au joueur :
+     * la réservation est remboursée et ses QR codes révoqués. À appeler dans une transaction.
+     */
+    public function thaw(Booking $booking, bool $won, string $reason): void
+    {
+        if ($booking->status !== 'frozen') {
+            return;
+        }
+        $won ? $this->transition($booking, 'confirmed', $reason) : $this->close($booking, 'cancelled_refunded', $reason, null);
+    }
+
     /** Ferme une réservation annulée : plus aucun QR code ne passe, et le changement d'état est tracé. */
     private function close(Booking $booking, string $status, string $reason, ?int $by): void
     {
