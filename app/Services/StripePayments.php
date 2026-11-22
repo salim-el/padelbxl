@@ -6,8 +6,10 @@ use App\Exceptions\BookingException;
 use App\Models\Booking;
 use App\Models\User;
 use Stripe\Checkout\Session;
+use Stripe\Event;
 use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
+use Stripe\Webhook;
 
 /**
  * F9 : passerelle vers Stripe en mode test. Sans clé secrète, enabled() est faux et le paiement reste simulé
@@ -28,8 +30,10 @@ class StripePayments
     /**
      * Page de paiement hébergée par Stripe (3-D Secure compris). Pour un prix partagé, la carte est gardée
      * en garantie : elle paiera hors session les parts encore impayées 24 h avant le match.
+     *
+     * @param  string  $purpose  booking (organisateur), share (invité), join (partie ouverte) ou move (supplément d'un déplacement)
      */
-    public function checkout(Booking $booking, User $user, int $amountCents, string $label, bool $keepCard): Session
+    public function checkout(Booking $booking, User $user, int $amountCents, string $label, bool $keepCard, string $purpose = 'booking', ?string $cancelUrl = null): Session
     {
         $params = [
             'mode' => 'payment',
@@ -37,9 +41,10 @@ class StripePayments
                 'currency' => config('services.stripe.currency'), 'unit_amount' => $amountCents, 'product_data' => ['name' => $label],
             ]]],
             'success_url' => route('bookings.paid', $booking).'?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('bookings.checkout', $booking),
+            'cancel_url' => $cancelUrl ?? route('bookings.checkout', $booking),
             'client_reference_id' => $booking->public_id,
-            'metadata' => ['booking' => $booking->public_id],
+            // Numéro interne du compte, jamais son e-mail : la notification signée retrouve ainsi le payeur.
+            'metadata' => ['booking' => $booking->public_id, 'purpose' => $purpose, 'user' => (string) $user->id],
             'expires_at' => now()->addMinutes(self::SESSION_MINUTES)->getTimestamp(),
             'locale' => app()->getLocale(),
         ];
@@ -48,6 +53,15 @@ class StripePayments
             : ['customer_email' => $user->email];
 
         return $this->call(fn () => $this->client()->checkout->sessions->create($params));
+    }
+
+    /**
+     * Notification de Stripe, acceptée seulement si sa signature est bonne (secret STRIPE_WEBHOOK_SECRET, cinq minutes
+     * de tolérance). Une signature fausse ou un contenu illisible lève une exception : la route répond 400.
+     */
+    public function event(string $payload, string $signature): Event
+    {
+        return Webhook::constructEvent($payload, $signature, (string) config('services.stripe.webhook_secret'));
     }
 
     /** Session relue chez Stripe : l'adresse de retour ne prouve rien, seul Stripe dit si le paiement est fait. */
