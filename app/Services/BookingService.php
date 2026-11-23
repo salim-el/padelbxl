@@ -736,8 +736,15 @@ class BookingService
             }
             $refundable = now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS));
             if ($refundable) {
-                $this->refundRest($this->openPayments($booking), 'Annulation au moins 24 h avant le match.', 'cancellation_24h');
+                $back = [];
+                foreach ($this->openPayments($booking) as $payment) {
+                    $back[$payment->payer_id] = ($back[$payment->payer_id] ?? 0) + $this->refundRest([$payment], 'Annulation au moins 24 h avant le match.', 'cancellation_24h');
+                }
                 $this->restock($booking);
+                // Les partenaires n'ont rien décidé : ils apprennent l'annulation et ce qui leur est rendu.
+                foreach ($booking->players()->where('is_organizer', false)->whereIn('status', ['invited', 'paid'])->get() as $player) {
+                    $this->notifyCancelled($booking, $player, $back[$player->user_id] ?? 0, 'L’organisateur a annulé la partie.');
+                }
             }
             if (! $refundable) {
                 // Annulée trop tard : l'organisateur supporte seul le prix du terrain.
