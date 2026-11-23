@@ -180,6 +180,6 @@
     "Le montant payé ne correspond plus à la commande.": "The amount paid no longer matches the order.",
     "Ce paiement n’est pas encore possible par carte en ligne. Rien n’a été débité.": "This payment is not yet possible by card online. Nothing was charged.",
     "Signalement classé.": "Flag closed.",
-    "Trois paiements abandonnés en 24 heures. Vous pourrez réserver de nouveau le :date à :time.": "Three abandoned payments in 24 hours. You can book again on :date at :time.",
+    "Trois paiements abandonnés pour ce créneau en 24 heures. Vous pourrez le bloquer de nouveau le :date à :time.": "Three abandoned payments for this slot in 24 hours. You can hold it again on :date at :time.",
     "Un autre membre du personnel doit annuler une partie où vous jouez.": "Another staff member must cancel a match you are playing in."
 }
