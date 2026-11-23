@@ -24,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(AddSecurityHeaders::class);
+        // Chez Render, l'appli ne voit que son répartiteur : l'adresse du joueur est celle qu'il ajoute à X-Forwarded-For.
+        // shortcut: on fait confiance à tout pair direct ; sans proxy devant l'appli, un client choisirait son adresse.
+        $middleware->trustProxies(at: '*');
         // F3 : chaque session garde l'empreinte du mot de passe. Un nouveau mot de passe ferme les autres sessions
         // et les cookies « Rester connecté » ; la session qui fait le changement reste ouverte.
         $middleware->authenticateSessions();
