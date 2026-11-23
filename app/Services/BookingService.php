@@ -38,7 +38,9 @@ class BookingService
     public const MAX_ACTIVE = 3;
 
     /** Paiements abandonnés par joueur sur 24 h glissantes : au-delà, plus de nouveau blocage, pour qu'aucun créneau ne soit tenu sans payer. */
-    public const MAX_ABANDONED_PER_DAY = 3;
+    public const MAX_ABANDONED_PER_SLOT = 3;
+
+    public const MAX_ABANDONED_PER_DAY = 10;
 
     // Motif de l'historique posé par expireHolds : seul un blocage laissé expirer par le joueur est un abandon.
     private const HOLD_TIMEOUT = 'Dix minutes sans paiement.';
@@ -178,17 +180,27 @@ class BookingService
             if ($walkIn === null && $active >= self::MAX_ACTIVE) {
                 throw new BookingException(__('Vous avez déjà trois réservations à venir.'));
             }
-            // Bloquer, laisser expirer et rebloquer tiendrait un créneau sans payer : trois abandons du même créneau par 24 h au plus.
-            // Changer de créneau en cours de paiement ne compte pas, ni un blocage libéré par le club (suspension).
+            // Bloquer, laisser expirer et rebloquer tiendrait un créneau sans payer : sur 24 h, trois abandons du même créneau
+            // et dix en tout au plus. Changer de créneau en cours de paiement reste possible ; un blocage libéré par le club ne compte pas.
             $abandoned = $walkIn !== null ? collect() : Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('status', 'expired')
-                ->where('court_id', $court->id)->where('starts_at', $startUtc)->where('created_at', '>', now()->subDay())
+                ->where('created_at', '>', now()->subDay())
                 ->whereExists(fn ($q) => $q->from('booking_status_histories')->whereColumn('booking_id', 'bookings.id')
                     ->where('to_status', 'expired')->where('reason', self::HOLD_TIMEOUT))
-                ->orderBy('created_at')->pluck('created_at');
+                ->orderBy('created_at')->get(['court_id', 'starts_at', 'created_at']);
+            $sameSlot = $abandoned->filter(fn (Booking $b) => $b->court_id === $court->id && $b->starts_at->equalTo($startUtc))->values();
+            // 24 h après l'abandon qui fait atteindre la limite.
+            $reopens = function (Collection $list, int $max): array {
+                $again = Clock::local($list[$list->count() - $max]->created_at->toImmutable()->addDay());
+
+                return ['date' => $again->format('d/m'), 'time' => $again->format('H:i')];
+            };
             if ($abandoned->count() >= self::MAX_ABANDONED_PER_DAY) {
-                $again = $abandoned[$abandoned->count() - self::MAX_ABANDONED_PER_DAY]->toImmutable()->addDay();
+                throw new BookingException(__('Dix paiements abandonnés en 24 heures. Vous pourrez réserver de nouveau le :date à :time.',
+                    $reopens($abandoned, self::MAX_ABANDONED_PER_DAY)));
+            }
+            if ($sameSlot->count() >= self::MAX_ABANDONED_PER_SLOT) {
                 throw new BookingException(__('Trois paiements abandonnés pour ce créneau en 24 heures. Vous pourrez le bloquer de nouveau le :date à :time.',
-                    ['date' => Clock::local($again)->format('d/m'), 'time' => Clock::local($again)->format('H:i')]));
+                    $reopens($sameSlot, self::MAX_ABANDONED_PER_SLOT)));
             }
             try {
                 // Point de sauvegarde : un refus de la contrainte ne casse pas la transaction englobante.
