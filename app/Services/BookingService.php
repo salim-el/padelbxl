@@ -40,6 +40,9 @@ class BookingService
     /** Paiements abandonnés par joueur sur 24 h glissantes : au-delà, plus de nouveau blocage, pour qu'aucun créneau ne soit tenu sans payer. */
     public const MAX_ABANDONED_PER_DAY = 3;
 
+    // Motif de l'historique posé par expireHolds : seul un blocage laissé expirer par le joueur est un abandon.
+    private const HOLD_TIMEOUT = 'Dix minutes sans paiement.';
+
     /** Compteur d'annulations : au-delà de trois en trente jours, le gérant est prévenu. Rien n'est bloqué (RGPD, art. 22). */
     public const CANCELLATIONS_BEFORE_FLAG = 3;
 
@@ -136,7 +139,7 @@ class BookingService
                 if ($booking === null || $booking->status !== 'pending_payment' || ! $booking->hold_expires_at?->isPast()) {
                     return 0;
                 }
-                $this->transition($booking, 'expired', 'Dix minutes sans paiement.');
+                $this->transition($booking, 'expired', self::HOLD_TIMEOUT);
 
                 return 1;
             });
@@ -175,12 +178,16 @@ class BookingService
             if ($walkIn === null && $active >= self::MAX_ACTIVE) {
                 throw new BookingException(__('Vous avez déjà trois réservations à venir.'));
             }
-            // Bloquer, laisser expirer et rebloquer tiendrait un créneau sans payer : trois abandons par 24 h au plus.
+            // Bloquer, laisser expirer et rebloquer tiendrait un créneau sans payer : trois abandons du même créneau par 24 h au plus.
+            // Changer de créneau en cours de paiement ne compte pas, ni un blocage libéré par le club (suspension).
             $abandoned = $walkIn !== null ? collect() : Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('status', 'expired')
-                ->where('created_at', '>', now()->subDay())->orderBy('created_at')->pluck('created_at');
+                ->where('court_id', $court->id)->where('starts_at', $startUtc)->where('created_at', '>', now()->subDay())
+                ->whereExists(fn ($q) => $q->from('booking_status_histories')->whereColumn('booking_id', 'bookings.id')
+                    ->where('to_status', 'expired')->where('reason', self::HOLD_TIMEOUT))
+                ->orderBy('created_at')->pluck('created_at');
             if ($abandoned->count() >= self::MAX_ABANDONED_PER_DAY) {
                 $again = $abandoned[$abandoned->count() - self::MAX_ABANDONED_PER_DAY]->toImmutable()->addDay();
-                throw new BookingException(__('Trois paiements abandonnés en 24 heures. Vous pourrez réserver de nouveau le :date à :time.',
+                throw new BookingException(__('Trois paiements abandonnés pour ce créneau en 24 heures. Vous pourrez le bloquer de nouveau le :date à :time.',
                     ['date' => Clock::local($again)->format('d/m'), 'time' => Clock::local($again)->format('H:i')]));
             }
             try {
