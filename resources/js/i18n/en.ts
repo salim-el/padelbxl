@@ -246,6 +246,10 @@ const en: Record<string, string> = {
     'Le compte': 'Your account',
     'Pour réserver, il faut un compte actif et une adresse e-mail confirmée.': 'To book, you need an active account and a confirmed e-mail address.',
     'Un joueur a au plus trois réservations à venir.': 'A player has at most three upcoming bookings.',
+    'Au-delà de trois annulations en 30 jours, le compte est signalé au gérant, qui examine la situation. Le signalement seul ne bloque rien.':
+        'Beyond three cancellations in 30 days, the account is flagged to the manager, who looks into it. The flag alone blocks nothing.',
+    'Après trois paiements abandonnés en 24 heures, on ne peut plus réserver avant que 24 heures soient passées depuis le premier.':
+        'After three abandoned payments in 24 hours, you cannot book again until 24 hours have passed since the first one.',
     'Le club peut suspendre un compte. Un compte suspendu ne peut plus réserver ni payer. Cette décision est toujours prise par une personne du club.':
         'The club can suspend an account. A suspended account can no longer book or pay. This decision is always taken by a member of the club staff.',
     'Les créneaux et les prix': 'Slots and prices',

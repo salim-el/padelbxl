@@ -195,5 +195,7 @@
     ":reason Le paiement vous est remboursé en entier.": ":reason U krijgt de betaling volledig terug.",
     "Le montant payé ne correspond plus à la commande.": "Het betaalde bedrag komt niet meer overeen met de bestelling.",
     "Ce paiement n’est pas encore possible par carte en ligne. Rien n’a été débité.": "Deze betaling kan nog niet online met een kaart. Er is niets afgeschreven.",
-    "Signalement classé.": "Melding afgesloten."
+    "Signalement classé.": "Melding afgesloten.",
+    "Trois paiements abandonnés en 24 heures. Vous pourrez réserver de nouveau le :date à :time.": "Drie afgebroken betalingen in 24 uur. Je kunt opnieuw reserveren op :date om :time.",
+    "Un autre membre du personnel doit annuler une partie où vous jouez.": "Een ander personeelslid moet een wedstrijd annuleren waarin je zelf speelt."
 }
