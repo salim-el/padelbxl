@@ -36,6 +36,9 @@ class BookingService
 
     public const MAX_ACTIVE = 3;
 
+    /** Paiements abandonnés par joueur sur 24 h glissantes : au-delà, plus de nouveau blocage, pour qu'aucun créneau ne soit tenu sans payer. */
+    public const MAX_ABANDONED_PER_DAY = 3;
+
     public const FREE_CANCELLATION_HOURS = 24;
 
     public const MAX_PLAYERS = 4;
@@ -167,6 +170,14 @@ class BookingService
             $active = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->count();
             if ($walkIn === null && $active >= self::MAX_ACTIVE) {
                 throw new BookingException(__('Vous avez déjà trois réservations à venir.'));
+            }
+            // Bloquer, laisser expirer et rebloquer tiendrait un créneau sans payer : trois abandons par 24 h au plus.
+            $abandoned = $walkIn !== null ? collect() : Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('status', 'expired')
+                ->where('created_at', '>', now()->subDay())->orderBy('created_at')->pluck('created_at');
+            if ($abandoned->count() >= self::MAX_ABANDONED_PER_DAY) {
+                $again = $abandoned[$abandoned->count() - self::MAX_ABANDONED_PER_DAY]->toImmutable()->addDay();
+                throw new BookingException(__('Trois paiements abandonnés en 24 heures. Vous pourrez réserver de nouveau le :date à :time.',
+                    ['date' => Clock::local($again)->format('d/m'), 'time' => Clock::local($again)->format('H:i')]));
             }
             try {
                 // Point de sauvegarde : un refus de la contrainte ne casse pas la transaction englobante.
