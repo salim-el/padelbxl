@@ -25,7 +25,8 @@ class StaffService
         if (BlockedIdentity::blocksEmail($email)) {
             throw new BookingException(__('Cette adresse appartient à un compte révoqué.'));
         }
-        $user = User::withTrashed()->where('email', $email)->first();
+        // Un alias d'un compte existant désigne ce compte (email_canonical est unique).
+        $user = User::withTrashed()->where('email_canonical', User::canonicalEmail($email))->first();
         if ($user?->isStaff()) {
             throw new BookingException(__('Cette personne fait déjà partie du personnel.'));
         }

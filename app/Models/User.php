@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -62,6 +63,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'email_canonical',
         'two_factor_secret',
         'stripe_customer_id',
     ];
@@ -81,6 +83,32 @@ class User extends Authenticatable implements MustVerifyEmail
             'birth_date' => 'date',
             'suspended_until' => 'datetime',
         ];
+    }
+
+    /**
+     * La boîte aux lettres derrière l'adresse : la casse, un « +alias » et, chez Gmail, les points n'y changent rien.
+     * shortcut: le « + » est retiré chez tous les fournisseurs ; un fournisseur où « a+b » est une autre boîte verrait deux adresses confondues.
+     */
+    public static function canonicalEmail(string $email): string
+    {
+        $email = mb_strtolower(trim($email));
+        $at = strrpos($email, '@');
+        if ($at === false) {
+            return $email;
+        }
+        $local = explode('+', substr($email, 0, $at), 2)[0];
+        $domain = substr($email, $at + 1);
+        if (in_array($domain, ['gmail.com', 'googlemail.com'], true)) {
+            [$local, $domain] = [str_replace('.', '', $local), 'gmail.com'];
+        }
+
+        return $local.'@'.$domain;
+    }
+
+    // Un mutateur et non un événement : anonymize() enregistre sans événements (saveQuietly).
+    protected function email(): Attribute
+    {
+        return Attribute::make(set: fn (string $value) => ['email' => $value, 'email_canonical' => self::canonicalEmail($value)]);
     }
 
     public function hasTwoFactor(): bool
