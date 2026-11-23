@@ -60,7 +60,7 @@ class AdminController extends Controller
                 'player' => $b->walk_in_name ? $b->walk_in_name.' (comptoir)' : $b->organizer->name,
                 'status' => $b->status,
                 // Une réservation du comptoir s'annule depuis son ticket, avec la règle des 24 heures.
-                'cancellable' => $b->walk_in_name === null && $b->status === 'confirmed' && $b->starts_at->isFuture(),
+                'cancellable' => $b->walk_in_name === null && $b->status === 'confirmed' && $b->starts_at->isFuture() && $b->organizer_id !== $request->user()->id,
             ])->all(),
             'search' => $search,
             // F30 et F18 : signalements à examiner. Le système signale, une personne décide (RGPD, art. 22).
@@ -155,6 +155,10 @@ class AdminController extends Controller
         $this->ensureStaff($request);
         abort_if($booking->walk_in_name !== null, 404);
         $data = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:200']]);
+        // Séparation des tâches : annulée « par le club », sa propre partie serait remboursée en entier même une heure avant.
+        if ($booking->players()->where('user_id', $request->user()->id)->exists()) {
+            return back()->withErrors(['booking' => __('Un autre membre du personnel doit annuler une partie où vous jouez.')]);
+        }
         try {
             $bookings->cancelByClub($booking, $request->user(), $data['reason']);
         } catch (BookingException $e) {
