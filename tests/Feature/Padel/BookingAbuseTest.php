@@ -3,10 +3,12 @@
 namespace Tests\Feature\Padel;
 
 use App\Exceptions\BookingException;
+use App\Models\BlockedIdentity;
 use App\Models\Court;
 use App\Models\FraudFlag;
 use App\Models\User;
 use App\Notifications\MatchCancelled;
+use App\Services\AccountStatusService;
 use App\Services\BookingService;
 use App\Services\Clock;
 use Carbon\CarbonImmutable;
@@ -67,11 +69,25 @@ class BookingAbuseTest extends TestCase
             // 24 h après le premier abandon, celui de 10 h 00.
             $this->assertStringContainsString('le 21/10 à 10:00', $e->getMessage());
         }
-        // Le créneau reste libre pour les autres joueurs.
+        // Le créneau reste libre pour les autres joueurs, et Lucas peut en bloquer un autre : changer de créneau n'est pas un abandon.
         $this->assertSame('pending_payment', $this->service->hold(User::factory()->create(), $this->court(), $this->slot())->status);
+        $this->assertSame('pending_payment', $this->service->hold($this->lucas, $this->court(2), $this->slot())->status);
 
         $this->travelTo(CarbonImmutable::parse('2026-10-21 10:01', Clock::ZONE));
-        $this->assertSame('pending_payment', $this->service->hold($this->lucas, $this->court(2), $this->slot())->status);
+        $this->assertSame('pending_payment', $this->service->hold($this->lucas, $this->court(), $this->slot())->status);
+    }
+
+    public function test_a_hold_released_by_a_suspension_is_not_an_abandoned_payment(): void
+    {
+        $this->abandon($this->lucas);
+        $this->abandon($this->lucas);
+        $this->service->hold($this->lucas, $this->court(), $this->slot());
+        // Le club suspend par erreur puis réactive : le blocage libéré par sa décision ne compte pas contre Lucas.
+        $status = app(AccountStatusService::class);
+        $status->suspend($this->lucas, $this->marc, 'Erreur de saisie.', 7);
+        $status->reactivate($this->lucas->fresh(), $this->marc, 'Suspension levée après vérification.');
+
+        $this->assertSame('pending_payment', $this->service->hold($this->lucas->fresh(), $this->court(), $this->slot())->status);
     }
 
     public function test_the_counter_of_the_club_is_not_limited(): void
@@ -128,12 +144,43 @@ class BookingAbuseTest extends TestCase
         $this->assertSame('confirmed', $booking->fresh()->status);
     }
 
+    public function test_an_alias_of_a_used_address_cannot_open_a_second_account(): void
+    {
+        $this->assertSame('jeandupont@gmail.com', User::canonicalEmail(' Jean.Dupont+padel@GoogleMail.com '));
+        $this->assertSame('lucas.martin@example.test', User::canonicalEmail('lucas.martin+bis@example.test'));
+        User::factory()->create(['email' => 'jean.dupont@gmail.com']);
+
+        // Seul le champ e-mail est regardé : les autres manquent exprès.
+        $this->post('/register', ['email' => 'lucas.martin+bis@example.test'])->assertSessionHasErrors('email');
+        $this->post('/register', ['email' => 'jeandupont+padel@googlemail.com'])->assertSessionHasErrors('email');
+        $this->post('/register', ['email' => 'nouvelle.joueuse@example.test'])->assertSessionDoesntHaveErrors('email');
+        // Changer l'adresse de son profil vers celle d'un autre compte est refusé de la même façon.
+        $this->actingAs(User::factory()->create())->patch('/settings/profile', ['name' => 'Autre', 'email' => 'lucas.martin+x@example.test'])
+            ->assertSessionHasErrors('email');
+
+        // Une fois le compte anonymisé, l'adresse est libre.
+        $this->lucas->anonymize();
+        $this->assertSame("supprime-{$this->lucas->id}@padelbxl.invalid", $this->lucas->fresh()->email_canonical);
+    }
+
+    public function test_a_revoked_address_stays_refused_under_an_alias(): void
+    {
+        BlockedIdentity::create(['email_hash' => BlockedIdentity::hashEmail('fraude@gmail.com'), 'reason' => 'Fraude à la carte']);
+
+        $this->post('/register', ['email' => 'f.raude+2@gmail.com'])
+            ->assertSessionHasErrors(['email' => __('Cette adresse ne peut pas être utilisée pour créer un compte.')]);
+    }
+
     public function test_registration_is_limited_per_address(): void
     {
+        // Une autre limite par adresse (double authentification, une minute) ne raccourcit pas celle de l'inscription.
+        $this->post('/two-factor-challenge', []);
         foreach (range(1, 10) as $i) {
             $this->post('/register', [])->assertSessionHasErrors();
         }
 
         $this->post('/register', [])->assertStatus(429);
+        // Derrière le proxy de Render, chaque joueur a son compteur : son adresse vient de X-Forwarded-For.
+        $this->post('/register', [], ['X-Forwarded-For' => '203.0.113.7'])->assertSessionHasErrors();
     }
 }
