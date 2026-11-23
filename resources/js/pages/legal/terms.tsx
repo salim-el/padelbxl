@@ -57,6 +57,9 @@ export default function Terms({ club }: { club: Club }) {
                         t(
                             'Après trois paiements abandonnés pour un même créneau en 24 heures, ce créneau ne peut plus être bloqué avant que 24 heures soient passées depuis le premier.',
                         ),
+                        t(
+                            'Après dix paiements abandonnés en 24 heures, tous créneaux confondus, on ne peut plus réserver avant que 24 heures soient passées depuis le premier.',
+                        ),
                         t('Le paiement se fait par carte en ligne, ou en espèces et par terminal à l’accueil.'),
                         stripe
                             ? t('Le paiement en ligne passe par Stripe, en mode test : aucune carte réelle n’est débitée.')

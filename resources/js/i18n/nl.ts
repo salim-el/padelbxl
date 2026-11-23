@@ -253,6 +253,8 @@ const nl: Record<string, string> = {
         'Na meer dan drie annuleringen in 30 dagen wordt het account gemeld aan de clubbeheerder, die de situatie bekijkt. De melding alleen blokkeert niets.',
     'Après trois paiements abandonnés pour un même créneau en 24 heures, ce créneau ne peut plus être bloqué avant que 24 heures soient passées depuis le premier.':
         'Na drie afgebroken betalingen voor hetzelfde tijdslot in 24 uur kan dat tijdslot pas opnieuw worden vastgehouden als er 24 uur voorbij zijn sinds de eerste.',
+    'Après dix paiements abandonnés en 24 heures, tous créneaux confondus, on ne peut plus réserver avant que 24 heures soient passées depuis le premier.':
+        'Na tien afgebroken betalingen in 24 uur, alle tijdsloten samen, kun je pas opnieuw reserveren als er 24 uur voorbij zijn sinds de eerste.',
     'Le club peut suspendre un compte. Un compte suspendu ne peut plus réserver ni payer. Cette décision est toujours prise par une personne du club.':
         'De club kan een account schorsen. Met een geschorst account kun je niet meer reserveren of betalen. Die beslissing neemt altijd een medewerker van de club.',
     'Les créneaux et les prix': 'Tijdsloten en prijzen',

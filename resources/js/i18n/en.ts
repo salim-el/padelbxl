@@ -252,6 +252,8 @@ const en: Record<string, string> = {
         'Beyond three cancellations in 30 days, the account is flagged to the manager, who looks into it. The flag alone blocks nothing.',
     'Après trois paiements abandonnés pour un même créneau en 24 heures, ce créneau ne peut plus être bloqué avant que 24 heures soient passées depuis le premier.':
         'After three abandoned payments for the same slot in 24 hours, that slot cannot be held again until 24 hours have passed since the first one.',
+    'Après dix paiements abandonnés en 24 heures, tous créneaux confondus, on ne peut plus réserver avant que 24 heures soient passées depuis le premier.':
+        'After ten abandoned payments in 24 hours, across all slots, you cannot book again until 24 hours have passed since the first one.',
     'Le club peut suspendre un compte. Un compte suspendu ne peut plus réserver ni payer. Cette décision est toujours prise par une personne du club.':
         'The club can suspend an account. A suspended account can no longer book or pay. This decision is always taken by a member of the club staff.',
     'Les créneaux et les prix': 'Slots and prices',
