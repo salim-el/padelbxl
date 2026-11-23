@@ -10,6 +10,7 @@ use App\Models\BookingPlayer;
 use App\Models\Court;
 use App\Models\CourtClosure;
 use App\Models\CreditNote;
+use App\Models\FraudFlag;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Payment;
@@ -38,6 +39,9 @@ class BookingService
 
     /** Paiements abandonnés par joueur sur 24 h glissantes : au-delà, plus de nouveau blocage, pour qu'aucun créneau ne soit tenu sans payer. */
     public const MAX_ABANDONED_PER_DAY = 3;
+
+    /** Compteur d'annulations : au-delà de trois en trente jours, le gérant est prévenu. Rien n'est bloqué (RGPD, art. 22). */
+    public const CANCELLATIONS_BEFORE_FLAG = 3;
 
     public const FREE_CANCELLATION_HOURS = 24;
 
@@ -766,9 +770,33 @@ class BookingService
                 }
             }
             $this->close($booking, $refundable ? 'cancelled_refunded' : 'cancelled_unrefunded', $refundable ? 'Annulation au moins 24 h avant.' : 'Annulation moins de 24 h avant.', $user->id);
+            if ($booking->walk_in_name === null && $booking->organizer_id === $user->id) {
+                $this->flagCancellations($user);
+            }
 
             return $booking->fresh();
         });
+    }
+
+    /**
+     * Compteur d'annulations (réserver puis annuler en boucle) : au-delà de trois en trente jours, le gérant reçoit un signalement.
+     * Un seul par période : un signalement classé ne revient pas à chaque annulation suivante.
+     */
+    private function flagCancellations(User $user): void
+    {
+        $since = now()->subDays(30);
+        if (FraudFlag::where('user_id', $user->id)->where('type', 'repeated_cancellations')->where('created_at', '>', $since)->exists()) {
+            return;
+        }
+        // Seules comptent ses propres annulations : celles du club ne disent rien du joueur.
+        $statuses = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('cancelled_at', '>', $since)
+            ->whereExists(fn ($q) => $q->from('booking_status_histories')->whereColumn('booking_id', 'bookings.id')->where('changed_by', $user->id)
+                ->whereIn('to_status', ['cancelled_refunded', 'cancelled_unrefunded']))
+            ->pluck('status');
+        if ($statuses->count() > self::CANCELLATIONS_BEFORE_FLAG) {
+            FraudFlag::create(['user_id' => $user->id, 'type' => 'repeated_cancellations', 'details' => sprintf('%d annulations en 30 jours, dont %d à moins de 24 h du match.',
+                $statuses->count(), $statuses->filter(fn ($s) => $s === 'cancelled_unrefunded')->count())]);
+        }
     }
 
     /**
