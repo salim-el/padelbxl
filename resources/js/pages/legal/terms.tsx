@@ -29,6 +29,9 @@ export default function Terms({ club }: { club: Club }) {
                         t('Pour réserver, il faut un compte actif et une adresse e-mail confirmée.'),
                         t('Un joueur a au plus trois réservations à venir.'),
                         t(
+                            'Au-delà de trois annulations en 30 jours, le compte est signalé au gérant, qui examine la situation. Le signalement seul ne bloque rien.',
+                        ),
+                        t(
                             'Le club peut suspendre un compte. Un compte suspendu ne peut plus réserver ni payer. Cette décision est toujours prise par une personne du club.',
                         ),
                     ],
@@ -47,6 +50,9 @@ export default function Terms({ club }: { club: Club }) {
                     lines: [
                         t(
                             'Le créneau choisi est bloqué 10 minutes pendant le paiement. Sans paiement dans ce délai, il est libéré et rien n’est débité.',
+                        ),
+                        t(
+                            'Après trois paiements abandonnés en 24 heures, on ne peut plus réserver avant que 24 heures soient passées depuis le premier.',
                         ),
                         t('Le paiement se fait par carte en ligne, ou en espèces et par terminal à l’accueil.'),
                         stripe
