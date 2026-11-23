@@ -77,6 +77,23 @@ class BookingAbuseTest extends TestCase
         $this->assertSame('pending_payment', $this->service->hold($this->lucas, $this->court(), $this->slot())->status);
     }
 
+    public function test_ten_abandoned_payments_on_different_slots_block_every_slot_for_24_hours(): void
+    {
+        // Dix créneaux tous différents : aucun n'atteint trois abandons, mais le total, si.
+        foreach (range(1, 10) as $i) {
+            $this->service->hold($this->lucas, $this->court(($i % 6) + 1), $this->slot($i <= 6 ? '18:00' : '19:30'));
+            $this->travel(11)->minutes();
+        }
+
+        try {
+            $this->service->hold($this->lucas, $this->court(), $this->slot('21:00'));
+            $this->fail('Un onzième blocage a été accepté.');
+        } catch (BookingException $e) {
+            $this->assertStringContainsString('Dix paiements abandonnés', $e->getMessage());
+            $this->assertStringContainsString('le 21/10 à 10:00', $e->getMessage());
+        }
+    }
+
     public function test_a_hold_released_by_a_suspension_is_not_an_abandoned_payment(): void
     {
         $this->abandon($this->lucas);
