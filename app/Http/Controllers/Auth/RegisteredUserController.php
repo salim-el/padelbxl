@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BlockedIdentity;
 use App\Models\User;
 use App\Rules\NotDisposableEmail;
+use App\Rules\UniqueMailbox;
 use App\Services\LegalConsents;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Registered;
@@ -39,7 +40,7 @@ class RegisteredUserController extends Controller
         $request->merge(['vat_number' => self::normalizeVat($request->input('vat_number'))]);
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class, new NotDisposableEmail, function (string $attribute, mixed $value, \Closure $fail) {
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', new UniqueMailbox, new NotDisposableEmail, function (string $attribute, mixed $value, \Closure $fail) {
                 if (BlockedIdentity::blocksEmail((string) $value)) {
                     $fail(__('Cette adresse ne peut pas être utilisée pour créer un compte.'));
                 }

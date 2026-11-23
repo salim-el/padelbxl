@@ -10,6 +10,7 @@ use App\Models\BookingPlayer;
 use App\Models\Court;
 use App\Models\CourtClosure;
 use App\Models\CreditNote;
+use App\Models\FraudFlag;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Payment;
@@ -35,6 +36,17 @@ class BookingService
     public const HOLD_MINUTES = 10;
 
     public const MAX_ACTIVE = 3;
+
+    /** Paiements abandonnés par joueur sur 24 h glissantes : au-delà, plus de nouveau blocage, pour qu'aucun créneau ne soit tenu sans payer. */
+    public const MAX_ABANDONED_PER_SLOT = 3;
+
+    public const MAX_ABANDONED_PER_DAY = 10;
+
+    // Motif de l'historique posé par expireHolds : seul un blocage laissé expirer par le joueur est un abandon.
+    private const HOLD_TIMEOUT = 'Dix minutes sans paiement.';
+
+    /** Compteur d'annulations : au-delà de trois en trente jours, le gérant est prévenu. Rien n'est bloqué (RGPD, art. 22). */
+    public const CANCELLATIONS_BEFORE_FLAG = 3;
 
     public const FREE_CANCELLATION_HOURS = 24;
 
@@ -129,7 +141,7 @@ class BookingService
                 if ($booking === null || $booking->status !== 'pending_payment' || ! $booking->hold_expires_at?->isPast()) {
                     return 0;
                 }
-                $this->transition($booking, 'expired', 'Dix minutes sans paiement.');
+                $this->transition($booking, 'expired', self::HOLD_TIMEOUT);
 
                 return 1;
             });
@@ -167,6 +179,28 @@ class BookingService
             $active = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->count();
             if ($walkIn === null && $active >= self::MAX_ACTIVE) {
                 throw new BookingException(__('Vous avez déjà trois réservations à venir.'));
+            }
+            // Bloquer, laisser expirer et rebloquer tiendrait un créneau sans payer : sur 24 h, trois abandons du même créneau
+            // et dix en tout au plus. Changer de créneau en cours de paiement reste possible ; un blocage libéré par le club ne compte pas.
+            $abandoned = $walkIn !== null ? collect() : Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('status', 'expired')
+                ->where('created_at', '>', now()->subDay())
+                ->whereExists(fn ($q) => $q->from('booking_status_histories')->whereColumn('booking_id', 'bookings.id')
+                    ->where('to_status', 'expired')->where('reason', self::HOLD_TIMEOUT))
+                ->orderBy('created_at')->get(['court_id', 'starts_at', 'created_at']);
+            $sameSlot = $abandoned->filter(fn (Booking $b) => $b->court_id === $court->id && $b->starts_at->equalTo($startUtc))->values();
+            // 24 h après l'abandon qui fait atteindre la limite.
+            $reopens = function (Collection $list, int $max): array {
+                $again = Clock::local($list[$list->count() - $max]->created_at->toImmutable()->addDay());
+
+                return ['date' => $again->format('d/m'), 'time' => $again->format('H:i')];
+            };
+            if ($abandoned->count() >= self::MAX_ABANDONED_PER_DAY) {
+                throw new BookingException(__('Dix paiements abandonnés en 24 heures. Vous pourrez réserver de nouveau le :date à :time.',
+                    $reopens($abandoned, self::MAX_ABANDONED_PER_DAY)));
+            }
+            if ($sameSlot->count() >= self::MAX_ABANDONED_PER_SLOT) {
+                throw new BookingException(__('Trois paiements abandonnés pour ce créneau en 24 heures. Vous pourrez le bloquer de nouveau le :date à :time.',
+                    $reopens($sameSlot, self::MAX_ABANDONED_PER_SLOT)));
             }
             try {
                 // Point de sauvegarde : un refus de la contrainte ne casse pas la transaction englobante.
@@ -725,8 +759,15 @@ class BookingService
             }
             $refundable = now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS));
             if ($refundable) {
-                $this->refundRest($this->openPayments($booking), 'Annulation au moins 24 h avant le match.', 'cancellation_24h');
+                $back = [];
+                foreach ($this->openPayments($booking) as $payment) {
+                    $back[$payment->payer_id] = ($back[$payment->payer_id] ?? 0) + $this->refundRest([$payment], 'Annulation au moins 24 h avant le match.', 'cancellation_24h');
+                }
                 $this->restock($booking);
+                // Les partenaires n'ont rien décidé : ils apprennent l'annulation et ce qui leur est rendu.
+                foreach ($booking->players()->where('is_organizer', false)->whereIn('status', ['invited', 'paid'])->get() as $player) {
+                    $this->notifyCancelled($booking, $player, $back[$player->user_id] ?? 0, 'L’organisateur a annulé la partie.');
+                }
             }
             if (! $refundable) {
                 // Annulée trop tard : l'organisateur supporte seul le prix du terrain.
@@ -748,9 +789,33 @@ class BookingService
                 }
             }
             $this->close($booking, $refundable ? 'cancelled_refunded' : 'cancelled_unrefunded', $refundable ? 'Annulation au moins 24 h avant.' : 'Annulation moins de 24 h avant.', $user->id);
+            if ($booking->walk_in_name === null && $booking->organizer_id === $user->id) {
+                $this->flagCancellations($user);
+            }
 
             return $booking->fresh();
         });
+    }
+
+    /**
+     * Compteur d'annulations (réserver puis annuler en boucle) : au-delà de trois en trente jours, le gérant reçoit un signalement.
+     * Un seul par période : un signalement classé ne revient pas à chaque annulation suivante.
+     */
+    private function flagCancellations(User $user): void
+    {
+        $since = now()->subDays(30);
+        if (FraudFlag::where('user_id', $user->id)->where('type', 'repeated_cancellations')->where('created_at', '>', $since)->exists()) {
+            return;
+        }
+        // Seules comptent ses propres annulations : celles du club ne disent rien du joueur.
+        $statuses = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('cancelled_at', '>', $since)
+            ->whereExists(fn ($q) => $q->from('booking_status_histories')->whereColumn('booking_id', 'bookings.id')->where('changed_by', $user->id)
+                ->whereIn('to_status', ['cancelled_refunded', 'cancelled_unrefunded']))
+            ->pluck('status');
+        if ($statuses->count() > self::CANCELLATIONS_BEFORE_FLAG) {
+            FraudFlag::create(['user_id' => $user->id, 'type' => 'repeated_cancellations', 'details' => sprintf('%d annulations en 30 jours, dont %d à moins de 24 h du match.',
+                $statuses->count(), $statuses->filter(fn ($s) => $s === 'cancelled_unrefunded')->count())]);
+        }
     }
 
     /**

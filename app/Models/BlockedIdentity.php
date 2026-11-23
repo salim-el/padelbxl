@@ -11,9 +11,10 @@ class BlockedIdentity extends Model
 
     protected $fillable = ['email_hash', 'card_fingerprint', 'reason'];
 
+    // Sur la forme canonique : un alias de l'adresse révoquée reste refusé.
     public static function hashEmail(string $email): string
     {
-        return hash('sha256', mb_strtolower(trim($email)));
+        return hash('sha256', User::canonicalEmail($email));
     }
 
     public static function blocksEmail(string $email): bool

@@ -246,7 +246,15 @@ const nl: Record<string, string> = {
     'Le compte': 'Het account',
     'Pour réserver, il faut un compte actif et une adresse e-mail confirmée.':
         'Om te reserveren heb je een actief account en een bevestigd e-mailadres nodig.',
+    'Une adresse e-mail ne sert qu’à un seul compte. Une variante de la même adresse, avec un « + » ou, chez Gmail, des points en plus, compte comme la même adresse.':
+        'Een e-mailadres dient voor één account. Een variant van hetzelfde adres, met een „+” of, bij Gmail, extra punten, telt als hetzelfde adres.',
     'Un joueur a au plus trois réservations à venir.': 'Je hebt hoogstens drie komende reserveringen.',
+    'Au-delà de trois annulations en 30 jours, le compte est signalé au gérant, qui examine la situation. Le signalement seul ne bloque rien.':
+        'Na meer dan drie annuleringen in 30 dagen wordt het account gemeld aan de clubbeheerder, die de situatie bekijkt. De melding alleen blokkeert niets.',
+    'Après trois paiements abandonnés pour un même créneau en 24 heures, ce créneau ne peut plus être bloqué avant que 24 heures soient passées depuis le premier.':
+        'Na drie afgebroken betalingen voor hetzelfde tijdslot in 24 uur kan dat tijdslot pas opnieuw worden vastgehouden als er 24 uur voorbij zijn sinds de eerste.',
+    'Après dix paiements abandonnés en 24 heures, tous créneaux confondus, on ne peut plus réserver avant que 24 heures soient passées depuis le premier.':
+        'Na tien afgebroken betalingen in 24 uur, alle tijdsloten samen, kun je pas opnieuw reserveren als er 24 uur voorbij zijn sinds de eerste.',
     'Le club peut suspendre un compte. Un compte suspendu ne peut plus réserver ni payer. Cette décision est toujours prise par une personne du club.':
         'De club kan een account schorsen. Met een geschorst account kun je niet meer reserveren of betalen. Die beslissing neemt altijd een medewerker van de club.',
     'Les créneaux et les prix': 'Tijdsloten en prijzen',

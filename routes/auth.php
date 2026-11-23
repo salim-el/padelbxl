@@ -16,7 +16,10 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    // Multi-comptes : dix essais par heure et par adresse IP, assez pour une famille ou le Wi-Fi du club.
+    // Le préfixe « register » sépare ce compteur des limites d'une minute posées sur les autres routes.
+    Route::post('register', [RegisteredUserController::class, 'store'])
+        ->middleware('throttle:10,60,register');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
