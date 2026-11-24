@@ -12,6 +12,8 @@ RUN composer install --no-dev --no-interaction --no-progress --prefer-dist --no-
 # 2. Le front, construit à part. Vite lit Ziggy dans vendor/.
 FROM node:22-alpine AS front
 WORKDIR /app
+# .env reste hors de l'image : Vite prend ici le nom affiché dans les onglets.
+ARG VITE_APP_NAME=PadelBxl
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
