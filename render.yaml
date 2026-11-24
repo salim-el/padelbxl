@@ -1,0 +1,73 @@
+# Mise en ligne de PadelBxl sur Render : l'image Docker et sa base PostgreSQL, à Francfort (données dans l'UE).
+# Plan gratuit : pas de worker ni de commande avant déploiement. docker/start.sh migre la base,
+# sème la démo une seule fois et lance le scheduler à côté du serveur web.
+# Les secrets (sync: false) se saisissent dans Render, jamais dans ce fichier.
+services:
+  - type: web
+    name: padelbxl
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: develop
+    healthCheckPath: /up
+    autoDeployTrigger: commit
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: APP_NAME
+        value: PadelBxl
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_LOCALE
+        value: fr
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: padelbxl-db
+          property: connectionString
+      - key: SEED_DEMO
+        value: "1"
+      # Le plan gratuit bloque les ports SMTP 25, 465 et 587 : Brevo accepte aussi le port 2525.
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp-relay.brevo.com
+      - key: MAIL_PORT
+        value: "2525"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: PadelBxl
+      - key: STRIPE_SECRET
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: CLUB_LEGAL_NAME
+        value: Arena Padel Club SRL
+      - key: CLUB_VAT_NUMBER
+        value: BE0999999999
+      - key: CLUB_STREET
+        value: Rue du Padel 1
+      - key: CLUB_POSTCODE
+        value: "1070"
+      - key: CLUB_CITY
+        value: Anderlecht
+      - key: CLUB_EMAIL
+        sync: false
+
+databases:
+  - name: padelbxl-db
+    plan: free
+    region: frankfurt
+    databaseName: padelbxl
+    user: padelbxl
+    postgresMajorVersion: "16"
