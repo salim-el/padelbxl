@@ -123,4 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    // Comptes de démo en ligne : Render génère ce mot de passe. Vide en local et en test, le seeder garde le sien.
+    'demo_password' => env('DEMO_PASSWORD'),
+
 ];

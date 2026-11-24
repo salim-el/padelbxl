@@ -32,6 +32,9 @@ services:
           property: connectionString
       - key: SEED_DEMO
         value: "1"
+      # Mot de passe des comptes de démo : celui du dépôt est public, Render en génère un autre.
+      - key: DEMO_PASSWORD
+        generateValue: true
       # Le plan gratuit bloque les ports SMTP 25, 465 et 587 : Brevo accepte aussi le port 2525.
       - key: MAIL_MAILER
         value: smtp

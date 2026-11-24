@@ -12,6 +12,7 @@ use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class DemoSeederTest extends TestCase
@@ -43,5 +44,16 @@ class DemoSeederTest extends TestCase
         $this->assertSame(97 - ((int) substr($vat, 2, 8) % 97), (int) substr($vat, 10));
         // La numérotation suit l'ordre des dates d'émission.
         $this->assertSame(Invoice::orderBy('issued_at')->orderBy('id')->pluck('number')->all(), Invoice::orderBy('number')->pluck('number')->all());
+    }
+
+    public function test_online_demo_accounts_do_not_use_the_public_password(): void
+    {
+        // Le mot de passe du dépôt est public : en ligne, celui que Render génère le remplace.
+        config(['app.demo_password' => 'genere-par-render']);
+        $this->seed(DatabaseSeeder::class);
+
+        $admin = User::where('role', 'admin')->sole()->password;
+        $this->assertTrue(Hash::check('genere-par-render', $admin));
+        $this->assertFalse(Hash::check(DatabaseSeeder::DEMO_PASSWORD, $admin));
     }
 }
