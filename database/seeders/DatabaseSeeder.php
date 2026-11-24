@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    // Mot de passe de démonstration, identique au dump du T14. À changer avant toute mise en ligne.
+    // Mot de passe de démonstration, identique au dump du T14. Il est public : en ligne, DEMO_PASSWORD le remplace.
     public const DEMO_PASSWORD = 'Padeltfeicc2026#';
 
     public function run(): void
@@ -32,15 +32,16 @@ class DatabaseSeeder extends Seeder
         // Matériel : TVA de 21 %, contrairement à l'accès au terrain.
         Product::create(['name' => 'Location de raquette', 'kind' => 'rental', 'price_cents' => 400, 'vat_rate' => 21, 'stock' => 12]);
         Product::create(['name' => 'Tube de 3 balles neuves', 'kind' => 'sale', 'price_cents' => 600, 'vat_rate' => 21, 'stock' => 40]);
-        User::create(['name' => 'Lucas Martin', 'email' => 'lucas.martin@example.test', 'password' => Hash::make(self::DEMO_PASSWORD), 'email_verified_at' => now(), 'role' => 'player']);
+        $password = Hash::make(config('app.demo_password') ?: self::DEMO_PASSWORD);
+        User::create(['name' => 'Lucas Martin', 'email' => 'lucas.martin@example.test', 'password' => $password, 'email_verified_at' => now(), 'role' => 'player']);
         foreach ([['Inès Laurent', 'ines.laurent@example.test', now(), 'active'],
             ['Thomas Peeters', 'thomas.peeters@example.test', null, 'active'],
             ['Yassin Benali', 'yassin.benali@example.test', now(), 'suspended']] as [$name, $email, $verified, $status]) {
-            User::create(['name' => $name, 'email' => $email, 'password' => Hash::make(self::DEMO_PASSWORD), 'email_verified_at' => $verified, 'role' => 'player', 'status' => $status]);
+            User::create(['name' => $name, 'email' => $email, 'password' => $password, 'email_verified_at' => $verified, 'role' => 'player', 'status' => $status]);
         }
-        User::create(['name' => 'Marc Dumont', 'email' => 'marc.dumont@example.test', 'password' => Hash::make(self::DEMO_PASSWORD), 'email_verified_at' => now(), 'role' => 'manager']);
+        User::create(['name' => 'Marc Dumont', 'email' => 'marc.dumont@example.test', 'password' => $password, 'email_verified_at' => now(), 'role' => 'manager']);
         // F35 : l'administrateur gère le personnel ; il n'utilise pas l'espace gérant au quotidien.
-        User::create(['name' => 'Claire Vermeulen', 'email' => 'claire.vermeulen@example.test', 'password' => Hash::make(self::DEMO_PASSWORD), 'email_verified_at' => now(), 'role' => 'admin']);
+        User::create(['name' => 'Claire Vermeulen', 'email' => 'claire.vermeulen@example.test', 'password' => $password, 'email_verified_at' => now(), 'role' => 'admin']);
         self::legalDocuments();
         User::all()->each(fn (User $u) => app(LegalConsents::class)->accept($u, null));
     }
