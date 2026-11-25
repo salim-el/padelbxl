@@ -4,6 +4,8 @@
 FROM dunglas/frankenphp:1-php8.4 AS php
 # pdo_pgsql : PostgreSQL. gd : factures PDF et QR codes. intl : montants et dates en trois langues.
 RUN install-php-extensions pdo_pgsql gd intl zip opcache
+# CVE-2026-115560 : PadelBxl n'utilise pas la progression des envois, l'option reste coupée en production.
+RUN echo "session.upload_progress.enabled = Off" > "$PHP_INI_DIR/conf.d/zz-padelbxl.ini"
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY composer.json composer.lock ./
