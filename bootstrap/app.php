@@ -28,7 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // celle d'un serveur Cloudflare quand Cloudflare est devant lui. Laravel remonte la liste tant qu'il croise
         // un proxy connu (pair direct, réseau privé, Cloudflare) : la première autre adresse est celle du joueur.
         // shortcut: le pair direct est toujours cru (sans proxy devant l'appli, un client choisirait son adresse) et
-        // les plages Cloudflare sont celles de cloudflare.com/ips au 25/11/2026 : les relire si Cloudflare en ajoute.
+        // toute adresse Cloudflare aussi : un Worker Cloudflare peut encore annoncer une fausse adresse. Si Render est
+        // bien derrière Cloudflare, lire plutôt CF-Connecting-IP, que Cloudflare réécrit toujours.
+        // Plages de cloudflare.com/ips au 25/11/2026 : les relire si Cloudflare en ajoute.
         $middleware->trustProxies(at: [
             'REMOTE_ADDR', 'private_ranges',
             '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18',
