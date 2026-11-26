@@ -31,6 +31,7 @@ Route::get('/', fn () => Inertia::render('home', [
             'start' => substr($r->start_time, 0, 5),
             'end' => substr($r->end_time, 0, 5),
             'price_cents' => $r->price_cents,
+            'sport' => $r->sport,
         ]),
 ]))->name('home');
 
