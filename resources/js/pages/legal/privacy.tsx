@@ -14,7 +14,7 @@ export default function Privacy({ club }: { club: Club }) {
                 {
                     title: t('Qui traite vos données'),
                     lines: [
-                        t(':name est responsable du traitement des données de ses joueurs. PadelBxl est son logiciel de réservation.', { name }),
+                        t(':name est responsable du traitement des données de ses joueurs. ArenaBxl est son logiciel de réservation.', { name }),
                         address !== null && t('Adresse : :address.', { address }),
                         !!club.email && t('E-mail : :email.', { email: club.email }),
                         t('L’hébergeur et le service d’envoi des e-mails traitent les données pour le club, sous contrat.'),
@@ -93,7 +93,7 @@ export default function Privacy({ club }: { club: Club }) {
                     title: t('Les cookies'),
                     lines: [
                         t(
-                            'PadelBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun consentement à donner. Un bandeau vous en informe à la première visite.',
+                            'ArenaBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun consentement à donner. Un bandeau vous en informe à la première visite.',
                         ),
                         t('Le cookie de session garde votre connexion. Il expire après deux heures sans activité.'),
                         t('Le cookie XSRF-TOKEN protège vos formulaires contre une requête envoyée à votre insu.'),

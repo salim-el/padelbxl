@@ -50,8 +50,8 @@ class DatabaseSeeder extends Seeder
     public static function legalDocuments(): void
     {
         $texts = [
-            'terms' => ['fr' => 'Conditions générales de PadelBxl, version 2026.1. Texte complet : /conditions-generales.', 'nl' => 'Algemene voorwaarden van PadelBxl, versie 2026.1. Volledige tekst: /conditions-generales.', 'en' => 'PadelBxl terms and conditions, version 2026.1. Full text: /conditions-generales.'],
-            'privacy' => ['fr' => 'Politique de vie privée de PadelBxl, version 2026.1. Texte complet : /confidentialite.', 'nl' => 'Privacybeleid van PadelBxl, versie 2026.1. Volledige tekst: /confidentialite.', 'en' => 'PadelBxl privacy policy, version 2026.1. Full text: /confidentialite.'],
+            'terms' => ['fr' => 'Conditions générales d’ArenaBxl, version 2026.1. Texte complet : /conditions-generales.', 'nl' => 'Algemene voorwaarden van ArenaBxl, versie 2026.1. Volledige tekst: /conditions-generales.', 'en' => 'ArenaBxl terms and conditions, version 2026.1. Full text: /conditions-generales.'],
+            'privacy' => ['fr' => 'Politique de vie privée d’ArenaBxl, version 2026.1. Texte complet : /confidentialite.', 'nl' => 'Privacybeleid van ArenaBxl, versie 2026.1. Volledige tekst: /confidentialite.', 'en' => 'ArenaBxl privacy policy, version 2026.1. Full text: /confidentialite.'],
         ];
         foreach ($texts as $type => $byLocale) {
             foreach ($byLocale as $locale => $content) {

@@ -20,7 +20,7 @@ export default function Terms({ club }: { club: Club }) {
                         address !== null && t('Adresse : :address.', { address }),
                         !!club.email && t('E-mail : :email.', { email: club.email }),
                         club.vat !== null && t('Numéro de TVA : :vat.', { vat: club.vat }),
-                        t('Ces conditions valent pour toute réservation faite sur PadelBxl ou à l’accueil du club.'),
+                        t('Ces conditions valent pour toute réservation faite sur ArenaBxl ou à l’accueil du club.'),
                     ],
                 },
                 {

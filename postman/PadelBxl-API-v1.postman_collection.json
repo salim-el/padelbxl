@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "PadelBxl API v1",
-    "description": "API des logiciels partenaires de PadelBxl. Lancer « Connexion joueur » d'abord : le jeton est gardé dans la variable token. Le jeton d'appareil (terminalToken) se crée avec php artisan api:partner-token <e-mail du gérant> \"Écran terrain 1\".",
+    "name": "ArenaBxl API v1",
+    "description": "API des logiciels partenaires d’ArenaBxl. Lancer « Connexion joueur » d'abord : le jeton est gardé dans la variable token. Le jeton d'appareil (terminalToken) se crée avec php artisan api:partner-token <e-mail du gérant> \"Écran terrain 1\".",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

@@ -55,7 +55,7 @@ export default function CounterTicket({ booking, qr, qr_window }: { booking: Tic
                     aria-label={t('Ticket')}
                     className="bg-card mx-auto w-full max-w-sm rounded-2xl border p-5 text-center print:border-0 print:shadow-none"
                 >
-                    <p className="font-mono text-xs tracking-widest uppercase">PadelBxl</p>
+                    <p className="font-mono text-xs tracking-widest uppercase">ArenaBxl</p>
                     <h2 className="mt-1 text-xl font-extrabold">{booking.name}</h2>
                     <p className="mt-2">
                         {booking.court} · {booking.date} · {booking.time}

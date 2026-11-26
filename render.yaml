@@ -1,4 +1,4 @@
-# Mise en ligne de PadelBxl sur Render : l'image Docker et sa base PostgreSQL, à Francfort (données dans l'UE).
+# Mise en ligne d’ArenaBxl sur Render : l'image Docker et sa base PostgreSQL, à Francfort (données dans l'UE).
 # Plan gratuit : pas de worker ni de commande avant déploiement. docker/start.sh migre la base,
 # sème la démo une seule fois et lance le scheduler à côté du serveur web.
 # Les secrets (sync: false) se saisissent dans Render, jamais dans ce fichier.
@@ -15,7 +15,7 @@ services:
       - key: PORT
         value: "8080"
       - key: APP_NAME
-        value: PadelBxl
+        value: ArenaBxl
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
@@ -49,7 +49,7 @@ services:
       - key: MAIL_FROM_ADDRESS
         sync: false
       - key: MAIL_FROM_NAME
-        value: PadelBxl
+        value: ArenaBxl
       - key: STRIPE_SECRET
         sync: false
       - key: STRIPE_WEBHOOK_SECRET

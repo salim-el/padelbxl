@@ -1,4 +1,4 @@
-# PadelBxl en local : l'application, le planificateur et PostgreSQL 16.
+# ArenaBxl en local : l'application, le planificateur et PostgreSQL 16.
 # docker compose up --build, puis http://localhost:8080
 # Les secrets viennent du fichier .env (APP_KEY, DB_PASSWORD, ...).
 

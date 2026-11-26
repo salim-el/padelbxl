@@ -17,7 +17,7 @@ class ShareInvitation extends Notification
         // Le nom vient d'un formulaire d'inscription et part chez un inconnu : seuls lettres, espaces, tirets
         // et apostrophes passent, sur 60 caractères. Ni lien, ni nom de domaine, ni numéro de téléphone.
         $propre = trim(preg_replace('/\s+/u', ' ', preg_replace('/[^\p{L}\p{M} \'’-]+/u', ' ', $organizer) ?? '') ?? '');
-        $this->organizer = mb_substr($propre, 0, 60) ?: 'PadelBxl';
+        $this->organizer = mb_substr($propre, 0, 60) ?: 'ArenaBxl';
     }
 
     /** @return list<string> */

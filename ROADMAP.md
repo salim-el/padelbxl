@@ -57,7 +57,7 @@ Le même jour, ce fichier et le README sont mis à jour et l'étiquette `v1.0.0`
 
 | Fusion | Branche | Contenu |
 |---|---|---|
-| 30/10 | `chore/rename-padelbxl`, `bugfix/symfony-mime-cve` | Projet renommé PadelBxl ; PHP 8.4.27 au moins et correctif de symfony/mime |
+| 30/10 | `chore/rename-padelbxl`, `bugfix/symfony-mime-cve` | Projet renommé ArenaBxl ; PHP 8.4.27 au moins et correctif de symfony/mime |
 | 30/10 | `fix/account-soft-delete` | Désinscription en soft delete, anonymisation après 30 jours |
 | 31/10 au 02/11 | `feature/i18n-nl-en`, `feature/i18n-pages` | Interface du joueur en français, néerlandais et anglais |
 | 01/11 au 02/11 | `feature/api-rest`, `feature/opendata-jsonld` | API REST `/api/v1` (Sanctum), créneaux libres en JSON-LD ouvert |

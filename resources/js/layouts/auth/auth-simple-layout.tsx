@@ -40,8 +40,8 @@ export default function AuthSimpleLayout({ children, title, description }: AuthL
                 <div className="w-full max-w-sm">
                     <div className="flex flex-col gap-8">
                         <div className="flex flex-col items-center gap-4">
-                            <Link href={route('home')} aria-label={t('PadelBxl, retour à l’accueil')}>
-                                <img src="/images/logo-fond-clair.webp" alt="PadelBxl" className="h-[114px] w-auto" />
+                            <Link href={route('home')} aria-label={t('ArenaBxl, retour à l’accueil')}>
+                                <img src="/images/logo-fond-clair.webp" alt="ArenaBxl" className="h-[114px] w-auto" />
                             </Link>
                             <div className="space-y-2 text-center">
                                 <h1 className="text-2xl font-extrabold uppercase">{title && t(title)}</h1>

@@ -81,8 +81,8 @@ export default function Home({ prices }: { prices: Price[] }) {
                         aria-label={t('Navigation principale')}
                         className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4"
                     >
-                        <Link href="/" aria-label={t('PadelBxl, accueil')}>
-                            <img src="/images/logo-fond-sombre.webp" alt="PadelBxl" className="h-12 w-auto" />
+                        <Link href="/" aria-label={t('ArenaBxl, accueil')}>
+                            <img src="/images/logo-fond-sombre.webp" alt="ArenaBxl" className="h-12 w-auto" />
                         </Link>
                         <ul className="hidden items-center gap-6 text-sm font-semibold md:flex">
                             <li>

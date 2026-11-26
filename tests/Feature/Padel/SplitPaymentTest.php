@@ -240,7 +240,7 @@ class SplitPaymentTest extends TestCase
 
         $this->assertDoesNotMatchRegularExpression('/[0-9:\/.]/', $mail->subject);
         $this->assertStringStartsWith('Banque appelez le ou https piege test', $mail->subject);
-        $this->assertSame('PadelBxl vous invite à une partie de padel', (new ShareInvitation($booking, '12345', 1200))->toMail($this->ines)->subject);
+        $this->assertSame('ArenaBxl vous invite à une partie de padel', (new ShareInvitation($booking, '12345', 1200))->toMail($this->ines)->subject);
     }
 
     public function test_a_late_cancellation_charges_the_unpaid_shares_without_waiting_for_the_schedule(): void

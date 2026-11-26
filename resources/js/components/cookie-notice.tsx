@@ -46,7 +46,7 @@ export default function CookieNotice() {
             <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-3">
                 <p className="min-w-60 flex-1">
                     {t(
-                        'PadelBxl n’utilise que des cookies nécessaires : connexion, sécurité des formulaires et menu. Ni mesure d’audience ni publicité, il n’y a donc rien à accepter.',
+                        'ArenaBxl n’utilise que des cookies nécessaires : connexion, sécurité des formulaires et menu. Ni mesure d’audience ni publicité, il n’y a donc rien à accepter.',
                     )}{' '}
                     <Link href="/confidentialite" className="font-semibold text-[#1D5C7A] underline">
                         {t('En savoir plus')}

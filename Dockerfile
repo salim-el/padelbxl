@@ -1,10 +1,10 @@
-# Image de PadelBxl. FrankenPHP réunit PHP 8.4 et le serveur web ; il sert le dossier public/.
+# Image d’ArenaBxl. FrankenPHP réunit PHP 8.4 et le serveur web ; il sert le dossier public/.
 
 # 1. PHP et les dépendances de production.
 FROM dunglas/frankenphp:1-php8.4 AS php
 # pdo_pgsql : PostgreSQL. gd : factures PDF et QR codes. intl : montants et dates en trois langues.
 RUN install-php-extensions pdo_pgsql gd intl zip opcache
-# CVE-2026-115560 : PadelBxl n'utilise pas la progression des envois, l'option reste coupée en production.
+# CVE-2026-115560 : ArenaBxl n'utilise pas la progression des envois, l'option reste coupée en production.
 RUN echo "session.upload_progress.enabled = Off" > "$PHP_INI_DIR/conf.d/zz-padelbxl.ini"
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
@@ -15,7 +15,7 @@ RUN composer install --no-dev --no-interaction --no-progress --prefer-dist --no-
 FROM node:22-alpine AS front
 WORKDIR /app
 # .env reste hors de l'image : Vite prend ici le nom affiché dans les onglets.
-ARG VITE_APP_NAME=PadelBxl
+ARG VITE_APP_NAME=ArenaBxl
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .

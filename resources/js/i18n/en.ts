@@ -3,7 +3,7 @@ const en: Record<string, string> = {
     'Padel indoor à Anderlecht': 'Indoor padel in Anderlecht',
     'Aller au contenu': 'Skip to content',
     'Navigation principale': 'Main navigation',
-    'PadelBxl, accueil': 'PadelBxl, home',
+    'ArenaBxl, accueil': 'ArenaBxl, home',
     'Comment ça marche': 'How it works',
     Tarifs: 'Prices',
     Planning: 'Schedule',
@@ -40,7 +40,7 @@ const en: Record<string, string> = {
     'Arena Padel Club · Anderlecht, Bruxelles': 'Arena Padel Club · Anderlecht, Brussels',
     'Liens du pied de page': 'Footer links',
     'Mes réservations': 'My bookings',
-    'PadelBxl, retour à l’accueil': 'PadelBxl, back to home',
+    'ArenaBxl, retour à l’accueil': 'ArenaBxl, back to home',
     'Arena Padel Club · Anderlecht': 'Arena Padel Club · Anderlecht',
     'Retour à l’accueil': 'Back to home',
     'Connexion à votre compte': 'Log in to your account',
@@ -241,8 +241,8 @@ const en: Record<string, string> = {
     ':name exploite six terrains de padel couverts à Anderlecht.': ':name runs six indoor padel courts in Anderlecht.',
     'Adresse : :address.': 'Address: :address.',
     'Numéro de TVA : :vat.': 'VAT number: :vat.',
-    'Ces conditions valent pour toute réservation faite sur PadelBxl ou à l’accueil du club.':
-        'These terms apply to every booking made on PadelBxl or at the club reception.',
+    'Ces conditions valent pour toute réservation faite sur ArenaBxl ou à l’accueil du club.':
+        'These terms apply to every booking made on ArenaBxl or at the club reception.',
     'Le compte': 'Your account',
     'Pour réserver, il faut un compte actif et une adresse e-mail confirmée.': 'To book, you need an active account and a confirmed e-mail address.',
     'Une adresse e-mail ne sert qu’à un seul compte. Une variante de la même adresse, avec un « + » ou, chez Gmail, des points en plus, compte comme la même adresse.':
@@ -314,8 +314,8 @@ const en: Record<string, string> = {
     'En cas de litige, le joueur peut aussi s’adresser au Service de médiation pour le consommateur.':
         'In case of a dispute, the player can also contact the Consumer Mediation Service.',
     'Qui traite vos données': 'Who processes your data',
-    ':name est responsable du traitement des données de ses joueurs. PadelBxl est son logiciel de réservation.':
-        ':name is the controller of its players’ data. PadelBxl is its booking software.',
+    ':name est responsable du traitement des données de ses joueurs. ArenaBxl est son logiciel de réservation.':
+        ':name is the controller of its players’ data. ArenaBxl is its booking software.',
     'L’hébergeur et le service d’envoi des e-mails traitent les données pour le club, sous contrat.':
         'The hosting provider and the e-mail service process the data for the club, under contract.',
     'Les données gardées': 'The data we keep',
@@ -371,8 +371,8 @@ const en: Record<string, string> = {
     'Vous pouvez porter plainte auprès de l’Autorité de protection des données.':
         'You can lodge a complaint with the Belgian Data Protection Authority.',
     'Les cookies': 'Cookies',
-    'PadelBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun consentement à donner. Un bandeau vous en informe à la première visite.':
-        'PadelBxl only uses necessary cookies. There is no audience measurement and no advertising, so there is no consent to give. A banner tells you so on your first visit.',
+    'ArenaBxl n’utilise que des cookies nécessaires. Il n’y a ni mesure d’audience ni publicité, donc aucun consentement à donner. Un bandeau vous en informe à la première visite.':
+        'ArenaBxl only uses necessary cookies. There is no audience measurement and no advertising, so there is no consent to give. A banner tells you so on your first visit.',
     'Le cookie de session garde votre connexion. Il expire après deux heures sans activité.':
         'The session cookie keeps you logged in. It expires after two hours of inactivity.',
     'Le cookie XSRF-TOKEN protège vos formulaires contre une requête envoyée à votre insu.':
@@ -384,8 +384,8 @@ const en: Record<string, string> = {
     'Quand vous fermez le bandeau, votre navigateur le note dans son stockage local pendant six mois. Cette note ne quitte pas votre appareil.':
         'When you close the banner, your browser notes it in its local storage for six months. This note never leaves your device.',
     Cookies: 'Cookies',
-    'PadelBxl n’utilise que des cookies nécessaires : connexion, sécurité des formulaires et menu. Ni mesure d’audience ni publicité, il n’y a donc rien à accepter.':
-        'PadelBxl only uses necessary cookies: login, form security and the menu. No audience measurement and no advertising, so there is nothing to accept.',
+    'ArenaBxl n’utilise que des cookies nécessaires : connexion, sécurité des formulaires et menu. Ni mesure d’audience ni publicité, il n’y a donc rien à accepter.':
+        'ArenaBxl only uses necessary cookies: login, form security and the menu. No audience measurement and no advertising, so there is nothing to accept.',
     'En savoir plus': 'Learn more',
     'J’ai compris': 'Got it',
     'La langue choisie est gardée dans la session et dans votre compte.': 'The chosen language is kept in the session and in your account.',

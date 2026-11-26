@@ -1,4 +1,4 @@
-# PadelBxl
+# ArenaBxl
 
 Application web de l'Arena Padel Club, un club fictif de six terrains couverts à Anderlecht.
 Elle gère la réservation en ligne et au comptoir, le paiement, l'accès au terrain par QR code et la facturation.

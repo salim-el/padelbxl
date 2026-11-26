@@ -24,7 +24,7 @@ class AccountSuspended extends Notification
     {
         $url = URL::temporarySignedRoute('account.appeal', now()->addDays(AccountStatusService::APPEAL_DAYS), ['suspension' => $this->suspension->id]);
         $mail = (new MailMessage)
-            ->subject(__('Votre compte PadelBxl est suspendu'))
+            ->subject(__('Votre compte ArenaBxl est suspendu'))
             ->line(__('Le club a suspendu votre compte. Vous ne pouvez plus vous connecter ni réserver.'))
             ->line(__('Motif : :reason', ['reason' => $this->suspension->reason]));
         $mail = $this->suspension->until

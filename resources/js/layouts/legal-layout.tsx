@@ -29,8 +29,8 @@ export default function LegalLayout({ title, sections = [], children }: { title:
             <div className="min-h-screen bg-[#F7F6F1] text-[#0E1B2C]">
                 <header className="bg-[#0E1B2C] text-[#F7F6F1]">
                     <nav aria-label={t('Navigation principale')} className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4">
-                        <Link href="/" aria-label={t('PadelBxl, accueil')}>
-                            <img src="/images/logo-fond-sombre.webp" alt="PadelBxl" className="h-10 w-auto" />
+                        <Link href="/" aria-label={t('ArenaBxl, accueil')}>
+                            <img src="/images/logo-fond-sombre.webp" alt="ArenaBxl" className="h-10 w-auto" />
                         </Link>
                         <LanguageSwitcher />
                     </nav>

@@ -20,7 +20,7 @@ class ChargebackService
     public function opened(string $disputeId, string $paymentIntent, int $amountCents, string $reason): ?Chargeback
     {
         $payment = Payment::where('provider_reference', $paymentIntent)->first();
-        // Un paiement inconnu ne vient pas de PadelBxl (autre usage du compte Stripe) : rien à faire.
+        // Un paiement inconnu ne vient pas d’ArenaBxl (autre usage du compte Stripe) : rien à faire.
         if ($payment === null) {
             return null;
         }

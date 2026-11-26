@@ -16,7 +16,7 @@ class AddSecurityHeaders
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'DENY');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        // F18 : la borne lit le QR code avec la caméra. Seules les pages de PadelBxl peuvent la demander.
+        // F18 : la borne lit le QR code avec la caméra. Seules les pages d’ArenaBxl peuvent la demander.
         $response->headers->set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(), payment=()');
 
         // HSTS seulement en HTTPS : sur http://localhost, le navigateur le refuserait de toute façon.

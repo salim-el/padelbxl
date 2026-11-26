@@ -22,7 +22,7 @@ class StaffInvitation extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $mail = (new MailMessage)
-            ->subject(__('Votre accès au personnel de PadelBxl'))
+            ->subject(__('Votre accès au personnel d’ArenaBxl'))
             ->line(__('Vous avez maintenant le rôle « :role » au club.', ['role' => __($this->role === 'admin' ? 'Administrateur' : 'Gérant')]))
             ->line(__('À la première connexion, vous activerez la double authentification.'));
 

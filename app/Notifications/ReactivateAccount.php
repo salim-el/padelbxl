@@ -23,8 +23,8 @@ class ReactivateAccount extends Notification
         $url = URL::temporarySignedRoute('account.reactivate', now()->addMinutes(self::MINUTES), ['user' => $notifiable->getKey()]);
 
         return (new MailMessage)
-            ->subject(__('Réactiver votre compte PadelBxl'))
-            ->line(__('Vous avez demandé à réactiver votre compte PadelBxl.'))
+            ->subject(__('Réactiver votre compte ArenaBxl'))
+            ->line(__('Vous avez demandé à réactiver votre compte ArenaBxl.'))
             ->action(__('Réactiver mon compte'), $url)
             ->line(__('Ce lien vaut soixante minutes.'))
             ->line(__('Si vous n’avez rien demandé, ignorez cet e-mail. Votre compte reste désactivé.'));
