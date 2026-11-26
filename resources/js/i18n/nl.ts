@@ -674,6 +674,40 @@ const nl: Record<string, string> = {
         'Beveiligde betaling via Stripe, in testmodus: er wordt geen echte kaart gedebiteerd.',
     'Le paiement en ligne passe par Stripe, en mode test : aucune carte réelle n’est débitée.':
         'Online betalen verloopt via Stripe, in testmodus: er wordt geen echte kaart gedebiteerd.',
+    // Accueil padel et foot à 5 (26/11/2026).
+    'Padel et foot à 5 à Anderlecht': 'Padel en minivoetbal in Anderlecht',
+    'Six terrains de padel et quatre terrains de foot à 5 couverts à Anderlecht. Réservation en ligne, prix partagé entre joueurs, accès par QR code.':
+        'Zes overdekte padelterreinen en vier overdekte minivoetbalvelden in Anderlecht. Online reserveren, prijs gedeeld tussen spelers, toegang met QR-code.',
+    'Padel & foot à 5 · Anderlecht': 'Padel & minivoetbal · Anderlecht',
+    'Le padel et le foot,': 'Padel en voetbal,',
+    'Six terrains de padel et quatre terrains de foot à 5, couverts, à Anderlecht. Réservez en ligne, partagez le prix entre joueurs et entrez avec votre QR code.':
+        'Zes padelterreinen en vier minivoetbalvelden, overdekt, in Anderlecht. Reserveer online, deel de prijs tussen spelers en kom binnen met je QR-code.',
+    '9 h – 23 h': '9 – 23 u',
+    'le créneau, dès': 'per tijdslot, vanaf',
+    'Quatre étapes, du planning au terrain. Le prix se partage entre tous les joueurs.':
+        'Vier stappen, van planning tot terrein. De prijs wordt gedeeld tussen alle spelers.',
+    'Le planning montre les terrains libres en temps réel, sans compte. Un créneau dure 90 minutes au padel, une heure au foot.':
+        'De planning toont de vrije terreinen in realtime, zonder account. Een tijdslot duurt 90 minuten bij padel en een uur bij voetbal.',
+    'Partagez le prix': 'Deel de prijs',
+    'Invitez vos partenaires par e-mail : jusqu’à 3 au padel, 9 au foot. Chacun paie sa part en ligne et reçoit sa propre facture.':
+        'Nodig je partners uit per e-mail: tot 3 bij padel, 9 bij voetbal. Iedereen betaalt zijn deel online en krijgt zijn eigen factuur.',
+    'Payez votre part': 'Betaal je deel',
+    'Le créneau est bloqué 10 minutes pour vous. Annulation remboursée jusqu’à 24 h avant le match.':
+        'Het tijdslot wordt 10 minuten voor je vastgehouden. Annuleren wordt terugbetaald tot 24 uur voor de wedstrijd.',
+    'Entrez avec votre QR code': 'Kom binnen met je QR-code',
+    'Chaque joueur reçoit son propre QR code. Il ouvre le terrain 15 minutes avant le début : pas de clé, pas d’attente à l’accueil.':
+        'Elke speler krijgt zijn eigen QR-code. Die opent het terrein 15 minuten voor de start: geen sleutel, niet wachten aan het onthaal.',
+    'Prix par terrain et par créneau, TVA de 6 % comprise. Le prix se partage entre les joueurs : chacun paie sa part.':
+        'Prijs per terrein en per tijdslot, inclusief 6 % btw. De prijs wordt gedeeld tussen de spelers: iedereen betaalt zijn deel.',
+    Padel: 'Padel',
+    'Foot à 5': 'Minivoetbal',
+    joueurs: 'spelers',
+    '90 minutes': '90 minuten',
+    '1 heure': '1 uur',
+    soit: 'of',
+    'par joueur': 'per speler',
+    'L’organisateur invite ses partenaires. Chacun paie sa part en ligne et reçoit sa facture et son QR code. À 24 h du match, l’organisateur règle les parts encore impayées.':
+        'De organisator nodigt zijn partners uit. Iedereen betaalt zijn deel online en krijgt zijn factuur en QR-code. 24 uur voor de wedstrijd betaalt de organisator de delen die nog openstaan.',
 };
 
 export default nl;

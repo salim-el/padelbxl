@@ -671,6 +671,40 @@ const en: Record<string, string> = {
         'Secure payment by Stripe, in test mode: no real card is charged.',
     'Le paiement en ligne passe par Stripe, en mode test : aucune carte réelle n’est débitée.':
         'Online payment goes through Stripe, in test mode: no real card is charged.',
+    // Accueil padel et foot à 5 (26/11/2026).
+    'Padel et foot à 5 à Anderlecht': 'Padel and 5-a-side football in Anderlecht',
+    'Six terrains de padel et quatre terrains de foot à 5 couverts à Anderlecht. Réservation en ligne, prix partagé entre joueurs, accès par QR code.':
+        'Six indoor padel courts and four indoor 5-a-side football pitches in Anderlecht. Online booking, price shared between players, entry by QR code.',
+    'Padel & foot à 5 · Anderlecht': 'Padel & 5-a-side football · Anderlecht',
+    'Le padel et le foot,': 'Padel and football,',
+    'Six terrains de padel et quatre terrains de foot à 5, couverts, à Anderlecht. Réservez en ligne, partagez le prix entre joueurs et entrez avec votre QR code.':
+        'Six padel courts and four 5-a-side football pitches, all indoors, in Anderlecht. Book online, share the price between players and get in with your QR code.',
+    '9 h – 23 h': '9 am – 11 pm',
+    'le créneau, dès': 'per slot, from',
+    'Quatre étapes, du planning au terrain. Le prix se partage entre tous les joueurs.':
+        'Four steps from the schedule to the court. The price is shared between all players.',
+    'Le planning montre les terrains libres en temps réel, sans compte. Un créneau dure 90 minutes au padel, une heure au foot.':
+        'The schedule shows free courts in real time, no account needed. A slot lasts 90 minutes for padel and one hour for football.',
+    'Partagez le prix': 'Share the price',
+    'Invitez vos partenaires par e-mail : jusqu’à 3 au padel, 9 au foot. Chacun paie sa part en ligne et reçoit sa propre facture.':
+        'Invite your partners by email: up to 3 for padel, 9 for football. Everyone pays their share online and gets their own invoice.',
+    'Payez votre part': 'Pay your share',
+    'Le créneau est bloqué 10 minutes pour vous. Annulation remboursée jusqu’à 24 h avant le match.':
+        'The slot is held for you for 10 minutes. Cancellations are refunded up to 24 hours before the match.',
+    'Entrez avec votre QR code': 'Get in with your QR code',
+    'Chaque joueur reçoit son propre QR code. Il ouvre le terrain 15 minutes avant le début : pas de clé, pas d’attente à l’accueil.':
+        'Each player gets their own QR code. It opens the court 15 minutes before the start: no key, no queue at the desk.',
+    'Prix par terrain et par créneau, TVA de 6 % comprise. Le prix se partage entre les joueurs : chacun paie sa part.':
+        'Price per court and per slot, 6% VAT included. The price is shared between players: everyone pays their share.',
+    Padel: 'Padel',
+    'Foot à 5': '5-a-side football',
+    joueurs: 'players',
+    '90 minutes': '90 minutes',
+    '1 heure': '1 hour',
+    soit: 'i.e.',
+    'par joueur': 'per player',
+    'L’organisateur invite ses partenaires. Chacun paie sa part en ligne et reçoit sa facture et son QR code. À 24 h du match, l’organisateur règle les parts encore impayées.':
+        'The organiser invites their partners. Everyone pays their share online and gets their invoice and QR code. 24 hours before the match, the organiser pays any shares still unpaid.',
 };
 
 export default en;
