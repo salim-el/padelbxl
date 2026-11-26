@@ -6,8 +6,8 @@
 
 | Branche | Rôle |
 |---|---|
-| `main` | Versions livrées uniquement, chacune marquée d'une étiquette (`v0.1.0-alpha`) |
-| `develop` | Intégration des fonctionnalités terminées. La version remise est l'état de cette branche |
+| `main` | Versions livrées uniquement, chacune marquée d'une étiquette (`v0.1.0-alpha`, `v1.0.0`) |
+| `develop` | Intégration des fonctionnalités terminées |
 | `feature/<sujet>` | Une fonctionnalité, créée depuis `develop`, fusionnée dans `develop` |
 | `fix/<sujet>`, `bugfix/<sujet>` | Correction d'une anomalie trouvée sur `develop` |
 | `test/<sujet>` | Tests ajoutés à une règle déjà codée |
@@ -45,11 +45,15 @@ Elle compte 78 tests, dont 5 pour le mode Arcade, retiré le 9 novembre 2026.
 | `feature/company-accounts` | Inscription en particulier ou en entreprise ; numéro de TVA belge contrôlé et repris sur la facture |
 | `chore/ci-github-actions` | Intégration continue : Pint, Prettier, ESLint et PHPUnit sur PostgreSQL 16 |
 
-## Version remise — branche `develop`, code gelé le 15 novembre 2026
+## Version remise — v1.0.0 (26 novembre 2026)
 
-Le code est gelé au commit `e1e5aef`. La suite compte 250 tests et 1536 vérifications.
+Un premier gel date du 15 novembre 2026, au commit `e1e5aef`, avec 250 tests et 1536 vérifications.
 Le 16 novembre 2026, ce fichier et le README ont été mis à jour, sans changer le code.
 Le 17 novembre 2026, un réglage des tests (`config/inertia.php`) a corrigé l'intégration continue sous Linux. Il ne change pas l'application.
+Le plan de code a été repris le 17 novembre 2026. Le paiement par Stripe, les avoirs, le déplacement d'une réservation et les fichiers de mise en ligne passent avant la remise.
+Le code du projet est gelé le 25 novembre 2026, au commit `0fa88db`. La suite compte 294 tests et 1796 vérifications.
+Le 26 novembre 2026, Symfony passe à la version 8.1.12. L'audit des dépendances signalait cinq failles publiées la veille.
+Le même jour, ce fichier et le README sont mis à jour et l'étiquette `v1.0.0` est posée sur `main`.
 
 | Fusion | Branche | Contenu |
 |---|---|---|
@@ -91,20 +95,33 @@ Le 17 novembre 2026, un réglage des tests (`config/inertia.php`) a corrigé l'i
 | 14/11 | `feature/level-matching` | F11 : appel aux joueurs d'un niveau proche |
 | 15/11 | `bugfix/refund-gaps`, `bugfix/terms-late-cancellation` | Remboursements partiels, annulation par le club, comptes suspendus ; annulation tardive dans les conditions |
 | 17/11 | `fix/ci-inertia-page-paths` | Dossier des écrans écrit en minuscules dans la configuration des tests : Linux distingue la casse, Windows non |
+| 18/11 | `feature/staff-i18n` | Écrans et messages du personnel en néerlandais et en anglais |
+| 18/11 | `chore/docker` | Image de l'application avec FrankenPHP, sans root ; application, planificateur et PostgreSQL avec `docker compose` |
+| 18/11 | `ci/dependency-audits` | `composer audit`, `npm audit` et Dependabot dans l'intégration continue ; failles connues des dépendances corrigées |
+| 18/11 | `feature/store-credits` | F15 : avoirs. Une demande exceptionnelle peut être acceptée en avoir, l'avoir se déduit en priorité au paiement |
+| 19/11 | `bugfix/failles-demande-et-qr` | La borne refuse le QR code d'un compte qui n'est plus actif ; demande refusée sur une réservation au comptoir |
+| 19/11 | `feature/move-booking` | F14 : déplacer une réservation jusqu'à 24 h avant, différence de prix payée ou remboursée |
+| 19/11 | `feature/freed-slot-waitlist` | Créneau d'une partie annulée proposé à sa liste d'attente, par e-mail |
+| 20/11 | `feature/stripe-payments`, `bugfix/stripe-simulated-card` | Paiement sur la page de Stripe en mode test, carte de garantie, remboursements par Stripe ; paiement simulé sans clé |
+| 22/11 | `feature/stripe-webhooks` | Notifications Stripe signées ; F30 : contestation bancaire, réservation gelée, compte signalé au gérant |
+| 23/11 | `feature/abus-reservations` | Une adresse e-mail pour un seul compte ; dix paiements abandonnés en 24 h au plus ; conditions générales mises à jour |
+| 24/11 | `feature/deploiement-render` | Fichier `render.yaml` : application, base PostgreSQL et secrets sur Render ; mot de passe de démonstration généré en ligne |
+| 25/11 | `bugfix/camera-et-ip-joueur` | La borne peut ouvrir la caméra pour lire le QR code ; adresse du joueur lue seulement derrière Render et Cloudflare |
+| 25/11 | `bugfix/php-upload-progress` | Option `session.upload_progress` coupée dans l'image de production (CVE-2026-115560) |
+| 26/11 | `bugfix/symfony-cve-novembre` | Symfony 8.1.12 : cinq failles publiées le 25 novembre corrigées |
 
 ## Après la remise — version 1.1 (27 novembre au 11 décembre 2026)
 
 Ces points suivent la remise du 26 novembre 2026 et précèdent la défense de mi-décembre.
 Le rapport écrit les présente comme « version 1.1 ».
 
-- Paiement par Stripe en mode test, avec la carte gardée en garantie ; contestation bancaire (F30).
-- Mise en ligne sur Render, e-mails par Brevo, du 27 novembre au 4 décembre 2026. Fichier Docker. Audits des dépendances (`composer audit`, `npm audit`, Dependabot).
-- F14 déplacer une réservation, F15 avoirs, F19 codes de secours de la borne, F31 suivi des absences, F33 export comptable.
-- Créneau libéré par une annulation proposé à la liste d'attente.
-- E-mail de confirmation de réservation, rappels et préférences de notification.
-- Écrans du personnel en néerlandais et en anglais ; textes, documents légaux et clés d'API modifiables par l'administrateur.
+- F19 codes de secours de la borne, F31 suivi des absences, F33 export comptable.
+- E-mail de confirmation de réservation, rappels et préférences de notification ; rappel avant la fin d'un avoir.
+- Textes des pages, traductions, documents légaux et clés d'API modifiables par l'administrateur.
 - Codes de secours de la double authentification ; tarif selon le jour ; adresse de facturation d'une entreprise.
 - Suppression d'un compte jamais confirmé après sept jours ; recours contre une décision sur une demande exceptionnelle.
+- Empreinte de la carte gardée sur le paiement, pour repérer une même carte sur plusieurs comptes.
+- Adresse du joueur lue dans l'en-tête `CF-Connecting-IP` derrière Cloudflare.
 - Contrôle complet WCAG 2.1 AA, tests de bout en bout avec Playwright, balises hreflang et plan du site.
 
 ## Idées à étudier plus tard
