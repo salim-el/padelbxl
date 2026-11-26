@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\Booking;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,7 +30,12 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $request->user()->fill($request->safe()->only(['name', 'email', 'level']));
+        $request->user()->forceFill($request->safe()->only(['phone', 'locale']));
+        // La langue choisie vaut tout de suite pour l'interface.
+        if ($request->has('locale')) {
+            $request->session()->put('locale', $request->validated('locale'));
+        }
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
@@ -47,13 +53,32 @@ class ProfileController extends Controller
     {
         $request->validate([
             'password' => ['required', 'current_password'],
+            'erase_now' => ['boolean'],
         ]);
 
         $user = $request->user();
 
+        // Une réservation à venir doit d'abord être annulée, pour que les règles de remboursement s'appliquent.
+        // Organisateur, ou invité qui a payé lui-même sa part : dans les deux cas, la partie à venir le concerne.
+        $upcoming = Booking::whereNull('walk_in_name')->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())
+            ->where(fn ($q) => $q->where('organizer_id', $user->id)
+                ->orWhereHas('players', fn ($p) => $p->where('user_id', $user->id)->where('is_organizer', false)->where('status', 'paid')))
+            ->exists();
+        if ($upcoming) {
+            return back()->withErrors(['password' => __('Annulez d’abord vos réservations à venir.')]);
+        }
+
         Auth::logout();
 
+        // Soft delete : réservations et factures restent liées au compte, anonymisé après 30 jours (accounts:anonymize).
+        // Le délai laisse au joueur le temps de revenir sur une erreur ; il peut aussi demander l'effacement tout de suite.
+        $user->forceFill(['status' => 'deactivated'])->save();
+        // Les jetons d'API ne survivent pas à la désactivation : un compte réactivé repart sans accès resté ouvert.
+        $user->tokens()->delete();
         $user->delete();
+        if ($request->boolean('erase_now')) {
+            $user->anonymize();
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

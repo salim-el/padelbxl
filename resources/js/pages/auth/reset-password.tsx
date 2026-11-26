@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
+import { useT } from '@/lib/i18n';
 
 interface ResetPasswordProps {
     token: string;
@@ -23,6 +24,7 @@ interface ResetPasswordForm {
 }
 
 export default function ResetPassword({ token, email }: ResetPasswordProps) {
+    const t = useT();
     const { data, setData, post, processing, errors, reset } = useForm<ResetPasswordForm>({
         token: token,
         email: email,
@@ -38,13 +40,13 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
     };
 
     return (
-        <AuthLayout title="Nouveau mot de passe" description="Choisissez votre nouveau mot de passe">
-            <Head title="Nouveau mot de passe" />
+        <AuthLayout title={t('Nouveau mot de passe')} description={t('Choisissez votre nouveau mot de passe')}>
+            <Head title={t('Nouveau mot de passe')} />
 
             <form onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Adresse e-mail</Label>
+                        <Label htmlFor="email">{t('Adresse e-mail')}</Label>
                         <Input
                             id="email"
                             type="email"
@@ -59,7 +61,7 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password">Mot de passe</Label>
+                        <Label htmlFor="password">{t('Mot de passe')}</Label>
                         <PasswordInput
                             id="password"
                             name="password"
@@ -68,13 +70,13 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                             className="mt-1 block w-full"
                             autoFocus
                             onChange={(e) => setData('password', e.target.value)}
-                            placeholder="Mot de passe"
+                            placeholder={t('Mot de passe')}
                         />
                         <InputError message={errors.password} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Confirmer le mot de passe</Label>
+                        <Label htmlFor="password_confirmation">{t('Confirmer le mot de passe')}</Label>
                         <PasswordInput
                             id="password_confirmation"
                             name="password_confirmation"
@@ -82,14 +84,14 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                             value={data.password_confirmation}
                             className="mt-1 block w-full"
                             onChange={(e) => setData('password_confirmation', e.target.value)}
-                            placeholder="Confirmer le mot de passe"
+                            placeholder={t('Confirmer le mot de passe')}
                         />
                         <InputError message={errors.password_confirmation} className="mt-2" />
                     </div>
 
                     <Button type="submit" className="mt-4 w-full" disabled={processing}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Enregistrer le mot de passe
+                        {t('Enregistrer le mot de passe')}
                     </Button>
                 </div>
             </form>

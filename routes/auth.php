@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AccountReactivationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,12 +16,22 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    // Multi-comptes : dix essais par heure et par adresse IP, assez pour une famille ou le Wi-Fi du club.
+    // Le préfixe « register » sépare ce compteur des limites d'une minute posées sur les autres routes.
+    Route::post('register', [RegisteredUserController::class, 'store'])
+        ->middleware('throttle:10,60,register');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    Route::get('two-factor-challenge', [TwoFactorChallengeController::class, 'create'])
+        ->name('two-factor.login');
+
+    // Filet par adresse IP ; la vraie limite (5 codes faux par compte) est dans le contrôleur.
+    Route::post('two-factor-challenge', [TwoFactorChallengeController::class, 'store'])
+        ->middleware('throttle:20,1');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
@@ -32,6 +44,19 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+
+    // F4 : réactivation d'un compte désactivé depuis moins de trente jours.
+    Route::get('reactivate-account', [AccountReactivationController::class, 'create'])
+        ->name('account.reactivation');
+
+    Route::post('reactivate-account', [AccountReactivationController::class, 'store'])
+        ->middleware('throttle:3,1')
+        ->name('account.reactivation.send');
+
+    Route::get('reactivate-account/{user}', [AccountReactivationController::class, 'update'])
+        ->whereNumber('user')
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('account.reactivate');
 });
 
 Route::middleware('auth')->group(function () {

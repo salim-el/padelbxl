@@ -32,6 +32,6 @@ class KioskController extends Controller
     // Dans l'alpha, la borne est simulée par un écran réservé au personnel.
     private function ensureStaff(Request $request): void
     {
-        abort_unless(in_array($request->user()->role, ['manager', 'admin'], true), 403);
+        abort_unless($request->user()->can('manage-club'), 403);
     }
 }

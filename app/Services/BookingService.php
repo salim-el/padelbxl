@@ -10,15 +10,25 @@ use App\Models\BookingPlayer;
 use App\Models\Court;
 use App\Models\CourtClosure;
 use App\Models\CreditNote;
+use App\Models\FraudFlag;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Refund;
 use App\Models\User;
+use App\Models\WaitlistEntry;
+use App\Notifications\AccessPassLink;
+use App\Notifications\MatchCancelled;
+use App\Notifications\ShareInvitation;
+use App\Notifications\SlotFreed;
+use App\Notifications\SpotAvailable;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class BookingService
@@ -27,44 +37,170 @@ class BookingService
 
     public const MAX_ACTIVE = 3;
 
+    /** Paiements abandonnés par joueur sur 24 h glissantes : au-delà, plus de nouveau blocage, pour qu'aucun créneau ne soit tenu sans payer. */
+    public const MAX_ABANDONED_PER_SLOT = 3;
+
+    public const MAX_ABANDONED_PER_DAY = 10;
+
+    // Motif de l'historique posé par expireHolds : seul un blocage laissé expirer par le joueur est un abandon.
+    private const HOLD_TIMEOUT = 'Dix minutes sans paiement.';
+
+    /** Compteur d'annulations : au-delà de trois en trente jours, le gérant est prévenu. Rien n'est bloqué (RGPD, art. 22). */
+    public const CANCELLATIONS_BEFORE_FLAG = 3;
+
     public const FREE_CANCELLATION_HOURS = 24;
 
-    public function __construct(private SlotService $slots) {}
+    public const MAX_PLAYERS = 4;
+
+    /** Invitations par organisateur et par jour : quatre parties partagées, pas un relais d'e-mails. */
+    public const MAX_INVITATIONS_PER_DAY = 12;
+
+    /** Espaces des verrous PostgreSQL de transaction (pg_advisory_xact_lock), libérés au commit. */
+    private const LOCK_COURT = 1;
+
+    private const LOCK_PLAYER = 2;
+
+    public function __construct(private SlotService $slots, private StoreCreditService $credits, private StripePayments $stripe) {}
+
+    /**
+     * F9 : ce que la carte paiera à la confirmation, calculé avant d'ouvrir la page de Stripe :
+     * part de l'organisateur (les centimes indivisibles lui restent, comme dans splitShares) et articles, moins l'avoir.
+     *
+     * @param  array<int, int>  $items
+     */
+    public function cardAmount(Booking $booking, User $user, array $items, int $others): int
+    {
+        $total = $booking->price_cents - intdiv($booking->price_cents, $others + 1) * $others;
+        $items = array_filter($items);
+        foreach (Product::whereIn('id', array_keys($items))->where('is_active', true)->get() as $product) {
+            $total += $product->price_cents * $items[$product->id];
+        }
+
+        return max(0, $total - StoreCreditService::balance($user));
+    }
+
+    // F9 : montants que la carte paiera sur la page de Stripe. 0 quand l'avoir couvre tout, ou quand la demande sera
+    // refusée de toute façon : elle passe alors par le chemin direct, qui refuse sans rien encaisser.
+
+    /** Part de ce joueur invité, moins son avoir. */
+    public function shareAmount(Booking $booking, User $user): int
+    {
+        $player = self::invitedPlayer($booking, $user);
+        if ($player === null || $player->status !== 'invited' || $booking->status !== 'confirmed' || ! $booking->starts_at->isFuture()) {
+            return 0;
+        }
+
+        return max(0, $player->share_cents - StoreCreditService::balance($user));
+    }
+
+    /** Part d'une place ouverte encore libre, moins l'avoir. */
+    public function openSpotAmount(Booking $booking, User $user): int
+    {
+        if (! self::openMatches()->whereKey($booking->id)->exists() || $booking->organizer_id === $user->id || self::invitedPlayer($booking, $user) !== null) {
+            return 0;
+        }
+        $share = $booking->players()->where('is_organizer', false)->whereNull('user_id')->whereNull('guest_email')->where('status', 'invited')->value('share_cents');
+
+        return $share === null ? 0 : max(0, (int) $share - StoreCreditService::balance($user));
+    }
+
+    /** F14 : supplément d'un déplacement permis, moins l'avoir ; 0 si le nouveau créneau ne coûte pas plus. */
+    public function moveAmount(Booking $booking, User $user, CarbonImmutable $startUtc): int
+    {
+        $rule = $this->slots->priceFor($startUtc);
+        $movable = $booking->organizer_id === $user->id && $booking->walk_in_name === null && $booking->status === 'confirmed'
+            && now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS)) && $booking->players()->count() < 2;
+        if ($rule === null || ! $movable) {
+            return 0;
+        }
+
+        return max(0, $this->slots->priceCents($rule, $startUtc) - $booking->price_cents - StoreCreditService::balance($user));
+    }
+
+    /** Sérialise ce qui touche au planning d'un terrain : réservations et fermetures. À appeler dans une transaction. */
+    public static function lockCourt(int $courtId): void
+    {
+        DB::select('select pg_advisory_xact_lock(?::int, ?::int)', [self::LOCK_COURT, $courtId]);
+    }
+
+    /** Sérialise les réservations d'un même joueur (plafond de trois). À appeler dans une transaction, après lockCourt. */
+    public static function lockPlayer(int $userId): void
+    {
+        DB::select('select pg_advisory_xact_lock(?::int, ?::int)', [self::LOCK_PLAYER, $userId]);
+    }
 
     /** Libère les créneaux bloqués dont les dix minutes sont écoulées. */
     public function expireHolds(): int
     {
         $ids = Booking::where('status', 'pending_payment')->where('hold_expires_at', '<', now())->pluck('id');
+        $expired = 0;
         foreach ($ids as $id) {
-            $this->transition(Booking::find($id), 'expired', 'Dix minutes sans paiement.');
+            // Un paiement a pu se terminer entre la recherche et ici : on relit la ligne sous verrou avant d'expirer.
+            $expired += DB::transaction(function () use ($id) {
+                $booking = Booking::whereKey($id)->lockForUpdate()->first();
+                if ($booking === null || $booking->status !== 'pending_payment' || ! $booking->hold_expires_at?->isPast()) {
+                    return 0;
+                }
+                $this->transition($booking, 'expired', self::HOLD_TIMEOUT);
+
+                return 1;
+            });
         }
 
-        return $ids->count();
+        return $expired;
     }
 
-    public function hold(User $user, Court $court, CarbonImmutable $startUtc): Booking
+    /** @param array{walk_in_name: string, walk_in_contact: string}|null $walkIn client du comptoir, sans compte */
+    public function hold(User $user, Court $court, CarbonImmutable $startUtc, ?array $walkIn = null): Booking
     {
         if ($user->status !== 'active' || $user->email_verified_at === null) {
-            throw new BookingException('Votre compte doit être actif et votre e-mail confirmé pour réserver.');
+            throw new BookingException(__('Votre compte doit être actif et votre e-mail confirmé pour réserver.'));
         }
-        if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::SLOTS, true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
-            throw new BookingException('Ce créneau n’existe pas ou n’est plus réservable.');
+        if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::slots(), true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
+            throw new BookingException(__('Ce créneau n’existe pas ou n’est plus réservable.'));
         }
         $rule = $this->slots->priceFor($startUtc);
         if ($rule === null || ! $court->is_active) {
-            throw new BookingException('Ce terrain n’est pas réservable à cette heure.');
+            throw new BookingException(__('Ce terrain n’est pas réservable à cette heure.'));
         }
-        $end = $startUtc->addMinutes(Clock::SLOT_MINUTES);
-        if (CourtClosure::where('court_id', $court->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc)->exists()) {
-            throw new BookingException('Ce terrain est fermé sur ce créneau.');
-        }
+        $end = $startUtc->addMinutes(Clock::slotMinutes());
 
         $this->expireHolds();
 
-        return DB::transaction(function () use ($user, $court, $startUtc, $rule) {
-            $active = Booking::where('organizer_id', $user->id)->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->count();
-            if ($active >= self::MAX_ACTIVE) {
-                throw new BookingException('Vous avez déjà trois réservations à venir.');
+        return DB::transaction(function () use ($user, $court, $startUtc, $end, $rule, $walkIn) {
+            // Verrous dans un ordre fixe (terrain puis joueur) : une fermeture et une réservation du même terrain,
+            // ou deux réservations du même joueur, passent l'une après l'autre.
+            self::lockCourt($court->id);
+            self::lockPlayer($user->id);
+            if (CourtClosure::where('court_id', $court->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc)->exists()) {
+                throw new BookingException(__('Ce terrain est fermé sur ce créneau.'));
+            }
+            // La limite de trois réservations vise un joueur, pas le gérant qui encode pour des clients au comptoir.
+            $active = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->count();
+            if ($walkIn === null && $active >= self::MAX_ACTIVE) {
+                throw new BookingException(__('Vous avez déjà trois réservations à venir.'));
+            }
+            // Bloquer, laisser expirer et rebloquer tiendrait un créneau sans payer : sur 24 h, trois abandons du même créneau
+            // et dix en tout au plus. Changer de créneau en cours de paiement reste possible ; un blocage libéré par le club ne compte pas.
+            $abandoned = $walkIn !== null ? collect() : Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('status', 'expired')
+                ->where('created_at', '>', now()->subDay())
+                ->whereExists(fn ($q) => $q->from('booking_status_histories')->whereColumn('booking_id', 'bookings.id')
+                    ->where('to_status', 'expired')->where('reason', self::HOLD_TIMEOUT))
+                ->orderBy('created_at')->get(['court_id', 'starts_at', 'created_at']);
+            $sameSlot = $abandoned->filter(fn (Booking $b) => $b->court_id === $court->id && $b->starts_at->equalTo($startUtc))->values();
+            // 24 h après l'abandon qui fait atteindre la limite.
+            $reopens = function (Collection $list, int $max): array {
+                $again = Clock::local($list[$list->count() - $max]->created_at->toImmutable()->addDay());
+
+                return ['date' => $again->format('d/m'), 'time' => $again->format('H:i')];
+            };
+            if ($abandoned->count() >= self::MAX_ABANDONED_PER_DAY) {
+                throw new BookingException(__('Dix paiements abandonnés en 24 heures. Vous pourrez réserver de nouveau le :date à :time.',
+                    $reopens($abandoned, self::MAX_ABANDONED_PER_DAY)));
+            }
+            if ($sameSlot->count() >= self::MAX_ABANDONED_PER_SLOT) {
+                throw new BookingException(__('Trois paiements abandonnés pour ce créneau en 24 heures. Vous pourrez le bloquer de nouveau le :date à :time.',
+                    $reopens($sameSlot, self::MAX_ABANDONED_PER_SLOT)));
             }
             try {
                 // Point de sauvegarde : un refus de la contrainte ne casse pas la transaction englobante.
@@ -74,17 +210,17 @@ class BookingService
                     'organizer_id' => $user->id,
                     'pricing_rule_id' => $rule->id,
                     'starts_at' => $startUtc,
-                    'ends_at' => $startUtc->addMinutes(Clock::SLOT_MINUTES),
+                    'ends_at' => $startUtc->addMinutes(Clock::slotMinutes()),
                     'status' => 'pending_payment',
                     'price_cents' => $this->slots->priceCents($rule, $startUtc),
                     'vat_rate' => $rule->vat_rate,
-                    'is_arena' => false,
                     'hold_expires_at' => now()->addMinutes(self::HOLD_MINUTES),
+                    ...($walkIn ?? []),
                 ]));
             } catch (QueryException $e) {
                 // 23P01 : la contrainte d'exclusion refuse un chevauchement.
                 if ($e->getCode() === '23P01') {
-                    throw new BookingException('Ce créneau vient d’être réservé par quelqu’un d’autre.');
+                    throw new BookingException(__('Ce créneau vient d’être réservé par quelqu’un d’autre.'));
                 }
                 throw $e;
             }
@@ -95,81 +231,517 @@ class BookingService
         });
     }
 
-    /** Paiement simulé de l'alpha. En production, la confirmation viendra de la notification signée de Stripe. */
-    /** @param array<int, int> $items quantité par identifiant d'article */
-    public function confirmPayment(Booking $booking, User $user, ?string $gameMode = null, array $items = []): Booking
+    /**
+     * Réservation au comptoir : créneau bloqué puis payé sur place (espèces ou terminal) dans la même transaction,
+     * donc jamais de créneau à moitié réservé si le paiement échoue.
+     */
+    public function counter(User $staff, Court $court, CarbonImmutable $startUtc, string $name, string $contact, string $method): Booking
     {
-        return DB::transaction(function () use ($booking, $user, $gameMode, $items) {
+        return DB::transaction(function () use ($staff, $court, $startUtc, $name, $contact, $method) {
+            $booking = $this->hold($staff, $court, $startUtc, ['walk_in_name' => $name, 'walk_in_contact' => $contact]);
+
+            return $this->confirmPayment($booking, $staff, [], $method);
+        });
+    }
+
+    /**
+     * Paiement simulé de l'alpha. En production, la confirmation viendra de la notification signée de Stripe.
+     *
+     * @param  array<int, int>  $items  quantité par identifiant d'article
+     * @param  list<string>  $guests  e-mails des joueurs qui paient leur part, trois au plus
+     * @param  int  $openSpots  places proposées aux autres membres du club, en plus des invités
+     * @param  string|null  $reference  F9 : paiement Stripe déjà encaissé (pi_…) ; null, paiement simulé
+     * @param  string|null  $guaranteeMethod  F9 : carte Stripe gardée en garantie d'un prix partagé
+     * @param  int|null  $received  F9 : montant que Stripe a encaissé ; la commande doit tomber juste, avoir compris
+     */
+    public function confirmPayment(Booking $booking, User $user, array $items = [], string $method = 'card', array $guests = [], int $openSpots = 0, ?string $reference = null, ?string $guaranteeMethod = null, ?int $received = null): Booking
+    {
+        return DB::transaction(function () use ($booking, $user, $items, $method, $guests, $openSpots, $reference, $guaranteeMethod, $received) {
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ($user->status !== 'active') {
-                throw new BookingException('Votre compte est suspendu. Le paiement est refusé.');
+                throw new BookingException(__('Votre compte est suspendu. Le paiement est refusé.'));
             }
             if ($booking->status !== 'pending_payment' || $booking->hold_expires_at?->isPast()) {
-                throw new BookingException('Les dix minutes sont écoulées. Le créneau a été libéré, rien n’a été débité.');
+                throw new BookingException(__('Les dix minutes sont écoulées. Le créneau a été libéré, rien n’a été débité.'));
             }
             $player = $booking->players()->where('is_organizer', true)->firstOrFail();
-            // Un mode arcade remplace le prix classique par le tarif arcade du même créneau (+14 €).
-            if ($gameMode !== null && $gameMode !== 'classic') {
-                $rule = $this->slots->priceFor($booking->starts_at, true);
-                $supplement = $this->slots->arcadeSupplement($booking->starts_at);
-                if ($rule === null || $supplement === null) {
-                    throw new BookingException('Le mode arcade n’est pas disponible sur ce créneau.');
-                }
-                // Le supplément s'ajoute au prix déjà bloqué, remise flash comprise.
-                $price = $booking->price_cents + $supplement;
-                $booking->update(['is_arena' => true, 'game_mode' => $gameMode, 'pricing_rule_id' => $rule->id, 'price_cents' => $price, 'vat_rate' => $rule->vat_rate]);
-                $player->update(['share_cents' => $price]);
+            if ($guests !== [] || $openSpots > 0) {
+                $this->splitShares($booking, $player, $user, $guests, $openSpots);
+                // L'organisateur a accepté la garantie avant de payer ; avec Stripe, sa carte est gardée pour la débiter.
+                $booking->update(['guarantee_accepted_at' => now(), 'guarantee_payment_method_id' => $guaranteeMethod]);
             }
-            $lines = [['label' => $booking->court->name.($booking->is_arena ? ' – partie Arena' : '').' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i'), 'quantity' => 1, 'unit' => $player->share_cents, 'vat' => (float) $booking->vat_rate]];
+            $lines = [$this->courtLine($booking, $player)];
             foreach ($this->reserveItems($booking, array_filter($items)) as $item) {
                 $lines[] = ['label' => $item->product->name, 'quantity' => $item->quantity, 'unit' => $item->unit_price_cents, 'vat' => (float) $item->vat_rate];
             }
-            $amount = array_sum(array_map(fn ($l) => $l['quantity'] * $l['unit'], $lines));
-            $payment = Payment::create([
-                'booking_id' => $booking->id,
-                'booking_player_id' => $player->id,
-                'payer_id' => $user->id,
-                'method' => 'card',
-                'provider_reference' => 'test_'.Str::uuid(),
-                'amount_cents' => $amount,
-                'status' => 'succeeded',
-                'paid_at' => now(),
-            ]);
-            // La TVA se calcule ligne par ligne : 6 % sur le terrain, 21 % sur le matériel.
-            foreach ($lines as &$l) {
-                $l['total'] = $l['quantity'] * $l['unit'];
-                $l['net'] = (int) round($l['total'] / (1 + $l['vat'] / 100));
-            }
-            unset($l);
-            $net = array_sum(array_column($lines, 'net'));
-            $invoice = Invoice::create([
-                'number' => $this->nextNumber('invoice', 'F'),
-                'booking_id' => $booking->id,
-                'payment_id' => $payment->id,
-                'issued_at' => now(),
-                'customer_name' => $user->name,
-                'customer_company' => $user->company_name,
-                'customer_vat' => $user->vat_number,
-                'net_cents' => $net,
-                'vat_rate' => $booking->vat_rate,
-                'vat_cents' => $amount - $net,
-                'total_cents' => $amount,
-            ]);
-            foreach ($lines as $l) {
-                InvoiceLine::create([
-                    'invoice_id' => $invoice->id, 'label' => $l['label'], 'quantity' => $l['quantity'], 'unit_price_cents' => $l['unit'],
-                    'vat_rate' => $l['vat'], 'net_cents' => $l['net'], 'vat_cents' => $l['total'] - $l['net'], 'total_cents' => $l['total'],
-                ]);
-            }
+            // Au comptoir, le payeur est le membre du personnel : aucun avoir n'entre en jeu.
+            $this->charge($booking, $player, $user, $lines, $method, useCredit: $method === 'card', reference: $reference, received: $received);
             $player->update(['status' => 'paid']);
-            AccessPass::create([
-                'booking_player_id' => $player->id,
-                'token_hash' => hash('sha256', self::passToken($player)),
-                'valid_from' => $booking->starts_at->subMinutes(15),
-                'valid_until' => $booking->ends_at,
-            ]);
             $booking->update(['hold_expires_at' => null]);
             $this->transition($booking, 'confirmed', 'Paiement reçu.', $user->id);
+
+            return $booking->fresh();
+        });
+    }
+
+    /** Un joueur invité règle sa part : il reçoit sa propre facture et son propre QR code. */
+    public function payShare(Booking $booking, User $user, ?string $reference = null, ?int $received = null): BookingPlayer
+    {
+        return DB::transaction(function () use ($booking, $user, $reference, $received) {
+            // Le verrou sur la réservation sérialise ce paiement avec la garantie de l'organisateur.
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $player = self::invitedPlayer($booking, $user) ?? throw new BookingException(__('Cette invitation n’existe pas.'));
+            if ($player->status !== 'invited') {
+                throw new BookingException(__('Votre part est déjà réglée.'));
+            }
+            if ($booking->status !== 'confirmed' || ! $booking->starts_at->isFuture()) {
+                throw new BookingException(__('Cette partie n’accepte plus de paiement.'));
+            }
+            if ($user->status !== 'active') {
+                throw new BookingException(__('Votre compte est suspendu. Le paiement est refusé.'));
+            }
+            if ($user->email_verified_at === null) {
+                throw new BookingException(__('Votre compte doit être actif et votre e-mail confirmé pour réserver.'));
+            }
+            // Une invitation envoyée à une adresse sans compte est rattachée au compte créé ensuite avec cette adresse.
+            $player->update(['user_id' => $user->id]);
+            $this->charge($booking, $player, $user, [$this->courtLine($booking, $player)], 'card', useCredit: true, reference: $reference, received: $received);
+            $player->update(['status' => 'paid']);
+
+            return $player->fresh();
+        });
+    }
+
+    /**
+     * Carte de garantie : à 24 h du match, l'organisateur paie les parts encore impayées.
+     * C'est le moment où une annulation cesse d'être remboursée, le club ne porte donc jamais le risque.
+     */
+    public function chargeUnpaidShares(): int
+    {
+        $ids = BookingPlayer::where('status', 'invited')->where('is_organizer', false)
+            ->whereHas('booking', fn ($q) => $q->where('status', 'confirmed')->where('starts_at', '<=', now()->addHours(self::FREE_CANCELLATION_HOURS)))
+            ->pluck('id');
+        $charged = 0;
+        foreach ($ids as $id) {
+            try {
+                $charged += DB::transaction(function () use ($id) {
+                    $booking = Booking::whereKey(BookingPlayer::whereKey($id)->value('booking_id'))->lockForUpdate()->firstOrFail();
+                    $player = BookingPlayer::findOrFail($id);
+                    // Relu sous verrou : le joueur a pu payer entre la recherche et le verrou.
+                    if ($player->status !== 'invited' || $booking->status !== 'confirmed') {
+                        return 0;
+                    }
+                    $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card', guarantee: true);
+                    $player->update(['status' => 'covered']);
+                    if ($player->user_id === null && $player->guest_email !== null) {
+                        DB::afterCommit(fn () => Notification::route('mail', $player->guest_email)->notify(new AccessPassLink($player)));
+                    }
+
+                    return 1;
+                });
+            } catch (BookingException $e) {
+                // F9 : carte de garantie refusée. Les autres parts sont quand même débitées ; celle-ci est retentée au passage suivant.
+                report($e);
+            }
+        }
+
+        return $charged;
+    }
+
+    /** Ligne invitée de ce joueur sur la réservation, retrouvée par son compte ou par l'adresse invitée. */
+    public static function invitedPlayer(Booking $booking, User $user): ?BookingPlayer
+    {
+        return self::invitationsOf($booking->players()->getQuery(), $user)->first();
+    }
+
+    /**
+     * Restreint aux invitations de ce joueur. L'adresse invitée ne compte que si son e-mail est confirmé :
+     * sinon n'importe qui s'inscrirait avec l'adresse d'un autre pour prendre sa place.
+     *
+     * @param  Builder<BookingPlayer>  $players
+     * @return Builder<BookingPlayer>
+     */
+    public static function invitationsOf(Builder $players, User $user): Builder
+    {
+        return $players->where('is_organizer', false)->where(fn ($q) => $q->where('user_id', $user->id)
+            ->when($user->email_verified_at !== null, fn ($q) => $q->orWhere(fn ($q) => $q->whereNull('user_id')->whereRaw('lower(guest_email) = ?', [mb_strtolower($user->email)]))));
+    }
+
+    /**
+     * Parties ouvertes encore joignables : confirmées, à plus de 24 h, avec au moins une place née ouverte.
+     * Après 24 h, la garantie de l'organisateur a payé les places vides : il n'y a plus rien à prendre.
+     *
+     * @return Builder<Booking>
+     */
+    public static function openMatches(): Builder
+    {
+        return Booking::where('status', 'confirmed')->whereNull('walk_in_name')
+            ->where('starts_at', '>', now()->addHours(self::FREE_CANCELLATION_HOURS))
+            ->whereHas('players', fn ($q) => $q->where('is_organizer', false)->whereNull('guest_email'));
+    }
+
+    /** Un membre du club prend une place ouverte et paie sa part tout de suite. */
+    public function joinOpenMatch(Booking $booking, User $user, ?string $reference = null, ?int $received = null): BookingPlayer
+    {
+        return DB::transaction(function () use ($booking, $user, $reference, $received) {
+            $booking = $this->lockJoinable($booking, $user);
+            $spot = $booking->players()->where('is_organizer', false)->whereNull('user_id')->whereNull('guest_email')
+                ->where('status', 'invited')->lockForUpdate()->first()
+                ?? throw new BookingException(__('Cette partie est complète. Inscrivez-vous sur la liste d’attente.'));
+            $spot->update(['user_id' => $user->id]);
+            $this->charge($booking, $spot, $user, [$this->courtLine($booking, $spot)], 'card', useCredit: true, reference: $reference, received: $received);
+            $spot->update(['status' => 'paid']);
+            WaitlistEntry::where('booking_id', $booking->id)->where('user_id', $user->id)->delete();
+
+            return $spot->fresh();
+        });
+    }
+
+    public function joinWaitlist(Booking $booking, User $user): WaitlistEntry
+    {
+        return DB::transaction(function () use ($booking, $user) {
+            $booking = $this->lockJoinable($booking, $user);
+            if ($booking->players()->where('is_organizer', false)->whereNull('user_id')->whereNull('guest_email')->where('status', 'invited')->exists()) {
+                throw new BookingException(__('Une place est encore libre : prenez-la directement.'));
+            }
+
+            return WaitlistEntry::firstOrCreate(['booking_id' => $booking->id, 'user_id' => $user->id]);
+        });
+    }
+
+    public function leaveWaitlist(Booking $booking, User $user): void
+    {
+        WaitlistEntry::where('booking_id', $booking->id)->where('user_id', $user->id)->delete();
+    }
+
+    /**
+     * Un invité refuse avant 24 h : sa place devient ouverte et la liste d'attente est prévenue.
+     * Après 24 h, la garantie a déjà payé sa part et la place n'est plus à rendre.
+     */
+    public function declineShare(Booking $booking, User $user): void
+    {
+        DB::transaction(function () use ($booking, $user) {
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $player = self::invitedPlayer($booking, $user) ?? throw new BookingException(__('Cette invitation n’existe pas.'));
+            if ($player->status !== 'invited' || $booking->status !== 'confirmed' || now()->gt($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS))) {
+                throw new BookingException(__('Cette invitation ne peut plus être refusée.'));
+            }
+            $player->update(['user_id' => null, 'guest_email' => null]);
+            DB::afterCommit(function () use ($booking) {
+                foreach (WaitlistEntry::with('user')->where('booking_id', $booking->id)->get() as $entry) {
+                    $entry->user?->notify((new SpotAvailable($booking))->locale($entry->user->locale ?? app()->getLocale()));
+                }
+            });
+        });
+    }
+
+    /** Verrouille une partie ouverte et vérifie que ce membre peut y entrer. */
+    private function lockJoinable(Booking $booking, User $user): Booking
+    {
+        $booking = self::openMatches()->whereKey($booking->id)->lockForUpdate()->first()
+            ?? throw new BookingException(__('Cette partie n’accepte plus de joueurs.'));
+        if ($user->status !== 'active' || $user->email_verified_at === null) {
+            throw new BookingException(__('Votre compte doit être actif et votre e-mail confirmé pour réserver.'));
+        }
+        if ($booking->organizer_id === $user->id || self::invitedPlayer($booking, $user) !== null) {
+            throw new BookingException(__('Vous faites déjà partie de cette partie.'));
+        }
+
+        return $booking;
+    }
+
+    /** @param list<string> $guests */
+    private function splitShares(Booking $booking, BookingPlayer $organizer, User $user, array $guests, int $openSpots): void
+    {
+        $guests = array_values(array_unique(array_map(fn ($e) => mb_strtolower(trim($e)), $guests)));
+        $others = count($guests) + $openSpots;
+        if ($booking->walk_in_name !== null || $openSpots < 0 || $others > self::MAX_PLAYERS - 1 || in_array(mb_strtolower($user->email), $guests, true)) {
+            throw new BookingException(__('Invitez au plus trois autres joueurs, sans vous compter.'));
+        }
+        if (now()->gt($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS))) {
+            throw new BookingException(__('Le prix ne se partage que pour un match dans plus de 24 h.'));
+        }
+        // Seules les adresses e-mail comptent : une place ouverte n'envoie aucun message.
+        $sentToday = BookingPlayer::where('is_organizer', false)->whereNotNull('guest_email')->where('joined_at', '>', now()->subDay())
+            ->whereHas('booking', fn ($q) => $q->where('organizer_id', $user->id))->count();
+        if ($sentToday + count($guests) > self::MAX_INVITATIONS_PER_DAY) {
+            throw new BookingException(__('Vous avez envoyé trop d’invitations aujourd’hui. Réessayez demain.'));
+        }
+        $share = intdiv($booking->price_cents, $others + 1);
+        // Les centimes qui ne se divisent pas restent à l'organisateur.
+        $organizer->update(['share_cents' => $booking->price_cents - $share * $others]);
+        for ($i = 0; $i < $openSpots; $i++) {
+            // Place ouverte : ni compte ni adresse, le premier membre qui paie la prend.
+            BookingPlayer::create(['booking_id' => $booking->id, 'user_id' => null, 'guest_email' => null, 'is_organizer' => false, 'share_cents' => $share, 'status' => 'invited']);
+        }
+        foreach ($guests as $email) {
+            // Un compte dont l'e-mail n'est pas confirmé ne prouve pas qu'il possède l'adresse : l'invitation reste alors à l'adresse.
+            $invited = User::whereRaw('lower(email) = ?', [$email])->whereNotNull('email_verified_at')->first();
+            BookingPlayer::create([
+                // guest_email garde toujours l'adresse tapée : c'est la seule que l'organisateur reverra.
+                'booking_id' => $booking->id, 'user_id' => $invited?->id, 'guest_email' => $email,
+                'is_organizer' => false, 'share_cents' => $share, 'status' => 'invited',
+            ]);
+            // Envoyé seulement si le paiement aboutit : une transaction annulée n'invite personne.
+            DB::afterCommit(function () use ($booking, $user, $share, $email, $invited) {
+                $mail = (new ShareInvitation($booking, $user->name, $share))->locale($invited?->locale ?? app()->getLocale());
+                $invited ? $invited->notify($mail) : Notification::route('mail', $email)->notify($mail);
+            });
+        }
+    }
+
+    private function courtLine(Booking $booking, BookingPlayer $player): array
+    {
+        return ['label' => $booking->court->name.' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i'), 'quantity' => 1, 'unit' => $player->share_cents, 'vat' => (float) $booking->vat_rate];
+    }
+
+    /**
+     * Encaisse les lignes, émet la facture au nom de celui qui paie et le QR code du joueur.
+     *
+     * @param  list<array{label: string, quantity: int, unit: int, vat: float}>  $lines
+     * @param  string|null  $reference  paiement Stripe déjà encaissé sur la page de paiement
+     * @param  bool  $guarantee  débit de la carte de garantie de l'organisateur pour une part restée impayée
+     * @param  int|null  $received  montant déjà encaissé par Stripe pour ces lignes
+     */
+    private function charge(Booking $booking, BookingPlayer $player, User $payer, array $lines, string $method, bool $useCredit = false, ?string $reference = null, bool $guarantee = false, ?int $received = null): Payment
+    {
+        $amount = array_sum(array_map(fn ($l) => $l['quantity'] * $l['unit'], $lines));
+        // F15 : l'avoir du joueur se déduit en priorité ; la carte ne paie que le reste. La garantie n'y touche pas.
+        $credits = $useCredit ? $this->credits->lockUsable($payer) : collect();
+        $byCredit = min($amount, (int) $credits->sum('remaining_cents'));
+        // F9 : avoirs verrouillés, la part de la carte doit égaler ce que Stripe a encaissé. Un avoir utilisé entre-temps
+        // ailleurs ferait sinon payer moins que la commande ; la transaction est annulée et le paiement remboursé.
+        if ($received !== null && $amount - $byCredit !== $received) {
+            throw new BookingException(__('Le montant payé ne correspond plus à la commande.'));
+        }
+        if ($byCredit === $amount) {
+            $method = 'store_credit';
+        }
+        // F9 : la carte gardée en garantie est débitée chez Stripe, hors session.
+        if ($guarantee && $this->stripe->enabled() && $booking->guarantee_payment_method_id !== null) {
+            $reference = $this->stripe->chargeGuarantee($payer, $booking->guarantee_payment_method_id, $amount,
+                'Garantie – '.$lines[0]['label'], 'guarantee-'.$player->id.'-'.$amount);
+        }
+        // F9 : Stripe actif, une carte n'est jamais débitée « pour de faux ». Sans référence Stripe, seul l'avoir peut
+        // payer : sinon la place serait gratuite (part d'invité, partie ouverte, supplément, partie partagée sans carte gardée).
+        if ($method === 'card' && $reference === null && $this->stripe->enabled()) {
+            throw new BookingException(__('Ce paiement n’est pas encore possible par carte en ligne. Rien n’a été débité.'));
+        }
+        $payment = Payment::create([
+            'booking_id' => $booking->id,
+            'booking_player_id' => $player->id,
+            'payer_id' => $payer->id,
+            'method' => $method,
+            // Espèces et terminal du club n'ont pas de référence chez un prestataire de paiement.
+            'provider_reference' => $reference ?? ($method === 'card' ? 'test_'.Str::uuid() : null),
+            'amount_cents' => $amount,
+            'status' => 'succeeded',
+            'paid_at' => now(),
+            'is_guarantee_charge' => $guarantee,
+        ]);
+        $this->credits->spend($credits, $payment, $byCredit);
+        // La TVA se calcule ligne par ligne : 6 % sur le terrain, 21 % sur le matériel.
+        foreach ($lines as &$l) {
+            $l['total'] = $l['quantity'] * $l['unit'];
+            $l['net'] = (int) round($l['total'] / (1 + $l['vat'] / 100));
+        }
+        unset($l);
+        $net = array_sum(array_column($lines, 'net'));
+        $invoice = Invoice::create([
+            'number' => $this->nextNumber('invoice', 'F'),
+            'booking_id' => $booking->id,
+            'payment_id' => $payment->id,
+            'issued_at' => now(),
+            'customer_name' => $booking->walk_in_name ?? $payer->name,
+            'customer_company' => $booking->walk_in_name ? null : $payer->company_name,
+            'customer_vat' => $booking->walk_in_name ? null : $payer->vat_number,
+            'net_cents' => $net,
+            'vat_rate' => $booking->vat_rate,
+            'vat_cents' => $amount - $net,
+            'total_cents' => $amount,
+        ]);
+        foreach ($lines as $l) {
+            InvoiceLine::create([
+                'invoice_id' => $invoice->id, 'label' => $l['label'], 'quantity' => $l['quantity'], 'unit_price_cents' => $l['unit'],
+                'vat_rate' => $l['vat'], 'net_cents' => $l['net'], 'vat_cents' => $l['total'] - $l['net'], 'total_cents' => $l['total'],
+            ]);
+        }
+        // Un joueur garde un seul QR code : la garantie qui reprend une part déjà payée ne lui en crée pas un second.
+        AccessPass::firstOrCreate(['booking_player_id' => $player->id], [
+            'token_hash' => hash('sha256', self::passToken($player)),
+            'valid_from' => $booking->starts_at->subMinutes(15),
+            'valid_until' => $booking->ends_at,
+        ]);
+
+        return $payment;
+    }
+
+    /**
+     * Rembourse tout ou partie d'un paiement : note de crédit qui renvoie à la facture, puis remboursement.
+     * Un montant partiel se répartit entre net et TVA dans la même proportion que la facture (6 % et 21 % mêlés).
+     * À appeler dans une transaction.
+     *
+     * @param  bool  $asCredit  tout rendre en avoir (demande exceptionnelle acceptée en avoir)
+     */
+    public function refund(Payment $payment, int $amount, string $note, string $code, bool $asCredit = false): CreditNote
+    {
+        // Verrou sur le paiement : deux remboursements simultanés ne peuvent pas dépasser le montant payé.
+        $payment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+        $refundable = self::refundable($payment);
+        if ($amount <= 0 || $amount > $refundable) {
+            throw new BookingException(__('Ce montant dépasse ce qui reste remboursable sur ce paiement.'));
+        }
+        $invoice = Invoice::where('payment_id', $payment->id)->firstOrFail();
+        // Le remboursement qui solde le paiement prend ce qui reste hors TVA : la somme des notes de crédit
+        // retombe ainsi au centime près sur la facture, même après plusieurs remboursements partiels.
+        $net = $amount === $refundable
+            ? $invoice->net_cents - (int) CreditNote::where('invoice_id', $invoice->id)->sum('net_cents')
+            : (int) round($invoice->net_cents * $amount / $invoice->total_cents);
+        $creditNote = CreditNote::create([
+            'number' => $this->nextNumber('credit_note', 'NC'),
+            'invoice_id' => $invoice->id,
+            'issued_at' => now(),
+            'net_cents' => $net,
+            'vat_cents' => $amount - $net,
+            'total_cents' => $amount,
+            'reason' => $note,
+        ]);
+        // F15 : ce qu'un avoir a payé revient en avoir, le reste retourne au moyen de paiement d'origine.
+        // Une seule note de crédit couvre les deux remboursements.
+        $toCredit = $asCredit ? $amount : min($amount, StoreCreditService::creditPart($payment));
+        foreach (['store_credit' => $toCredit, 'original_payment' => $amount - $toCredit] as $method => $part) {
+            if ($part === 0) {
+                continue;
+            }
+            // F9 : un paiement encaissé par Stripe est remboursé chez Stripe. Si Stripe refuse, la transaction
+            // est annulée et rien n'est noté ; la clé d'idempotence évite un second remboursement si on rejoue.
+            $stripeRefund = $method === 'original_payment' && $this->stripe->enabled() && str_starts_with((string) $payment->provider_reference, 'pi_')
+                ? $this->stripe->refund($payment->provider_reference, $part, 'refund-'.$payment->id.'-'.$creditNote->id)
+                : null;
+            $refund = Refund::create([
+                'payment_id' => $payment->id, 'amount_cents' => $part, 'reason' => $code, 'method' => $method,
+                'status' => 'succeeded', 'credit_note_id' => $creditNote->id, 'stripe_refund_id' => $stripeRefund,
+            ]);
+            if ($method === 'store_credit') {
+                $this->credits->grant(User::findOrFail($payment->payer_id), $part, $asCredit ? 'dispute' : 'refund', $refund);
+            }
+        }
+        $payment->update(['status' => $amount === $refundable ? 'refunded' : 'partially_refunded']);
+
+        return $creditNote;
+    }
+
+    /** Ce qui reste remboursable sur un paiement, une fois retirés les remboursements déjà faits. */
+    public static function refundable(Payment $payment): int
+    {
+        return $payment->amount_cents - (int) Refund::where('payment_id', $payment->id)->where('status', '<>', 'failed')->sum('amount_cents');
+    }
+
+    /**
+     * Rembourse le solde de chaque paiement. Un paiement déjà remboursé en partie (demande exceptionnelle)
+     * rend ce qui lui reste, pas son montant de départ. À appeler dans une transaction.
+     *
+     * @param  iterable<Payment>  $payments
+     */
+    private function refundRest(iterable $payments, string $note, string $code): int
+    {
+        $total = 0;
+        foreach ($payments as $payment) {
+            $rest = self::refundable($payment);
+            if ($rest > 0) {
+                $this->refund($payment, $rest, $note, $code);
+                $total += $rest;
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * F14 : l'organisateur déplace sa réservation vers un autre créneau libre, au plus tard 24 h avant le match.
+     * La même réservation change de créneau : l'ancien est libéré, le QR code ne vaut plus que pour le nouveau.
+     * La différence de prix est encaissée (l'avoir d'abord) ou remboursée avec une note de crédit.
+     */
+    public function move(Booking $booking, User $user, Court $court, CarbonImmutable $startUtc, ?string $reference = null, ?int $received = null): Booking
+    {
+        if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::slots(), true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
+            throw new BookingException(__('Ce créneau n’existe pas ou n’est plus réservable.'));
+        }
+        $rule = $this->slots->priceFor($startUtc);
+        if ($rule === null || ! $court->is_active) {
+            throw new BookingException(__('Ce terrain n’est pas réservable à cette heure.'));
+        }
+        $end = $startUtc->addMinutes(Clock::slotMinutes());
+
+        return DB::transaction(function () use ($booking, $user, $court, $startUtc, $end, $rule, $reference, $received) {
+            // Même ordre de verrous que hold() : le terrain d'arrivée, puis la réservation.
+            self::lockCourt($court->id);
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            if ($booking->organizer_id !== $user->id || $booking->walk_in_name !== null || $booking->status !== 'confirmed') {
+                throw new BookingException(__('Cette réservation ne peut plus être déplacée.'));
+            }
+            if (now()->gt($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS))) {
+                throw new BookingException(__('Une réservation se déplace au plus tard 24 h avant le match.'));
+            }
+            // Les partenaires ont payé ce créneau-là : on ne leur impose pas une autre heure.
+            if ($booking->players()->count() > 1) {
+                throw new BookingException(__('Une partie partagée ne se déplace pas : vos partenaires ont payé ce créneau.'));
+            }
+            if ($booking->court_id === $court->id && $booking->starts_at->equalTo($startUtc)) {
+                throw new BookingException(__('C’est déjà le créneau de votre réservation.'));
+            }
+            if (CourtClosure::where('court_id', $court->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc)->exists()) {
+                throw new BookingException(__('Ce terrain est fermé sur ce créneau.'));
+            }
+            // Le matériel loué suit la partie : il doit rester libre sur le nouveau créneau.
+            // Articles verrouillés avant de compter, comme dans reserveItems() : deux déplacements ne prennent pas la même raquette.
+            $items = $booking->items()->get();
+            $products = Product::whereIn('id', $items->pluck('product_id'))->lockForUpdate()->get()->keyBy('id');
+            foreach ($items as $item) {
+                $product = $products[$item->product_id];
+                $used = (int) BookingItem::where('product_id', $product->id)
+                    ->whereHas('booking', fn ($q) => $q->whereIn('status', Booking::ACTIVE)->where('id', '!=', $booking->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc))
+                    ->sum('quantity');
+                if ($product->kind === 'rental' && $used + $item->quantity > $product->stock) {
+                    throw new BookingException(__('Plus assez de « :product » sur ce créneau : il en reste :left.', ['product' => $product->name, 'left' => max(0, $product->stock - $used)]));
+                }
+            }
+            $from = $booking->court->name.' – '.Clock::local($booking->starts_at)->format('d/m/Y H:i');
+            $price = $this->slots->priceCents($rule, $startUtc);
+            $diff = $price - $booking->price_cents;
+            // F9 : un supplément payé chez Stripe pour un prix qui a baissé depuis (prix flash) n'est pas gardé : il est rendu.
+            if ($reference !== null && $diff <= 0) {
+                throw new BookingException(__('Le montant payé ne correspond plus à la commande.'));
+            }
+            try {
+                // Point de sauvegarde, comme dans hold() : la contrainte d'exclusion refuse un créneau pris entre-temps.
+                DB::transaction(fn () => $booking->update([
+                    'court_id' => $court->id, 'pricing_rule_id' => $rule->id, 'starts_at' => $startUtc, 'ends_at' => $end, 'price_cents' => $price, 'vat_rate' => $rule->vat_rate,
+                ]));
+            } catch (QueryException $e) {
+                if ($e->getCode() === '23P01') {
+                    throw new BookingException(__('Ce créneau vient d’être réservé par quelqu’un d’autre.'));
+                }
+                throw $e;
+            }
+            $booking->setRelation('court', $court);
+            $player = $booking->players()->firstOrFail();
+            $player->update(['share_cents' => $price]);
+            if ($diff > 0) {
+                $line = $this->courtLine($booking, $player);
+                $this->charge($booking, $player, $user, [[...$line, 'label' => 'Supplément de déplacement : '.$line['label'], 'unit' => $diff]], 'card', useCredit: true, reference: $reference, received: $received);
+            }
+            // Moins cher : la différence revient sur les derniers paiements de l'organisateur, avec une note de crédit.
+            $left = -$diff;
+            foreach ($this->openPayments($booking)->where('payer_id', $user->id)->sortByDesc('id') as $payment) {
+                $part = min($left, self::refundable($payment));
+                if ($part > 0) {
+                    $this->refund($payment, $part, 'Réservation déplacée sur un créneau moins cher.', 'booking_moved');
+                    $left -= $part;
+                }
+            }
+            AccessPass::where('booking_player_id', $player->id)->update(['valid_from' => $startUtc->subMinutes(15), 'valid_until' => $end]);
+            $this->history($booking, 'confirmed', 'confirmed', 'Déplacée depuis '.$from.'.', $user->id);
 
             return $booking->fresh();
         });
@@ -180,33 +752,230 @@ class BookingService
         return DB::transaction(function () use ($booking, $user) {
             $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
             if ($booking->status !== 'confirmed') {
-                throw new BookingException('Cette réservation ne peut plus être annulée.');
+                throw new BookingException(__('Cette réservation ne peut plus être annulée.'));
             }
             if (! $booking->starts_at->isFuture()) {
-                throw new BookingException('Le créneau a commencé. Seule une demande exceptionnelle reste possible.');
+                throw new BookingException(__('Le créneau a commencé. Seule une demande exceptionnelle reste possible.'));
             }
             $refundable = now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS));
             if ($refundable) {
-                foreach ($booking->payments()->where('status', 'succeeded')->get() as $payment) {
-                    $invoice = Invoice::where('payment_id', $payment->id)->firstOrFail();
-                    $note = CreditNote::create([
-                        'number' => $this->nextNumber('credit_note', 'NC'),
-                        'invoice_id' => $invoice->id,
-                        'issued_at' => now(),
-                        'net_cents' => $invoice->net_cents,
-                        'vat_cents' => $invoice->vat_cents,
-                        'total_cents' => $invoice->total_cents,
-                        'reason' => 'Annulation au moins 24 h avant le match.',
-                    ]);
-                    Refund::create(['payment_id' => $payment->id, 'amount_cents' => $payment->amount_cents, 'reason' => 'cancellation_24h', 'status' => 'succeeded', 'credit_note_id' => $note->id]);
-                    $payment->update(['status' => 'refunded']);
+                $back = [];
+                foreach ($this->openPayments($booking) as $payment) {
+                    $back[$payment->payer_id] = ($back[$payment->payer_id] ?? 0) + $this->refundRest([$payment], 'Annulation au moins 24 h avant le match.', 'cancellation_24h');
+                }
+                $this->restock($booking);
+                // Les partenaires n'ont rien décidé : ils apprennent l'annulation et ce qui leur est rendu.
+                foreach ($booking->players()->where('is_organizer', false)->whereIn('status', ['invited', 'paid'])->get() as $player) {
+                    $this->notifyCancelled($booking, $player, $back[$player->user_id] ?? 0, 'L’organisateur a annulé la partie.');
                 }
             }
-            AccessPass::whereIn('booking_player_id', $booking->players()->pluck('id'))->whereNull('revoked_at')->update(['revoked_at' => now()]);
-            $booking->update(['cancelled_at' => now()]);
-            $this->transition($booking, $refundable ? 'cancelled_refunded' : 'cancelled_unrefunded', $refundable ? 'Annulation au moins 24 h avant.' : 'Annulation moins de 24 h avant.', $user->id);
+            if (! $refundable) {
+                // Annulée trop tard : l'organisateur supporte seul le prix du terrain.
+                // La garantie encaisse ici les parts impayées, sans attendre la tâche planifiée.
+                foreach ($booking->players()->where('is_organizer', false)->where('status', 'invited')->get() as $player) {
+                    $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card', guarantee: true);
+                    $player->update(['status' => 'covered']);
+                }
+                // Un partenaire qui avait payé sa part n'a rien décidé : elle lui est rendue et passe sur la garantie.
+                foreach ($booking->players()->where('is_organizer', false)->where('status', 'paid')->get() as $player) {
+                    $back = $this->refundRest($this->openPayments($booking)->where('booking_player_id', $player->id)->where('payer_id', '!=', $booking->organizer_id),
+                        'Partie annulée par l’organisateur moins de 24 h avant.', 'organizer_cancellation');
+                    if ($back === 0) {
+                        continue;
+                    }
+                    $this->charge($booking, $player, $booking->organizer, [[...$this->courtLine($booking, $player), 'unit' => $back]], 'card', guarantee: true);
+                    $player->update(['status' => 'covered']);
+                    $this->notifyCancelled($booking, $player, $back, 'L’organisateur a annulé la partie.');
+                }
+            }
+            $this->close($booking, $refundable ? 'cancelled_refunded' : 'cancelled_unrefunded', $refundable ? 'Annulation au moins 24 h avant.' : 'Annulation moins de 24 h avant.', $user->id);
+            if ($booking->walk_in_name === null && $booking->organizer_id === $user->id) {
+                $this->flagCancellations($user);
+            }
 
             return $booking->fresh();
+        });
+    }
+
+    /**
+     * Compteur d'annulations (réserver puis annuler en boucle) : au-delà de trois en trente jours, le gérant reçoit un signalement.
+     * Un seul par période : un signalement classé ne revient pas à chaque annulation suivante.
+     */
+    private function flagCancellations(User $user): void
+    {
+        $since = now()->subDays(30);
+        if (FraudFlag::where('user_id', $user->id)->where('type', 'repeated_cancellations')->where('created_at', '>', $since)->exists()) {
+            return;
+        }
+        // Seules comptent ses propres annulations : celles du club ne disent rien du joueur.
+        $statuses = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('cancelled_at', '>', $since)
+            ->whereExists(fn ($q) => $q->from('booking_status_histories')->whereColumn('booking_id', 'bookings.id')->where('changed_by', $user->id)
+                ->whereIn('to_status', ['cancelled_refunded', 'cancelled_unrefunded']))
+            ->pluck('status');
+        if ($statuses->count() > self::CANCELLATIONS_BEFORE_FLAG) {
+            FraudFlag::create(['user_id' => $user->id, 'type' => 'repeated_cancellations', 'details' => sprintf('%d annulations en 30 jours, dont %d à moins de 24 h du match.',
+                $statuses->count(), $statuses->filter(fn ($s) => $s === 'cancelled_unrefunded')->count())]);
+        }
+    }
+
+    /**
+     * Annulation décidée par le club : le gérant, une demande exceptionnelle acceptée ou un compte suspendu.
+     * Chaque payeur retrouve tout ce qu'il a payé, même à moins de 24 h, et chaque joueur est prévenu.
+     *
+     * @param  string  $reason  motif gardé dans l'historique
+     * @param  string|null  $public  motif envoyé aux joueurs, s'il ne doit pas être le même
+     */
+    public function cancelByClub(Booking $booking, ?User $staff, string $reason, string $code = 'club_cancellation', ?string $public = null): Booking
+    {
+        return DB::transaction(function () use ($booking, $staff, $reason, $code, $public) {
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            if ($booking->status !== 'confirmed' || ! $booking->starts_at->isFuture()) {
+                throw new BookingException(__('Cette réservation ne peut plus être annulée.'));
+            }
+            $back = [];
+            foreach ($this->openPayments($booking) as $payment) {
+                $back[$payment->payer_id] = ($back[$payment->payer_id] ?? 0) + $this->refundRest([$payment], 'Annulation par le club.', $code);
+            }
+            $this->restock($booking);
+            $this->close($booking, 'cancelled_refunded', 'Annulée par le club : '.$reason, $staff?->id);
+            // Le client du comptoir n'a pas de compte : le gérant le prévient lui-même.
+            foreach ($booking->walk_in_name === null ? $booking->players()->get() : [] as $player) {
+                $this->notifyCancelled($booking, $player, $back[$player->user_id] ?? 0, $public ?? $reason);
+            }
+
+            return $booking->fresh();
+        });
+    }
+
+    /**
+     * Un joueur ne joue plus une partie à venir, par décision du club : sa demande exceptionnelle est acceptée en entier.
+     * L'organisateur emporte la partie avec lui, un partenaire libère seulement sa place. À appeler dans une transaction.
+     */
+    public function withdraw(Booking $booking, User $user, ?User $staff, string $reason, string $code): void
+    {
+        if ($booking->status !== 'confirmed' || ! $booking->starts_at->isFuture()) {
+            return;
+        }
+        if ($booking->organizer_id === $user->id) {
+            $this->cancelByClub($booking, $staff, $reason, $code, 'La partie est annulée par le club.');
+
+            return;
+        }
+        foreach ($booking->players()->where('is_organizer', false)->where('user_id', $user->id)->whereIn('status', ['invited', 'paid'])->get() as $player) {
+            $this->leave($player, $user, $reason, $code);
+        }
+    }
+
+    /**
+     * Compte suspendu ou révoqué (cas limite du T03) : ses QR codes sont désactivés, ses réservations à venir
+     * annulées et remboursées, ses places chez les autres libérées. À appeler dans une transaction.
+     */
+    public function releaseAccount(User $user, ?User $staff): int
+    {
+        $bookings = Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('status', 'confirmed')->where('starts_at', '>', now())->get();
+        foreach ($bookings as $booking) {
+            $this->cancelByClub($booking, $staff, 'Compte de l’organisateur suspendu.', 'suspension', 'La partie est annulée par le club.');
+        }
+        // Un créneau encore bloqué sans paiement est libéré tout de suite.
+        foreach (Booking::where('organizer_id', $user->id)->whereNull('walk_in_name')->where('status', 'pending_payment')->get() as $booking) {
+            $this->transition($booking, 'expired', 'Compte suspendu.', $staff?->id);
+        }
+        // Ses places dans les parties des autres : sa part lui est rendue, la partie continue sans lui.
+        $places = BookingPlayer::where('user_id', $user->id)->where('is_organizer', false)->whereIn('status', ['invited', 'paid'])
+            ->whereHas('booking', fn ($q) => $q->where('status', 'confirmed')->where('starts_at', '>', now()))->get();
+        foreach ($places as $player) {
+            $this->leave($player, $user, 'Compte suspendu.', 'suspension');
+        }
+        WaitlistEntry::where('user_id', $user->id)->delete();
+
+        return $bookings->count();
+    }
+
+    /** Un partenaire quitte une partie par décision du club : sa part lui est rendue, son QR code désactivé, sa place ne coûte rien à l'organisateur. */
+    private function leave(BookingPlayer $player, User $user, string $reason, string $code): void
+    {
+        $this->refundRest($this->openPayments($player->booking)->where('booking_player_id', $player->id)->where('payer_id', $user->id), $reason, $code);
+        AccessPass::where('booking_player_id', $player->id)->whereNull('revoked_at')->update(['revoked_at' => now()]);
+        $player->update(['status' => 'withdrawn']);
+    }
+
+    /**
+     * Paiements d'une réservation sur lesquels il reste quelque chose à rendre.
+     *
+     * @return Collection<int, Payment>
+     */
+    private function openPayments(Booking $booking): Collection
+    {
+        return $booking->payments()->whereIn('status', ['succeeded', 'partially_refunded'])->get();
+    }
+
+    /** Remboursés avant le match, les articles vendus n'ont pas été remis : ils reviennent en stock. */
+    private function restock(Booking $booking): void
+    {
+        foreach ($booking->items()->whereHas('product', fn ($q) => $q->where('kind', 'sale'))->get() as $item) {
+            Product::whereKey($item->product_id)->increment('stock', $item->quantity);
+        }
+    }
+
+    /** F30 : contestation bancaire ouverte. Une réservation confirmée est gelée ; la borne refuse alors ses QR codes. À appeler dans une transaction. */
+    public function freeze(Booking $booking, string $reason): void
+    {
+        if ($booking->status === 'confirmed') {
+            $this->transition($booking, 'frozen', $reason);
+        }
+    }
+
+    /**
+     * F30 : contestation close. Gagnée, la réservation redevient confirmée ; perdue, la banque a rendu l'argent au joueur :
+     * la réservation est remboursée et ses QR codes révoqués. À appeler dans une transaction.
+     */
+    public function thaw(Booking $booking, bool $won, string $reason): void
+    {
+        if ($booking->status !== 'frozen') {
+            return;
+        }
+        $won ? $this->transition($booking, 'confirmed', $reason) : $this->close($booking, 'cancelled_refunded', $reason, null);
+    }
+
+    /** Ferme une réservation annulée : plus aucun QR code ne passe, et le changement d'état est tracé. */
+    private function close(Booking $booking, string $status, string $reason, ?int $by): void
+    {
+        AccessPass::whereIn('booking_player_id', $booking->players()->pluck('id'))->whereNull('revoked_at')->update(['revoked_at' => now()]);
+        $booking->update(['cancelled_at' => now()]);
+        $this->transition($booking, $status, $reason, $by);
+        $this->offerFreedSlot($booking);
+    }
+
+    /**
+     * F13 : le créneau libéré par une annulation est proposé à la liste d'attente de la partie.
+     * Tous les inscrits sont prévenus, le premier qui réserve le créneau le prend. La partie n'existe plus, sa liste non plus.
+     */
+    private function offerFreedSlot(Booking $booking): void
+    {
+        $entries = WaitlistEntry::with('user')->where('booking_id', $booking->id)->get();
+        WaitlistEntry::where('booking_id', $booking->id)->delete();
+        if ($entries->isEmpty() || ! $booking->starts_at->isFuture()) {
+            return;
+        }
+        DB::afterCommit(function () use ($booking, $entries) {
+            foreach ($entries as $entry) {
+                if ($entry->user?->status === 'active') {
+                    $entry->user->notify((new SlotFreed($booking))->locale($entry->user->locale ?? app()->getLocale()));
+                }
+            }
+        });
+    }
+
+    /** Prévient un joueur que sa partie est annulée, dans sa langue, une fois la transaction validée. */
+    private function notifyCancelled(Booking $booking, BookingPlayer $player, int $refunded, string $reason): void
+    {
+        $user = $player->user;
+        if ($user === null && $player->guest_email === null) {
+            return;
+        }
+        DB::afterCommit(function () use ($booking, $player, $user, $refunded, $reason) {
+            $mail = (new MatchCancelled($booking, $refunded, $reason))->locale($user?->locale ?? app()->getLocale());
+            $user ? $user->notify($mail) : Notification::route('mail', $player->guest_email)->notify($mail);
         });
     }
 
@@ -223,13 +992,20 @@ class BookingService
         // Verrouiller les articles évite que deux paiements simultanés louent la même raquette.
         $products = Product::whereIn('id', array_keys($items))->where('is_active', true)->lockForUpdate()->get()->keyBy('id');
         foreach ($items as $productId => $quantity) {
-            $product = $products->get($productId) ?? throw new BookingException('Cet article n’est plus proposé.');
+            $product = $products->get($productId) ?? throw new BookingException(__('Cet article n’est plus proposé.'));
             $used = (int) BookingItem::where('product_id', $product->id)
                 ->whereHas('booking', fn ($q) => $q->whereIn('status', Booking::ACTIVE)->where('id', '!=', $booking->id)
                     ->where('starts_at', '<', $booking->ends_at)->where('ends_at', '>', $booking->starts_at))
                 ->sum('quantity');
             if ($product->kind === 'rental' && $used + $quantity > $product->stock) {
-                throw new BookingException("Plus assez de « {$product->name} » sur ce créneau : il en reste ".max(0, $product->stock - $used).'.');
+                throw new BookingException(__('Plus assez de « :product » sur ce créneau : il en reste :left.', ['product' => $product->name, 'left' => max(0, $product->stock - $used)]));
+            }
+            // Un article vendu quitte le stock pour de bon (la ligne est déjà verrouillée plus haut).
+            if ($product->kind === 'sale') {
+                if ($quantity > $product->stock) {
+                    throw new BookingException(__('Plus assez de « :product » en stock : il en reste :left.', ['product' => $product->name, 'left' => $product->stock]));
+                }
+                $product->decrement('stock', $quantity);
             }
             $reserved[] = BookingItem::create(['booking_id' => $booking->id, 'product_id' => $product->id, 'quantity' => $quantity, 'unit_price_cents' => $product->price_cents, 'vat_rate' => $product->vat_rate])->setRelation('product', $product);
         }

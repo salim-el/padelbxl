@@ -9,3 +9,11 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('bookings:expire-holds')->everyMinute();
+Schedule::command('bookings:charge-unpaid-shares')->everyFiveMinutes();
+Schedule::command('accounts:anonymize')->dailyAt('03:00');
+// Les passages à la borne ne sont gardés que trois mois (T18).
+Schedule::command('access-logs:prune')->dailyAt('03:15');
+// Le journal des actions sensibles n'est gardé qu'un an (minimisation RGPD).
+Schedule::command('activitylog:clean')->dailyAt('03:30');
+// F28 : à la fin de la durée, le compte suspendu redevient actif.
+Schedule::command('accounts:lift-suspensions')->everyFifteenMinutes();

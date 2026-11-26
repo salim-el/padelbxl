@@ -1,8 +1,10 @@
 import { BackButton } from '@/components/back-button';
 import { PageHeader } from '@/components/page-header';
+import TermsLink from '@/components/terms-link';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
-import { euros, GAME_MODES, ucfirst } from '@/lib/money';
+import { useT } from '@/lib/i18n';
+import { euros, ucfirst } from '@/lib/money';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { CalendarDays, Clock, ShieldAlert, ShieldCheck, Timer } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -10,7 +12,6 @@ import { useEffect, useState } from 'react';
 type Booking = {
     id: string;
     court: string;
-    is_arena: boolean;
     date: string;
     time: string;
     price_cents: number;
@@ -18,23 +19,60 @@ type Booking = {
     hold_expires_at: string | null;
     free_cancellation_until: string;
     refundable: boolean;
-    arcade_price_cents: number | null;
 };
 
 type Product = { id: number; name: string; kind: 'rental' | 'sale'; price_cents: number };
 
-export default function Checkout({ booking, products }: { booking: Booking; products: Product[] }) {
-    const { data, setData, post, processing, errors } = useForm<{ accept_terms: boolean; game_mode: string | null; items: Record<number, number> }>({
+export default function Checkout({
+    booking,
+    products,
+    my_level,
+    credit_cents,
+}: {
+    booking: Booking;
+    products: Product[];
+    my_level: number | null;
+    credit_cents: number;
+}) {
+    const t = useT();
+    // F9 : avec les clés Stripe, le paiement passe par la page de Stripe ; sinon il reste simulé.
+    const { stripe } = usePage<{ stripe: boolean }>().props;
+    const { data, setData, post, processing, errors } = useForm<{
+        accept_terms: boolean;
+        items: Record<number, number>;
+        guests: string[];
+        open_spots: number;
+        level_min: number;
+        level_max: number;
+        accept_guarantee: boolean;
+    }>({
         accept_terms: false,
-        game_mode: 'classic',
         items: {},
+        guests: ['', '', ''],
+        open_spots: 0,
+        level_min: Math.max(1, (my_level ?? 4) - 1),
+        level_max: Math.min(7, (my_level ?? 4) + 1),
+        accept_guarantee: false,
     });
     const pageErrors = usePage<{ errors: Record<string, string> }>().props.errors;
     const [left, setLeft] = useState(0);
-    const arcade = data.game_mode !== 'classic' && booking.arcade_price_cents !== null;
-    const court = arcade ? (booking.arcade_price_cents as number) : booking.price_cents;
+    const court = booking.price_cents;
     const extras = products.reduce((sum, p) => sum + (data.items[p.id] ?? 0) * p.price_cents, 0);
-    const total = court + extras;
+    // Même calcul que le serveur : part égale, les centimes restants à l'organisateur.
+    const emails = data.guests.filter((g) => g.trim() !== '').length;
+    const partners = emails + data.open_spots;
+    const maxOpen = 3 - emails;
+    const share = Math.floor(court / (partners + 1));
+    const myShare = court - share * partners;
+    const total = myShare + extras;
+    // F15 : même règle que le serveur, l'avoir paie d'abord et la carte le reste.
+    const byCredit = Math.min(credit_cents, total);
+    const byCard = total - byCredit;
+    const setGuest = (i: number, email: string) =>
+        setData(
+            'guests',
+            data.guests.map((g, j) => (j === i ? email : g)),
+        );
     const setQty = (id: number, q: number) => setData('items', { ...data.items, [id]: Math.max(0, Math.min(4, q)) });
 
     useEffect(() => {
@@ -47,18 +85,18 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
     const urgent = left < 120;
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Paiement', href: '#' }]}>
-            <Head title="Paiement" />
+        <AppLayout breadcrumbs={[{ title: t('Paiement'), href: '#' }]}>
+            <Head title={t('Paiement')} />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-4">
-                <BackButton href="/planning">Planning</BackButton>
-                <PageHeader eyebrow="Dernière étape" title="Paiement">
+                <BackButton href="/planning">{t('Planning')}</BackButton>
+                <PageHeader eyebrow={t('Dernière étape')} title={t('Paiement')}>
                     <span
                         aria-live="polite"
                         className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-mono text-sm font-bold ${urgent ? 'bg-[#CC3342] text-white' : 'bg-[#C8E64A] text-[#0E1B2C]'}`}
                     >
                         <Timer className="size-4" aria-hidden />
                         {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
-                        <span className="sr-only">avant la libération du créneau</span>
+                        <span className="sr-only">{t('avant la libération du créneau')}</span>
                     </span>
                 </PageHeader>
 
@@ -73,23 +111,31 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                         </li>
                         {booking.refundable ? (
                             <li className="flex items-center gap-2">
-                                <ShieldCheck className="size-4 text-[#4E6600]" aria-hidden /> Annulation gratuite jusqu’au{' '}
-                                {booking.free_cancellation_until}
+                                <ShieldCheck className="size-4 text-[#4E6600]" aria-hidden />{' '}
+                                {t('Annulation gratuite jusqu’au :date', { date: booking.free_cancellation_until })}
                             </li>
                         ) : (
                             <li className="flex items-center gap-2 font-semibold text-[#9E2833]">
-                                <ShieldAlert className="size-4" aria-hidden /> Match dans moins de 24 h : une annulation ne sera pas remboursée.
+                                <ShieldAlert className="size-4" aria-hidden />{' '}
+                                {t('Match dans moins de 24 h : une annulation ne sera pas remboursée.')}
                             </li>
                         )}
                     </ul>
                     <div className="mt-5 flex items-end justify-between border-t border-dashed pt-4">
-                        <span className="text-sm text-[#5F6B78]">Total TTC, TVA {booking.vat_rate} % comprise</span>
+                        <span className="text-sm text-[#5F6B78]">{t('Total TTC, TVA :rate % comprise', { rate: booking.vat_rate })}</span>
                         <span className="text-3xl font-extrabold">{euros(total)}</span>
                     </div>
+                    {byCredit > 0 && (
+                        <p className="mt-3 rounded-lg bg-[#F4F9E1] p-3 text-sm text-[#17304A]">
+                            {t('Votre avoir paie :credit. Reste à payer par carte : :card.', { credit: euros(byCredit), card: euros(byCard) })}
+                        </p>
+                    )}
                 </section>
 
                 <p className="rounded-lg bg-[#E6ECF2] p-3 text-sm text-[#17304A]">
-                    Version alpha : le paiement est simulé. Aucune carte n’est débitée.
+                    {stripe
+                        ? t('Paiement sécurisé par Stripe, en mode test : aucune carte réelle n’est débitée.')
+                        : t('Version alpha : le paiement est simulé. Aucune carte n’est débitée.')}
                 </p>
 
                 <form
@@ -99,51 +145,15 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                     }}
                     className="flex flex-col gap-3"
                 >
-                    {booking.arcade_price_cents !== null && (
-                        <fieldset className="flex flex-col gap-2">
-                            <legend className="mb-2 font-bold">Choisissez votre mode de jeu</legend>
-                            <div className="grid gap-2 sm:grid-cols-2">
-                                {Object.entries(GAME_MODES).map(([value, mode]) => (
-                                    <label
-                                        key={value}
-                                        className={`cursor-pointer rounded-xl border-2 p-3 text-sm transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#1D5C7A] ${
-                                            data.game_mode === value
-                                                ? 'border-[#C8E64A] bg-[#0E1B2C] text-[#F7F6F1]'
-                                                : 'bg-card border-[#DAD7CC] hover:border-[#C8E64A]'
-                                        }`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="game_mode"
-                                            value={value}
-                                            checked={data.game_mode === value}
-                                            onChange={() => setData('game_mode', value)}
-                                            className="sr-only"
-                                        />
-                                        <span className={`flex justify-between gap-2 font-bold ${data.game_mode === value ? 'text-[#C8E64A]' : ''}`}>
-                                            {mode.label}
-                                            <span className="text-xs">
-                                                {value === 'classic' || booking.arcade_price_cents === null
-                                                    ? 'inclus'
-                                                    : `+${euros(booking.arcade_price_cents - booking.price_cents)}`}
-                                            </span>
-                                        </span>
-                                        <span className="mt-1 block text-xs opacity-80">{mode.text}</span>
-                                    </label>
-                                ))}
-                            </div>
-                            {errors.game_mode && <p className="text-sm text-[#9E2833]">Choisissez un des modes de jeu proposés.</p>}
-                        </fieldset>
-                    )}
                     {products.length > 0 && (
                         <fieldset className="flex flex-col gap-2">
-                            <legend className="mb-2 font-bold">Matériel</legend>
+                            <legend className="mb-2 font-bold">{t('Matériel')}</legend>
                             {products.map((p) => (
                                 <div key={p.id} className="bg-card flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
                                     <span>
                                         <span className="font-semibold">{p.name}</span>
                                         <span className="text-muted-foreground block text-xs">
-                                            {euros(p.price_cents)} {p.kind === 'rental' ? 'par partie' : 'l’unité'} · TVA 21 %
+                                            {euros(p.price_cents)} {t(p.kind === 'rental' ? 'par partie' : 'l’unité')} · {t('TVA 21 %')}
                                         </span>
                                     </span>
                                     <span className="flex items-center gap-2">
@@ -151,7 +161,7 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                                             type="button"
                                             onClick={() => setQty(p.id, (data.items[p.id] ?? 0) - 1)}
                                             className="size-8 rounded-md border font-bold"
-                                            aria-label={`Retirer : ${p.name}`}
+                                            aria-label={t('Retirer : :name', { name: p.name })}
                                         >
                                             −
                                         </button>
@@ -162,7 +172,7 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                                             type="button"
                                             onClick={() => setQty(p.id, (data.items[p.id] ?? 0) + 1)}
                                             className="size-8 rounded-md border font-bold"
-                                            aria-label={`Ajouter : ${p.name}`}
+                                            aria-label={t('Ajouter : :name', { name: p.name })}
                                         >
                                             +
                                         </button>
@@ -170,6 +180,130 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                                 </div>
                             ))}
                         </fieldset>
+                    )}
+                    {booking.refundable ? (
+                        <fieldset className="flex flex-col gap-2">
+                            <legend className="mb-1 font-bold">{t('Partager le prix (facultatif)')}</legend>
+                            <p className="text-sm text-[#5F6B78]">
+                                {t('Chaque partenaire reçoit un e-mail et paie sa part. Vous ne payez que la vôtre.')}
+                            </p>
+                            {data.guests.map((g, i) => (
+                                <label key={i} className="flex flex-col gap-1 text-sm">
+                                    <span className="sr-only">{t('E-mail du partenaire :n', { n: i + 1 })}</span>
+                                    <input
+                                        type="email"
+                                        autoComplete="off"
+                                        value={g}
+                                        onChange={(e) => setGuest(i, e.target.value)}
+                                        placeholder={t('E-mail du partenaire :n', { n: i + 1 })}
+                                        className="bg-card rounded-lg border px-3 py-2"
+                                    />
+                                    {errors[`guests.${i}` as keyof typeof errors] && (
+                                        <span className="text-[#9E2833]">{t('Cette adresse e-mail n’est pas valable ou est en double.')}</span>
+                                    )}
+                                </label>
+                            ))}
+                            <div className="bg-card flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
+                                <span>
+                                    <span className="font-semibold">{t('Places ouvertes au club')}</span>
+                                    <span className="text-muted-foreground block text-xs">
+                                        {t('Un autre membre peut prendre la place et payer sa part.')}
+                                    </span>
+                                </span>
+                                <span className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setData('open_spots', Math.max(0, data.open_spots - 1))}
+                                        className="size-8 rounded-md border font-bold"
+                                        aria-label={t('Une place ouverte de moins')}
+                                    >
+                                        −
+                                    </button>
+                                    <span className="w-6 text-center font-semibold" aria-live="polite">
+                                        {data.open_spots}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setData('open_spots', Math.min(maxOpen, data.open_spots + 1))}
+                                        className="size-8 rounded-md border font-bold"
+                                        aria-label={t('Une place ouverte de plus')}
+                                    >
+                                        +
+                                    </button>
+                                </span>
+                            </div>
+                            {data.open_spots > 0 && (
+                                <fieldset className="bg-card flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm">
+                                    <legend className="sr-only">{t('Niveau demandé')}</legend>
+                                    <span className="font-semibold">{t('Niveau demandé')}</span>
+                                    <label className="flex items-center gap-1">
+                                        {t('de')}
+                                        <select
+                                            value={data.level_min}
+                                            onChange={(e) => setData('level_min', Number(e.target.value))}
+                                            className="rounded-md border px-2 py-1"
+                                        >
+                                            {[1, 2, 3, 4, 5, 6, 7].map((l) => (
+                                                <option key={l} value={l}>
+                                                    {l}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <label className="flex items-center gap-1">
+                                        {t('à')}
+                                        <select
+                                            value={data.level_max}
+                                            onChange={(e) => setData('level_max', Number(e.target.value))}
+                                            className="rounded-md border px-2 py-1"
+                                        >
+                                            {[1, 2, 3, 4, 5, 6, 7]
+                                                .filter((l) => l >= data.level_min)
+                                                .map((l) => (
+                                                    <option key={l} value={l}>
+                                                        {l}
+                                                    </option>
+                                                ))}
+                                        </select>
+                                    </label>
+                                    <span className="text-muted-foreground w-full text-xs">
+                                        {t('Les joueurs de ce niveau, libres à cette heure, reçoivent un e-mail.')}
+                                    </span>
+                                    {(pageErrors.level_min || pageErrors.level_max) && (
+                                        <span role="alert" className="w-full text-[#9E2833]">
+                                            {pageErrors.level_min ?? pageErrors.level_max}
+                                        </span>
+                                    )}
+                                </fieldset>
+                            )}
+                            {partners > 3 && (
+                                <p className="text-sm text-[#9E2833]">{t('Invitez au plus trois autres joueurs, sans vous compter.')}</p>
+                            )}
+                            {partners > 0 && (
+                                <>
+                                    <p className="rounded-lg bg-[#E3F0F7] p-3 text-sm text-[#17304A]">
+                                        {t('Part de chaque partenaire : :share. Votre part : :mine.', { share: euros(share), mine: euros(myShare) })}
+                                    </p>
+                                    <label className="flex items-start gap-3 text-sm">
+                                        <input
+                                            type="checkbox"
+                                            className="mt-0.5 size-4 accent-[#1D5C7A]"
+                                            checked={data.accept_guarantee}
+                                            onChange={(e) => setData('accept_guarantee', e.target.checked)}
+                                        />
+                                        <span>
+                                            {t('Ma carte sert de garantie : les parts encore impayées 24 h avant le match me seront débitées.')}{' '}
+                                            {t(
+                                                'Si j’annule à moins de 24 h, je paie tout le terrain : les parts déjà réglées par mes partenaires leur sont rendues et me sont débitées.',
+                                            )}
+                                        </span>
+                                    </label>
+                                    {errors.accept_guarantee && <p className="text-sm text-[#9E2833]">{errors.accept_guarantee}</p>}
+                                </>
+                            )}
+                        </fieldset>
+                    ) : (
+                        <p className="text-sm text-[#5F6B78]">{t('Le prix ne se partage que pour un match dans plus de 24 h.')}</p>
                     )}
                     {pageErrors.booking && (
                         <p role="alert" className="rounded-lg border border-[#9E2833]/30 bg-[#FCE6E8] p-3 text-sm text-[#9E2833]">
@@ -183,14 +317,15 @@ export default function Checkout({ booking, products }: { booking: Booking; prod
                             checked={data.accept_terms}
                             onChange={(e) => setData('accept_terms', e.target.checked)}
                         />
-                        J’accepte les conditions générales et la règle d’annulation de 24 heures.
+                        {t('J’accepte les conditions générales et la règle d’annulation de 24 heures.')}
                     </label>
-                    {errors.accept_terms && <p className="text-sm text-[#9E2833]">Vous devez accepter les conditions pour réserver.</p>}
+                    <TermsLink />
+                    {errors.accept_terms && <p className="text-sm text-[#9E2833]">{t('Vous devez accepter les conditions pour réserver.')}</p>}
                     <Button type="submit" size="lg" className="h-12 text-base font-bold" disabled={processing || left === 0}>
-                        Payer {euros(total)}
+                        {byCard === 0 ? t('Payer avec mon avoir') : t('Payer :amount', { amount: euros(byCard) })}
                     </Button>
                     {left === 0 && (
-                        <p className="text-sm text-[#9E2833]">Les dix minutes sont écoulées. Revenez au planning pour choisir un créneau.</p>
+                        <p className="text-sm text-[#9E2833]">{t('Les dix minutes sont écoulées. Revenez au planning pour choisir un créneau.')}</p>
                     )}
                 </form>
             </div>

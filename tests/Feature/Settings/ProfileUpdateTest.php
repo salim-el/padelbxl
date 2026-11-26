@@ -21,6 +21,24 @@ class ProfileUpdateTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_phone_language_and_level_can_be_updated()
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patch('/settings/profile', [
+            'name' => $user->name, 'email' => $user->email, 'phone' => '0470 12 34 56', 'locale' => 'nl', 'level' => '4.5',
+        ])->assertSessionHasNoErrors();
+
+        $user->refresh();
+        $this->assertSame('0470 12 34 56', $user->phone);
+        $this->assertSame('nl', $user->locale);
+        $this->assertEquals(4.5, $user->level);
+        // La nouvelle langue vaut tout de suite pour l'interface.
+        $this->actingAs($user)->get('/settings/profile')->assertInertia(fn ($p) => $p->where('locale', 'nl'));
+        $this->actingAs($user)->patch('/settings/profile', ['name' => $user->name, 'email' => $user->email, 'phone' => 'abc', 'locale' => 'de', 'level' => 9])
+            ->assertSessionHasErrors(['phone', 'locale', 'level']);
+    }
+
     public function test_profile_information_can_be_updated()
     {
         $user = User::factory()->create();
@@ -30,6 +48,7 @@ class ProfileUpdateTest extends TestCase
             ->patch('/settings/profile', [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
+                'current_password' => 'password',
             ]);
 
         $response
@@ -41,6 +60,21 @@ class ProfileUpdateTest extends TestCase
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_the_email_address_cannot_change_without_the_current_password()
+    {
+        $user = User::factory()->create(['email' => 'avant@example.test']);
+
+        foreach (['', 'mauvais-mot-de-passe'] as $password) {
+            $this->actingAs($user)->patch('/settings/profile', [
+                'name' => $user->name,
+                'email' => 'apres@example.test',
+                'current_password' => $password,
+            ])->assertSessionHasErrors('current_password');
+        }
+
+        $this->assertSame('avant@example.test', $user->refresh()->email);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
@@ -76,7 +110,8 @@ class ProfileUpdateTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
-        $this->assertNull($user->fresh());
+        $this->assertSoftDeleted($user, deletedAtColumn: 'deactivated_at');
+        $this->assertSame('deactivated', $user->fresh()->status);
     }
 
     public function test_correct_password_must_be_provided_to_delete_account()

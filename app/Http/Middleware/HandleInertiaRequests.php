@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\StripePayments;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -41,8 +42,11 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             ...parent::share($request),
             'name' => config('app.name'),
+            'locale' => app()->getLocale(),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'flash' => ['success' => fn () => $request->session()->get('success')],
+            // F9 : vrai quand le paiement passe par Stripe (mode test) ; les écrans de paiement le disent au joueur.
+            'stripe' => app(StripePayments::class)->enabled(),
             'auth' => [
                 'user' => $request->user(),
             ],

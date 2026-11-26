@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
+import { useT } from '@/lib/i18n';
 
 export default function ForgotPassword({ status }: { status?: string }) {
+    const t = useT();
     const { data, setData, post, processing, errors } = useForm({
         email: '',
     });
@@ -22,15 +24,15 @@ export default function ForgotPassword({ status }: { status?: string }) {
     };
 
     return (
-        <AuthLayout title="Mot de passe oublié" description="Entrez votre adresse e-mail pour recevoir un lien de réinitialisation">
-            <Head title="Mot de passe oublié" />
+        <AuthLayout title={t('Mot de passe oublié')} description={t('Entrez votre adresse e-mail pour recevoir un lien de réinitialisation')}>
+            <Head title={t('Mot de passe oublié')} />
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
 
             <div className="space-y-6">
                 <form onSubmit={submit}>
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Adresse e-mail</Label>
+                        <Label htmlFor="email">{t('Adresse e-mail')}</Label>
                         <Input
                             id="email"
                             type="email"
@@ -39,7 +41,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             value={data.email}
                             autoFocus
                             onChange={(e) => setData('email', e.target.value)}
-                            placeholder="prenom.nom@exemple.be"
+                            placeholder={t('prenom.nom@exemple.be')}
                         />
 
                         <InputError message={errors.email} />
@@ -48,14 +50,14 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     <div className="my-6 flex items-center justify-start">
                         <Button className="w-full" disabled={processing}>
                             {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                            Envoyer le lien de réinitialisation
+                            {t('Envoyer le lien de réinitialisation')}
                         </Button>
                     </div>
                 </form>
 
                 <div className="text-muted-foreground space-x-1 text-center text-sm">
-                    <span>Ou revenir à la</span>
-                    <TextLink href={route('login')}>connexion</TextLink>
+                    <span>{t('Ou revenir à la')}</span>
+                    <TextLink href={route('login')}>{t('connexion')}</TextLink>
                 </div>
             </div>
         </AuthLayout>

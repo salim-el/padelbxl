@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar:state';
@@ -228,6 +229,7 @@ Sidebar.displayName = 'Sidebar';
 const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(
     ({ className, onClick, ...props }, ref) => {
         const { toggleSidebar } = useSidebar();
+        const t = useT();
 
         return (
             <Button
@@ -243,7 +245,7 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
                 {...props}
             >
                 <PanelLeft />
-                <span className="sr-only">Afficher ou masquer le menu</span>
+                <span className="sr-only">{t('Afficher ou masquer le menu')}</span>
             </Button>
         );
     },
@@ -252,15 +254,16 @@ SidebarTrigger.displayName = 'SidebarTrigger';
 
 const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<'button'>>(({ className, ...props }, ref) => {
     const { toggleSidebar } = useSidebar();
+    const t = useT();
 
     return (
         <button
             ref={ref}
             data-sidebar="rail"
-            aria-label="Afficher ou masquer le menu"
+            aria-label={t('Afficher ou masquer le menu')}
             tabIndex={-1}
             onClick={toggleSidebar}
-            title="Afficher ou masquer le menu"
+            title={t('Afficher ou masquer le menu')}
             className={cn(
                 'absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex',
                 'in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize',

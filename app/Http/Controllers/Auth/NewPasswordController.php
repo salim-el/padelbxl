@@ -50,6 +50,8 @@ class NewPasswordController extends Controller
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
                 ])->save();
+                // Comme au changement depuis le profil : les jetons d'API ouverts avec l'ancien mot de passe ne servent plus.
+                $user->tokens()->delete();
 
                 event(new PasswordReset($user));
             }

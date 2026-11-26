@@ -28,6 +28,15 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
+    // F9 : Stripe en mode test. Sans clé secrète, le paiement reste simulé (tests et démonstration hors ligne).
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        // Secret de signature des notifications (whsec_…), propre à chaque point d'arrivée déclaré chez Stripe.
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'currency' => 'eur',
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

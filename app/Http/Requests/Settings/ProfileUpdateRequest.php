@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Settings;
 
-use App\Models\User;
+use App\Rules\UniqueMailbox;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -25,7 +25,19 @@ class ProfileUpdateRequest extends FormRequest
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore($this->user()->id),
+                new UniqueMailbox($this->user()->id),
+            ],
+
+            // F21 : téléphone facultatif, langue de l'interface et des e-mails, niveau de jeu pour les appels (F11).
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^\+?[0-9 .\/-]{8,20}$/'],
+            'locale' => ['sometimes', 'in:fr,nl,en'],
+            'level' => ['nullable', 'numeric', 'between:1,7'],
+
+            // Changer d'adresse, c'est changer l'identifiant du compte : on redemande le mot de passe.
+            'current_password' => [
+                Rule::requiredIf(fn () => mb_strtolower((string) $this->input('email')) !== mb_strtolower($this->user()->email)),
+                'nullable',
+                'current_password',
             ],
         ];
     }

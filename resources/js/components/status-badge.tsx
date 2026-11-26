@@ -1,3 +1,4 @@
+import { useT } from '@/lib/i18n';
 import { STATUS_LABELS } from '@/lib/money';
 
 // Teintes d'état de la charte T10 : fond clair, texte foncé de la même famille.
@@ -13,11 +14,12 @@ const STYLES: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
+    const t = useT();
     return (
         <span
             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STYLES[status] ?? 'bg-muted text-muted-foreground'}`}
         >
-            {STATUS_LABELS[status] ?? status}
+            {t(STATUS_LABELS[status] ?? status)}
         </span>
     );
 }

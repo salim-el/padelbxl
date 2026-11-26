@@ -18,6 +18,8 @@ class AccessService
         $reason = match (true) {
             $pass === null => 'unknown',
             $pass->revoked_at !== null || ! in_array($booking->status, ['confirmed', 'used'], true) => 'revoked',
+            // Compte suspendu après coup : sa place payée par la garantie (covered) garde son QR code, la borne le refuse quand même.
+            $pass->bookingPlayer->user !== null && $pass->bookingPlayer->user->status !== 'active' => 'revoked',
             $booking->court_id !== $court->id => 'wrong_court',
             now()->lt($pass->valid_from) => 'too_early',
             now()->gt($pass->valid_until) => 'expired',
@@ -30,6 +32,10 @@ class AccessService
             $reason = $updated === 1 ? null : 'already_used';
             if ($reason === null && $booking->status === 'confirmed') {
                 $booking->update(['status' => 'used']);
+                // Même trace que les autres changements d'état, pour que l'historique d'une partie soit complet.
+                DB::table('booking_status_histories')->insert([
+                    'booking_id' => $booking->id, 'from_status' => 'confirmed', 'to_status' => 'used', 'reason' => 'Accès validé à la borne.', 'changed_by' => null, 'created_at' => now(),
+                ]);
             }
         }
 

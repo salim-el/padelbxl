@@ -70,4 +70,25 @@ class PasswordResetTest extends TestCase
             return true;
         });
     }
+
+    public function test_a_reset_password_revokes_api_tokens()
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+        $user->createToken('Application mobile', ['bookings']);
+
+        $this->post('/forgot-password', ['email' => $user->email]);
+
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+            $this->post('/reset-password', [
+                'token' => $notification->token,
+                'email' => $user->email,
+                'password' => 'mot-de-passe-long-2026',
+                'password_confirmation' => 'mot-de-passe-long-2026',
+            ])->assertSessionHasNoErrors();
+
+            return true;
+        });
+        $this->assertSame(0, $user->tokens()->count());
+    }
 }

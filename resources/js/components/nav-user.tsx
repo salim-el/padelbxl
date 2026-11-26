@@ -3,11 +3,13 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/c
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useT } from '@/lib/i18n';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronsUpDown, LogIn, UserPlus } from 'lucide-react';
 
 export function NavUser() {
+    const t = useT();
     const { auth } = usePage<SharedData>().props;
     const { state } = useSidebar();
     const isMobile = useIsMobile();
@@ -20,7 +22,7 @@ export function NavUser() {
                     <SidebarMenuButton asChild>
                         <Link href="/login">
                             <LogIn />
-                            <span>Se connecter</span>
+                            <span>{t('Se connecter')}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -28,7 +30,7 @@ export function NavUser() {
                     <SidebarMenuButton asChild>
                         <Link href="/register">
                             <UserPlus />
-                            <span>Créer un compte</span>
+                            <span>{t('Créer un compte')}</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
