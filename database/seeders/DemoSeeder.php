@@ -10,7 +10,6 @@ use App\Models\User;
 use App\Services\AccessService;
 use App\Services\BookingService;
 use App\Services\Clock;
-use App\Services\LegalConsents;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Closure;
@@ -84,7 +83,8 @@ class DemoSeeder extends Seeder
                 ['Nina Vermeulen', 'nina'], ['Julie Lambert', 'julie'], ['Pieter Claes', 'pieter']] as [$name, $key]) {
                 $user = User::create(['name' => $name, 'email' => strtolower(str_replace(' ', '.', $name)).'@example.test', 'password' => Hash::make(DatabaseSeeder::DEMO_PASSWORD)]);
                 $user->forceFill(['email_verified_at' => now(), 'locale' => $key === 'lotte' || $key === 'pieter' ? 'nl' : 'fr'])->save();
-                app(LegalConsents::class)->accept($user, null);
+                // Inscrits il y a quatre semaines, ils ont aussi accepté les versions publiées depuis.
+                DatabaseSeeder::acceptLegalDocuments($user);
                 $this->users[$key] = $user;
             }
             // Client entreprise : numéro de TVA belge valide (97 − 08441234 mod 97 = 94).
@@ -226,6 +226,30 @@ class DemoSeeder extends Seeder
         $this->book('w7', 'pieter', 6, 10, '19:30', [-1, '08:20']);
         $this->book('w8', 'ines', 1, 12, '18:00', [-2, '19:40'], ['balles' => 1]);
         $this->book('w9', 'lotte', 3, 14, '16:30', [-1, '20:30']);
+
+        // Foot à 5 : matchs d'une heure, dix joueurs au plus, tarifs du foot. Ni raquette ni balles, ni place ouverte aux membres.
+        // Heures creuses : l'équipe d'une entreprise sur le temps de midi, facture au nom de la société.
+        $this->book('fa', 'pieter', 'Foot 2', -10, '12:00', [-12, '09:15']);
+        $this->enter('fa', 'pieter', -10, '11:52');
+        // Heures pleines à dix, 9 € chacun : à 24 h, la garantie de l'organisateur paie les quatre parts restées impayées.
+        $this->book('fb', 'mehdi', 'Foot 1', -8, '20:00', [-11, '19:30'],
+            guests: ['lucas', 'antoine', 'nina', 'sarah', 'pieter', 'lotte', 'karim.haddad@example.test', 'samir.ouali@example.test', 'tom.verhaegen@example.test']);
+        $this->payShare('fb', 'lucas', -11, '20:15');
+        $this->payShare('fb', 'antoine', -10, '13:05');
+        $this->payShare('fb', 'nina', -10, '18:40');
+        $this->payShare('fb', 'sarah', -9, '09:20');
+        $this->payShare('fb', 'pieter', -9, '12:30');
+        $this->guarantee(-9, '20:05');
+        foreach (['mehdi' => '19:48', 'lucas' => '19:50', 'antoine' => '19:51', 'nina' => '19:53', 'sarah' => '19:54', 'pieter' => '19:56', 'lotte' => '19:58'] as $who => $time) {
+            $this->enter('fb', $who, -8, $time);
+        }
+        // À venir, à dix : quatre parts payées, les cinq autres invitations attendent encore.
+        $this->book('fw', 'antoine', 'Foot 3', 4, '20:00', [-2, '18:30'],
+            guests: ['lucas', 'mehdi', 'pieter', 'nina', 'sarah', 'ines', 'lotte', 'karim.haddad@example.test', 'elise.dupont@example.test']);
+        $this->payShare('fw', 'lucas', -2, '20:40');
+        $this->payShare('fw', 'pieter', -1, '08:45');
+        $this->payShare('fw', 'mehdi', -1, '12:10');
+        $this->payShare('fw', 'nina', -1, '19:30');
     }
 
     /** Ajoute une étape à la date locale « aujourd'hui + $day » et à l'heure $time. */
@@ -239,9 +263,10 @@ class DemoSeeder extends Seeder
         return Clock::slotStart($this->today->addDays($day)->toDateString(), $time);
     }
 
-    private function court(int $number): Court
+    /** Terrain de padel par son numéro, ou terrain de foot par son nom (« Foot 1 »). */
+    private function court(int|string $court): Court
     {
-        return Court::where('name', "Terrain $number")->firstOrFail();
+        return Court::where('name', is_int($court) ? "Terrain $court" : $court)->firstOrFail();
     }
 
     /**
@@ -251,7 +276,7 @@ class DemoSeeder extends Seeder
      * @param  array<string, int>  $items  « raquette » ou « balles » => quantité
      * @param  list<string>  $guests  clé d'un joueur de la démo, ou e-mail d'un invité sans compte
      */
-    private function book(string $key, string $who, int $court, int $day, string $time, array $at, array $items = [], array $guests = [], int $open = 0): void
+    private function book(string $key, string $who, int|string $court, int $day, string $time, array $at, array $items = [], array $guests = [], int $open = 0): void
     {
         $this->at($at[0], $at[1], function () use ($key, $who, $court, $day, $time, $items, $guests, $open) {
             $user = $this->users[$who];
