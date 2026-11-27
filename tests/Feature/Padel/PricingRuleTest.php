@@ -62,7 +62,8 @@ class PricingRuleTest extends TestCase
         $this->rule()->assertSessionHasNoErrors();
         // Même jour de départ, heures communes : ambigu, refusé.
         $this->rule(['name' => 'Midi', 'start_time' => '12:00', 'end_time' => '14:00'])->assertSessionHasErrors('pricing');
-        $this->assertSame(3, PricingRule::count());
+        // Les 4 tarifs du club (2 de padel, 2 de foot) et le nouveau.
+        $this->assertSame(5, PricingRule::count());
     }
 
     public function test_a_closed_rule_no_longer_prices_slots_after_its_last_day(): void

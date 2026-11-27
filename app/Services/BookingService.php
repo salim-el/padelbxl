@@ -20,10 +20,12 @@ use App\Models\User;
 use App\Models\WaitlistEntry;
 use App\Notifications\AccessPassLink;
 use App\Notifications\MatchCancelled;
+use App\Notifications\ShareDeclined;
 use App\Notifications\ShareInvitation;
 use App\Notifications\SlotFreed;
 use App\Notifications\SpotAvailable;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
@@ -50,10 +52,8 @@ class BookingService
 
     public const FREE_CANCELLATION_HOURS = 24;
 
-    public const MAX_PLAYERS = 4;
-
-    /** Invitations par organisateur et par jour : quatre parties partagées, pas un relais d'e-mails. */
-    public const MAX_INVITATIONS_PER_DAY = 12;
+    /** Invitations par organisateur, par jour et par sport : quatre parties partagées (12 au padel, 36 au foot), pas un relais d'e-mails. */
+    public const MAX_SHARED_GAMES_PER_DAY = 4;
 
     /** Espaces des verrous PostgreSQL de transaction (pg_advisory_xact_lock), libérés au commit. */
     private const LOCK_COURT = 1;
@@ -68,11 +68,21 @@ class BookingService
      *
      * @param  array<int, int>  $items
      */
-    public function cardAmount(Booking $booking, User $user, array $items, int $others): int
+    public function cardAmount(Booking $booking, User $user, array $items, int $guests, int $openSpots): int
     {
+        $sport = $booking->court->sport;
+        // Places ouvertes hors padel : splitShares les refusera, rien ne doit partir chez Stripe.
+        if ($openSpots > 0 && $sport !== 'padel') {
+            return 0;
+        }
+        $others = $guests + $openSpots;
         $total = $booking->price_cents - intdiv($booking->price_cents, $others + 1) * $others;
         $items = array_filter($items);
         foreach (Product::whereIn('id', array_keys($items))->where('is_active', true)->get() as $product) {
+            // Article d'un autre sport : reserveItems le refusera, même raison.
+            if ($product->sport !== null && $product->sport !== $sport) {
+                return 0;
+            }
             $total += $product->price_cents * $items[$product->id];
         }
 
@@ -105,11 +115,12 @@ class BookingService
     }
 
     /** F14 : supplément d'un déplacement permis, moins l'avoir ; 0 si le nouveau créneau ne coûte pas plus. */
-    public function moveAmount(Booking $booking, User $user, CarbonImmutable $startUtc): int
+    public function moveAmount(Booking $booking, User $user, Court $court, CarbonImmutable $startUtc): int
     {
-        $rule = $this->slots->priceFor($startUtc);
+        $rule = $this->slots->priceFor($startUtc, $court->sport);
         $movable = $booking->organizer_id === $user->id && $booking->walk_in_name === null && $booking->status === 'confirmed'
-            && now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS)) && $booking->players()->count() < 2;
+            && now()->lte($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS)) && $booking->players()->count() < 2
+            && $booking->court->sport === $court->sport;
         if ($rule === null || ! $movable) {
             return 0;
         }
@@ -156,14 +167,14 @@ class BookingService
         if ($user->status !== 'active' || $user->email_verified_at === null) {
             throw new BookingException(__('Votre compte doit être actif et votre e-mail confirmé pour réserver.'));
         }
-        if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::slots(), true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
+        if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::slots($court->sport), true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
             throw new BookingException(__('Ce créneau n’existe pas ou n’est plus réservable.'));
         }
-        $rule = $this->slots->priceFor($startUtc);
+        $rule = $this->slots->priceFor($startUtc, $court->sport);
         if ($rule === null || ! $court->is_active) {
             throw new BookingException(__('Ce terrain n’est pas réservable à cette heure.'));
         }
-        $end = $startUtc->addMinutes(Clock::slotMinutes());
+        $end = $startUtc->addMinutes(Clock::slotMinutes($court->sport));
 
         $this->expireHolds();
 
@@ -210,7 +221,7 @@ class BookingService
                     'organizer_id' => $user->id,
                     'pricing_rule_id' => $rule->id,
                     'starts_at' => $startUtc,
-                    'ends_at' => $startUtc->addMinutes(Clock::slotMinutes()),
+                    'ends_at' => $end,
                     'status' => 'pending_payment',
                     'price_cents' => $this->slots->priceCents($rule, $startUtc),
                     'vat_rate' => $rule->vat_rate,
@@ -267,6 +278,11 @@ class BookingService
             $player = $booking->players()->where('is_organizer', true)->firstOrFail();
             if ($guests !== [] || $openSpots > 0) {
                 $this->splitShares($booking, $player, $user, $guests, $openSpots);
+                // Avec Stripe, la garantie se débite sur la carte gardée. Au foot, elle répond de neuf parts : l'avoir seul ne suffit pas.
+                // shortcut: au padel, l'avoir couvre encore seul la part d'un prix partagé, comme en v1.0.0 ; à fermer avec une carte gardée en mode setup.
+                if ($guaranteeMethod === null && $this->stripe->enabled() && $booking->court->sport !== 'padel') {
+                    throw new BookingException(__('Un match de foot partagé se garantit par une carte. Votre avoir paie déjà toute votre part : réservez sans partager le prix.'));
+                }
                 // L'organisateur a accepté la garantie avant de payer ; avec Stripe, sa carte est gardée pour la débiter.
                 $booking->update(['guarantee_accepted_at' => now(), 'guarantee_payment_method_id' => $guaranteeMethod]);
             }
@@ -334,7 +350,7 @@ class BookingService
                     $this->charge($booking, $player, $booking->organizer, [$this->courtLine($booking, $player)], 'card', guarantee: true);
                     $player->update(['status' => 'covered']);
                     if ($player->user_id === null && $player->guest_email !== null) {
-                        DB::afterCommit(fn () => Notification::route('mail', $player->guest_email)->notify(new AccessPassLink($player)));
+                        self::mailAfterCommit(fn () => Notification::route('mail', $player->guest_email)->notify(new AccessPassLink($player)));
                     }
 
                     return 1;
@@ -370,12 +386,14 @@ class BookingService
     /**
      * Parties ouvertes encore joignables : confirmées, à plus de 24 h, avec au moins une place née ouverte.
      * Après 24 h, la garantie de l'organisateur a payé les places vides : il n'y a plus rien à prendre.
+     * Padel seulement : au foot, la place d'un invité qui refuse reste à l'organisateur, payée par sa garantie.
      *
      * @return Builder<Booking>
      */
     public static function openMatches(): Builder
     {
         return Booking::where('status', 'confirmed')->whereNull('walk_in_name')
+            ->whereHas('court', fn ($q) => $q->where('sport', 'padel'))
             ->where('starts_at', '>', now()->addHours(self::FREE_CANCELLATION_HOURS))
             ->whereHas('players', fn ($q) => $q->where('is_organizer', false)->whereNull('guest_email'));
     }
@@ -415,7 +433,8 @@ class BookingService
     }
 
     /**
-     * Un invité refuse avant 24 h : sa place devient ouverte et la liste d'attente est prévenue.
+     * Un invité refuse avant 24 h : au padel, sa place devient ouverte et la liste d'attente est prévenue.
+     * Au foot, la place n'est pas ouverte (openMatches) : la garantie de l'organisateur la paie à 24 h, et il en est prévenu.
      * Après 24 h, la garantie a déjà payé sa part et la place n'est plus à rendre.
      */
     public function declineShare(Booking $booking, User $user): void
@@ -426,12 +445,16 @@ class BookingService
             if ($player->status !== 'invited' || $booking->status !== 'confirmed' || now()->gt($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS))) {
                 throw new BookingException(__('Cette invitation ne peut plus être refusée.'));
             }
+            $email = (string) $player->guest_email;
             $player->update(['user_id' => null, 'guest_email' => null]);
-            DB::afterCommit(function () use ($booking) {
-                foreach (WaitlistEntry::with('user')->where('booking_id', $booking->id)->get() as $entry) {
-                    $entry->user?->notify((new SpotAvailable($booking))->locale($entry->user->locale ?? app()->getLocale()));
-                }
-            });
+            foreach (WaitlistEntry::with('user')->where('booking_id', $booking->id)->get() as $entry) {
+                self::mailAfterCommit(fn () => $entry->user?->notify((new SpotAvailable($booking))->locale($entry->user->locale ?? app()->getLocale())));
+            }
+            // Personne ne reprend une place de foot : l'organisateur sait tout de suite qu'il la paiera, et peut encore annuler sans frais.
+            if ($booking->court->sport !== 'padel') {
+                $organizer = $booking->organizer;
+                self::mailAfterCommit(fn () => $organizer->notify((new ShareDeclined($booking, $email, $player->share_cents))->locale($organizer->locale ?? app()->getLocale())));
+            }
         });
     }
 
@@ -455,16 +478,23 @@ class BookingService
     {
         $guests = array_values(array_unique(array_map(fn ($e) => mb_strtolower(trim($e)), $guests)));
         $others = count($guests) + $openSpots;
-        if ($booking->walk_in_name !== null || $openSpots < 0 || $others > self::MAX_PLAYERS - 1 || in_array(mb_strtolower($user->email), $guests, true)) {
-            throw new BookingException(__('Invitez au plus trois autres joueurs, sans vous compter.'));
+        $max = $booking->court->maxPlayers();
+        if ($booking->walk_in_name !== null || $openSpots < 0 || $others > $max - 1 || in_array(mb_strtolower($user->email), $guests, true)) {
+            throw new BookingException(__('Invitez au plus :count autres joueurs, sans vous compter.', ['count' => $max - 1]));
+        }
+        // L'appel aux joueurs repose sur le niveau de padel (1 à 7) : au foot, le prix se partage par invitation seulement.
+        if ($openSpots > 0 && $booking->court->sport !== 'padel') {
+            throw new BookingException(__('Les places ouvertes aux membres concernent seulement le padel.'));
         }
         if (now()->gt($booking->starts_at->subHours(self::FREE_CANCELLATION_HOURS))) {
             throw new BookingException(__('Le prix ne se partage que pour un match dans plus de 24 h.'));
         }
         // Seules les adresses e-mail comptent : une place ouverte n'envoie aucun message.
+        // Compté par sport : un match de foot complet (9 invités) ne mange pas le quota du padel.
+        $sport = $booking->court->sport;
         $sentToday = BookingPlayer::where('is_organizer', false)->whereNotNull('guest_email')->where('joined_at', '>', now()->subDay())
-            ->whereHas('booking', fn ($q) => $q->where('organizer_id', $user->id))->count();
-        if ($sentToday + count($guests) > self::MAX_INVITATIONS_PER_DAY) {
+            ->whereHas('booking', fn ($q) => $q->where('organizer_id', $user->id)->whereHas('court', fn ($q) => $q->where('sport', $sport)))->count();
+        if ($sentToday + count($guests) > self::MAX_SHARED_GAMES_PER_DAY * ($max - 1)) {
             throw new BookingException(__('Vous avez envoyé trop d’invitations aujourd’hui. Réessayez demain.'));
         }
         $share = intdiv($booking->price_cents, $others + 1);
@@ -483,7 +513,7 @@ class BookingService
                 'is_organizer' => false, 'share_cents' => $share, 'status' => 'invited',
             ]);
             // Envoyé seulement si le paiement aboutit : une transaction annulée n'invite personne.
-            DB::afterCommit(function () use ($booking, $user, $share, $email, $invited) {
+            self::mailAfterCommit(function () use ($booking, $user, $share, $email, $invited) {
                 $mail = (new ShareInvitation($booking, $user->name, $share))->locale($invited?->locale ?? app()->getLocale());
                 $invited ? $invited->notify($mail) : Notification::route('mail', $email)->notify($mail);
             });
@@ -615,8 +645,9 @@ class BookingService
             }
             // F9 : un paiement encaissé par Stripe est remboursé chez Stripe. Si Stripe refuse, la transaction
             // est annulée et rien n'est noté ; la clé d'idempotence évite un second remboursement si on rejoue.
+            // Clé stable d'un essai à l'autre : l'identifiant de la note de crédit change à chaque essai (une séquence ne recule pas).
             $stripeRefund = $method === 'original_payment' && $this->stripe->enabled() && str_starts_with((string) $payment->provider_reference, 'pi_')
-                ? $this->stripe->refund($payment->provider_reference, $part, 'refund-'.$payment->id.'-'.$creditNote->id)
+                ? $this->stripe->refund($payment->provider_reference, $part, 'refund-'.$payment->id.'-'.($payment->amount_cents - $refundable).'-'.$part)
                 : null;
             $refund = Refund::create([
                 'payment_id' => $payment->id, 'amount_cents' => $part, 'reason' => $code, 'method' => $method,
@@ -664,14 +695,14 @@ class BookingService
      */
     public function move(Booking $booking, User $user, Court $court, CarbonImmutable $startUtc, ?string $reference = null, ?int $received = null): Booking
     {
-        if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::slots(), true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
+        if (! in_array(Clock::local($startUtc)->format('H:i'), Clock::slots($court->sport), true) || ! $startUtc->isFuture() || $startUtc->gt(now()->addDays(30))) {
             throw new BookingException(__('Ce créneau n’existe pas ou n’est plus réservable.'));
         }
-        $rule = $this->slots->priceFor($startUtc);
+        $rule = $this->slots->priceFor($startUtc, $court->sport);
         if ($rule === null || ! $court->is_active) {
             throw new BookingException(__('Ce terrain n’est pas réservable à cette heure.'));
         }
-        $end = $startUtc->addMinutes(Clock::slotMinutes());
+        $end = $startUtc->addMinutes(Clock::slotMinutes($court->sport));
 
         return DB::transaction(function () use ($booking, $user, $court, $startUtc, $end, $rule, $reference, $received) {
             // Même ordre de verrous que hold() : le terrain d'arrivée, puis la réservation.
@@ -689,6 +720,10 @@ class BookingService
             }
             if ($booking->court_id === $court->id && $booking->starts_at->equalTo($startUtc)) {
                 throw new BookingException(__('C’est déjà le créneau de votre réservation.'));
+            }
+            // Durée et tarif changent d'un sport à l'autre : une partie de padel ne devient pas un match de foot.
+            if ($booking->court->sport !== $court->sport) {
+                throw new BookingException(__('Une réservation se déplace sur un terrain du même sport.'));
             }
             if (CourtClosure::where('court_id', $court->id)->where('starts_at', '<', $end)->where('ends_at', '>', $startUtc)->exists()) {
                 throw new BookingException(__('Ce terrain est fermé sur ce créneau.'));
@@ -957,13 +992,11 @@ class BookingService
         if ($entries->isEmpty() || ! $booking->starts_at->isFuture()) {
             return;
         }
-        DB::afterCommit(function () use ($booking, $entries) {
-            foreach ($entries as $entry) {
-                if ($entry->user?->status === 'active') {
-                    $entry->user->notify((new SlotFreed($booking))->locale($entry->user->locale ?? app()->getLocale()));
-                }
+        foreach ($entries as $entry) {
+            if ($entry->user?->status === 'active') {
+                self::mailAfterCommit(fn () => $entry->user->notify((new SlotFreed($booking))->locale($entry->user->locale ?? app()->getLocale())));
             }
-        });
+        }
     }
 
     /** Prévient un joueur que sa partie est annulée, dans sa langue, une fois la transaction validée. */
@@ -973,9 +1006,24 @@ class BookingService
         if ($user === null && $player->guest_email === null) {
             return;
         }
-        DB::afterCommit(function () use ($booking, $player, $user, $refunded, $reason) {
+        self::mailAfterCommit(function () use ($booking, $player, $user, $refunded, $reason) {
             $mail = (new MatchCancelled($booking, $refunded, $reason))->locale($user?->locale ?? app()->getLocale());
             $user ? $user->notify($mail) : Notification::route('mail', $player->guest_email)->notify($mail);
+        });
+    }
+
+    /**
+     * E-mail envoyé une fois la transaction validée. Un envoi qui échoue est journalisé : il n'annule pas
+     * ce qui vient d'être payé ou annulé, et n'arrête pas les e-mails suivants.
+     */
+    private static function mailAfterCommit(Closure $send): void
+    {
+        DB::afterCommit(function () use ($send) {
+            try {
+                $send();
+            } catch (\Throwable $e) {
+                report($e);
+            }
         });
     }
 
@@ -993,6 +1041,10 @@ class BookingService
         $products = Product::whereIn('id', array_keys($items))->where('is_active', true)->lockForUpdate()->get()->keyBy('id');
         foreach ($items as $productId => $quantity) {
             $product = $products->get($productId) ?? throw new BookingException(__('Cet article n’est plus proposé.'));
+            // Une raquette ne se loue pas pour le foot : l'article suit le sport du terrain (null = tous les terrains).
+            if ($product->sport !== null && $product->sport !== $booking->court->sport) {
+                throw new BookingException(__('Cet article n’est pas proposé pour ce sport.'));
+            }
             $used = (int) BookingItem::where('product_id', $product->id)
                 ->whereHas('booking', fn ($q) => $q->whereIn('status', Booking::ACTIVE)->where('id', '!=', $booking->id)
                     ->where('starts_at', '<', $booking->ends_at)->where('ends_at', '>', $booking->starts_at))

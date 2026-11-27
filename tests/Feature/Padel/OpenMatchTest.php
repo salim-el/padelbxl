@@ -113,8 +113,8 @@ class OpenMatchTest extends TestCase
 
         $this->actingAs($this->lucas)->post("/bookings/{$booking->public_id}/cancel")->assertSessionHasNoErrors();
 
-        // F13 : l'inscrit est prévenu et renvoyé au planning du jour ; les joueurs de la partie, eux, reçoivent l'annulation.
-        Notification::assertSentTo($waiting, SlotFreed::class, fn (SlotFreed $n) => $n->toMail($waiting)->actionUrl === route('planning', ['date' => '2026-10-23']));
+        // F13 : l'inscrit est prévenu et renvoyé au planning du padel ce jour-là ; les joueurs de la partie, eux, reçoivent l'annulation.
+        Notification::assertSentTo($waiting, SlotFreed::class, fn (SlotFreed $n) => $n->toMail($waiting)->actionUrl === route('planning', ['date' => '2026-10-23', 'sport' => 'padel']));
         Notification::assertNotSentTo($this->ines, SlotFreed::class);
         $this->assertFalse(WaitlistEntry::where('booking_id', $booking->id)->exists());
         // Le créneau est libre : le premier qui le réserve le prend.

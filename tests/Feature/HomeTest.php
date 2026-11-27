@@ -15,10 +15,11 @@ class HomeTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
 
+        // Deux tarifs par sport, dans l'ordre des heures ; padel et foot commencent aux mêmes heures, leur ordre entre eux n'est pas fixé.
         $this->get('/')->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('home')
-            ->has('prices', 2)
-            ->where('prices.0.price_cents', 3360)
-            ->where('prices.1.price_cents', 4800));
+            ->has('prices', 4)
+            ->where('prices', fn ($prices) => $prices->where('sport', 'padel')->pluck('price_cents')->values()->all() === [3360, 4800]
+                && $prices->where('sport', 'foot5')->pluck('price_cents')->values()->all() === [7000, 9000]));
     }
 }
