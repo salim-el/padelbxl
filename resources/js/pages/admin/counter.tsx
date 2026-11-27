@@ -3,22 +3,32 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
+import { SPORT_LABELS } from '@/lib/money';
 import { Head, useForm } from '@inertiajs/react';
 
 const field = 'bg-card mt-1 block w-full rounded-md border px-2 py-1.5';
 
+type Court = { id: number; name: string; sport: string };
+
 // Client sans compte au comptoir : il paie sur place, le ticket imprimé porte son QR code d'accès.
-export default function Counter({ courts, slots, today }: { courts: { id: number; name: string }[]; slots: string[]; today: string }) {
+export default function Counter({ courts, slots, today }: { courts: Court[]; slots: Record<string, string[]>; today: string }) {
     const t = useT();
+    // Les heures proposées sont celles du sport du terrain : toutes les 90 minutes au padel, toutes les heures au foot.
+    const timesOf = (id: number) => slots[courts.find((c) => c.id === id)?.sport ?? 'padel'] ?? [];
     const form = useForm({
         court_id: courts[0]?.id ?? 0,
         date: today,
-        time: slots[0] ?? '',
+        time: timesOf(courts[0]?.id ?? 0)[0] ?? '',
         name: '',
         contact: '',
         method: 'cash',
     });
     const errors = form.errors as Record<string, string>;
+    // Un autre terrain garde l'heure choisie si son sport la propose, sinon il prend sa première heure.
+    const pickCourt = (id: number) => {
+        const next = timesOf(id);
+        form.setData((d) => ({ ...d, court_id: id, time: next.includes(d.time) ? d.time : (next[0] ?? '') }));
+    };
 
     return (
         <AppLayout
@@ -40,10 +50,10 @@ export default function Counter({ courts, slots, today }: { courts: { id: number
                 >
                     <label className="text-sm">
                         {t('Terrain')}
-                        <select value={form.data.court_id} onChange={(e) => form.setData('court_id', Number(e.target.value))} className={field}>
+                        <select value={form.data.court_id} onChange={(e) => pickCourt(Number(e.target.value))} className={field}>
                             {courts.map((c) => (
                                 <option key={c.id} value={c.id}>
-                                    {c.name}
+                                    {c.name} · {t(SPORT_LABELS[c.sport])}
                                 </option>
                             ))}
                         </select>
@@ -62,7 +72,7 @@ export default function Counter({ courts, slots, today }: { courts: { id: number
                         <label className="text-sm">
                             {t('Heure')}
                             <select value={form.data.time} onChange={(e) => form.setData('time', e.target.value)} className={field}>
-                                {slots.map((s) => (
+                                {timesOf(form.data.court_id).map((s) => (
                                     <option key={s}>{s}</option>
                                 ))}
                             </select>

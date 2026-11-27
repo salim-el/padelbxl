@@ -4,7 +4,7 @@ import TermsLink from '@/components/terms-link';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
-import { euros, ucfirst } from '@/lib/money';
+import { SPORT_LABELS, euros, ucfirst } from '@/lib/money';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { CalendarDays, Clock, ShieldAlert, ShieldCheck, Timer } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -26,11 +26,15 @@ type Product = { id: number; name: string; kind: 'rental' | 'sale'; price_cents:
 export default function Checkout({
     booking,
     products,
+    sport,
+    max_guests,
     my_level,
     credit_cents,
 }: {
     booking: Booking;
     products: Product[];
+    sport: string;
+    max_guests: number;
     my_level: number | null;
     credit_cents: number;
 }) {
@@ -48,7 +52,8 @@ export default function Checkout({
     }>({
         accept_terms: false,
         items: {},
-        guests: ['', '', ''],
+        // Une case par autre joueur du sport : 3 au padel, 9 au foot à 5.
+        guests: Array<string>(max_guests).fill(''),
         open_spots: 0,
         level_min: Math.max(1, (my_level ?? 4) - 1),
         level_max: Math.min(7, (my_level ?? 4) + 1),
@@ -61,8 +66,10 @@ export default function Checkout({
     // Même calcul que le serveur : part égale, les centimes restants à l'organisateur.
     const emails = data.guests.filter((g) => g.trim() !== '').length;
     const partners = emails + data.open_spots;
-    const maxOpen = 3 - emails;
+    const maxOpen = max_guests - emails;
     const share = Math.floor(court / (partners + 1));
+    // Part de chacun quand le terrain est complet : 4 joueurs au padel, 10 au foot à 5.
+    const fullShare = Math.floor(court / (max_guests + 1));
     const myShare = court - share * partners;
     const total = myShare + extras;
     // F15 : même règle que le serveur, l'avoir paie d'abord et la carte le reste.
@@ -102,6 +109,9 @@ export default function Checkout({
 
                 <section className="bg-card rounded-2xl border p-6 shadow-sm">
                     <h2 className="text-xl font-bold">{booking.court}</h2>
+                    <p className="text-muted-foreground text-sm">
+                        {t(SPORT_LABELS[sport])} · {t(':n joueurs par terrain', { n: max_guests + 1 })}
+                    </p>
                     <ul className="mt-3 space-y-2 text-sm">
                         <li className="flex items-center gap-2">
                             <CalendarDays className="size-4 text-[#1D5C7A]" aria-hidden /> {ucfirst(booking.date)}
@@ -185,7 +195,8 @@ export default function Checkout({
                         <fieldset className="flex flex-col gap-2">
                             <legend className="mb-1 font-bold">{t('Partager le prix (facultatif)')}</legend>
                             <p className="text-sm text-[#5F6B78]">
-                                {t('Chaque partenaire reçoit un e-mail et paie sa part. Vous ne payez que la vôtre.')}
+                                {t('Chaque partenaire reçoit un e-mail et paie sa part. Vous ne payez que la vôtre.')}{' '}
+                                {t('À :n joueurs, chacun paie :share.', { n: max_guests + 1, share: euros(fullShare) })}
                             </p>
                             {data.guests.map((g, i) => (
                                 <label key={i} className="flex flex-col gap-1 text-sm">
@@ -203,35 +214,38 @@ export default function Checkout({
                                     )}
                                 </label>
                             ))}
-                            <div className="bg-card flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
-                                <span>
-                                    <span className="font-semibold">{t('Places ouvertes au club')}</span>
-                                    <span className="text-muted-foreground block text-xs">
-                                        {t('Un autre membre peut prendre la place et payer sa part.')}
+                            {/* L'appel aux membres suit l'échelle de niveau du padel (1 à 7). Au foot, aucune place ne s'ouvre : le niveau reste caché. */}
+                            {sport === 'padel' && (
+                                <div className="bg-card flex items-center justify-between gap-3 rounded-xl border p-3 text-sm">
+                                    <span>
+                                        <span className="font-semibold">{t('Places ouvertes au club')}</span>
+                                        <span className="text-muted-foreground block text-xs">
+                                            {t('Un autre membre peut prendre la place et payer sa part.')}
+                                        </span>
                                     </span>
-                                </span>
-                                <span className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setData('open_spots', Math.max(0, data.open_spots - 1))}
-                                        className="size-8 rounded-md border font-bold"
-                                        aria-label={t('Une place ouverte de moins')}
-                                    >
-                                        −
-                                    </button>
-                                    <span className="w-6 text-center font-semibold" aria-live="polite">
-                                        {data.open_spots}
+                                    <span className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('open_spots', Math.max(0, data.open_spots - 1))}
+                                            className="size-8 rounded-md border font-bold"
+                                            aria-label={t('Une place ouverte de moins')}
+                                        >
+                                            −
+                                        </button>
+                                        <span className="w-6 text-center font-semibold" aria-live="polite">
+                                            {data.open_spots}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('open_spots', Math.min(maxOpen, data.open_spots + 1))}
+                                            className="size-8 rounded-md border font-bold"
+                                            aria-label={t('Une place ouverte de plus')}
+                                        >
+                                            +
+                                        </button>
                                     </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => setData('open_spots', Math.min(maxOpen, data.open_spots + 1))}
-                                        className="size-8 rounded-md border font-bold"
-                                        aria-label={t('Une place ouverte de plus')}
-                                    >
-                                        +
-                                    </button>
-                                </span>
-                            </div>
+                                </div>
+                            )}
                             {data.open_spots > 0 && (
                                 <fieldset className="bg-card flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm">
                                     <legend className="sr-only">{t('Niveau demandé')}</legend>
@@ -276,8 +290,10 @@ export default function Checkout({
                                     )}
                                 </fieldset>
                             )}
-                            {partners > 3 && (
-                                <p className="text-sm text-[#9E2833]">{t('Invitez au plus trois autres joueurs, sans vous compter.')}</p>
+                            {partners > max_guests && (
+                                <p className="text-sm text-[#9E2833]">
+                                    {t('Invitez au plus :count autres joueurs, sans vous compter.', { count: max_guests })}
+                                </p>
                             )}
                             {partners > 0 && (
                                 <>

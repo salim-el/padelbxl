@@ -215,11 +215,12 @@ const en: Record<string, string> = {
     'Un autre membre peut prendre la place et payer sa part.': 'Another member can take the spot and pay their share.',
     'Une place ouverte de moins': 'One open spot less',
     'Une place ouverte de plus': 'One more open spot',
-    'Invitez au plus trois autres joueurs, sans vous compter.': 'Invite at most three other players, not counting yourself.',
     'Place ouverte, prise par un membre': 'Open spot, taken by a member',
     'Place ouverte, encore libre': 'Open spot, still free',
+    'Invitation refusée, part à votre charge': 'Invitation declined, share charged to you',
     'Refuser l’invitation ? Votre place sera proposée aux autres membres du club.':
         'Decline the invitation? Your spot will be offered to the other club members.',
+    'Refuser l’invitation ? Votre part restera à la charge de l’organisateur.': 'Decline the invitation? The organiser will keep paying your share.',
     'Je ne peux pas venir': 'I can’t come',
     'Padel indoor · Anderlecht': 'Indoor padel · Anderlecht',
     'sans attendre.': 'no waiting.',
@@ -238,7 +239,8 @@ const en: Record<string, string> = {
     'Lire les conditions générales': 'Read the terms and conditions',
     'Politique de confidentialité': 'Privacy policy',
     'Le club': 'The club',
-    ':name exploite six terrains de padel couverts à Anderlecht.': ':name runs six indoor padel courts in Anderlecht.',
+    ':name exploite six terrains de padel et quatre terrains de foot à 5, tous couverts, à Anderlecht.':
+        ':name runs six padel courts and four five-a-side football pitches, all indoors, in Anderlecht.',
     'Adresse : :address.': 'Address: :address.',
     'Numéro de TVA : :vat.': 'VAT number: :vat.',
     'Ces conditions valent pour toute réservation faite sur ArenaBxl ou à l’accueil du club.':
@@ -257,8 +259,10 @@ const en: Record<string, string> = {
     'Le club peut suspendre un compte. Un compte suspendu ne peut plus réserver ni payer. Cette décision est toujours prise par une personne du club.':
         'The club can suspend an account. A suspended account can no longer book or pay. This decision is always taken by a member of the club staff.',
     'Les créneaux et les prix': 'Slots and prices',
-    'Un créneau dure 90 minutes. Le premier commence à 9 h, le dernier à 21 h.':
-        'A slot lasts 90 minutes. The first one starts at 9 am, the last one at 9 pm.',
+    'Au padel, un créneau dure 90 minutes. Le premier commence à 9 h, le dernier à 21 h.':
+        'For padel, a slot lasts 90 minutes. The first one starts at 9 am, the last one at 9 pm.',
+    'Au foot à 5, un créneau dure 60 minutes. Le premier commence à 9 h, le dernier à 22 h.':
+        'For five-a-side football, a slot lasts 60 minutes. The first one starts at 9 am, the last one at 10 pm.',
     'On réserve jusqu’à 30 jours à l’avance.': 'You can book up to 30 days ahead.',
     'Les prix sont affichés TVA comprise. La TVA est de 6 % sur l’accès au terrain et de 21 % sur le matériel loué ou vendu.':
         'Prices include VAT. VAT is 6% on court access and 21% on equipment rented or sold.',
@@ -274,18 +278,19 @@ const en: Record<string, string> = {
     'Télécharger le PDF': 'Download the PDF',
     'Note de crédit :number (PDF)': 'Credit note :number (PDF)',
     'Le partage du prix': 'Sharing the price',
-    'Pour un match dans plus de 24 h, l’organisateur peut partager le prix avec trois autres joueurs au plus. Il les invite par e-mail ou ouvre des places aux membres du club.':
-        'For a match more than 24 hours away, the organiser can share the price with up to three other players. They invite them by e-mail or open spots to club members.',
+    'Pour un match dans plus de 24 h, l’organisateur peut partager le prix avec d’autres joueurs : trois au plus au padel, neuf au plus au foot à 5. Il les invite par e-mail.':
+        'For a match more than 24 hours away, the organiser can share the price with other players: up to three for padel, up to nine for five-a-side football. They invite them by e-mail.',
+    'Au padel seulement, il peut aussi ouvrir des places aux membres du club.': 'For padel only, they can also open spots to club members.',
     'Le prix est divisé en parts égales. Les centimes qui restent sont à la charge de l’organisateur.':
         'The price is split into equal shares. The organiser pays any remaining cents.',
     'Chaque joueur paie sa part et reçoit sa propre facture et son propre QR code.':
         'Each player pays their share and gets their own invoice and their own QR code.',
     'L’organisateur se porte garant : 24 h avant le match, il paie les parts encore impayées.':
         'The organiser is the guarantor: 24 hours before the match, they pay the shares still unpaid.',
-    'Un invité peut refuser jusqu’à 24 h avant le match. Sa place est alors proposée aux membres du club.':
-        'A guest can decline up to 24 hours before the match. Their spot is then offered to club members.',
-    'Une place ouverte revient au premier membre qui paie sa part. Quand la partie est complète, un membre peut s’inscrire sur la liste d’attente. Si une place se libère, chaque inscrit reçoit un e-mail et le premier qui paie prend la place.':
-        'An open spot goes to the first member who pays their share. When the match is full, a member can join the waiting list. If a spot frees up, everyone on the list gets an e-mail and the first to pay takes the spot.',
+    'Un invité peut refuser jusqu’à 24 h avant le match. Au padel, sa place est alors proposée aux membres du club. Au foot à 5, sa part reste à la charge de l’organisateur.':
+        'A guest can decline up to 24 hours before the match. For padel, their spot is then offered to club members. For five-a-side football, the organiser keeps paying their share.',
+    'Au padel, une place ouverte revient au premier membre qui paie sa part. Quand la partie est complète, un membre peut s’inscrire sur la liste d’attente. Si une place se libère, chaque inscrit reçoit un e-mail et le premier qui paie prend la place.':
+        'For padel, an open spot goes to the first member who pays their share. When the match is full, a member can join the waiting list. If a spot frees up, everyone on the list gets an e-mail and the first to pay takes the spot.',
     'L’annulation': 'Cancellation',
     'L’organisateur annule depuis son espace.': 'The organiser cancels from their account.',
     'Jusqu’à 24 h avant le début, chaque paiement de la partie est remboursé en entier. Une note de crédit renvoie à la facture d’origine.':
@@ -683,8 +688,8 @@ const en: Record<string, string> = {
     'le créneau, dès': 'per slot, from',
     'Quatre étapes, du planning au terrain. Le prix se partage entre tous les joueurs.':
         'Four steps from the schedule to the court. The price is shared between all players.',
-    'Le planning montre les terrains libres en temps réel, sans compte. Un créneau dure 90 minutes au padel, une heure au foot.':
-        'The schedule shows free courts in real time, no account needed. A slot lasts 90 minutes for padel and one hour for football.',
+    'Le planning montre les terrains libres en temps réel, sans compte. Les tarifs donnent la durée d’un créneau pour chaque sport.':
+        'The schedule shows free courts in real time, no account needed. The rates give the length of a slot for each sport.',
     'Partagez le prix': 'Share the price',
     'Invitez vos partenaires par e-mail : jusqu’à 3 au padel, 9 au foot. Chacun paie sa part en ligne et reçoit sa propre facture.':
         'Invite your partners by email: up to 3 for padel, 9 for football. Everyone pays their share online and gets their own invoice.',
@@ -705,6 +710,31 @@ const en: Record<string, string> = {
     'par joueur': 'per player',
     'L’organisateur invite ses partenaires. Chacun paie sa part en ligne et reçoit sa facture et son QR code. À 24 h du match, l’organisateur règle les parts encore impayées.':
         'The organiser invites their partners. Everyone pays their share online and gets their invoice and QR code. 24 hours before the match, the organiser pays any shares still unpaid.',
+    // Écrans du padel et du foot à 5 : choix du sport, planning, paiement et gérant (26/11/2026).
+    'Que voulez-vous réserver ?': 'What would you like to book?',
+    ':n joueurs par terrain': ':n players per court',
+    'Créneaux de :n minutes': ':n-minute slots',
+    'Partage du prix entre :n': 'Price shared between :n',
+    'À partir de': 'From',
+    'par terrain': 'per court',
+    'Voir les créneaux padel': 'See padel slots',
+    'Voir les créneaux foot': 'See football slots',
+    'Un seul compte pour les deux sports. Le choix reste affiché en haut du planning : on peut passer de l’un à l’autre à tout moment.':
+        'One account for both sports. The choice stays at the top of the schedule: you can switch from one to the other at any time.',
+    Sport: 'Sport',
+    ':n min': ':n min',
+    'Prix TTC par créneau de :n minutes, TVA de 6 % comprise. Annulation remboursée jusqu’à 24 h avant.':
+        'Price per :n-minute slot, 6% VAT included. Cancellations are refunded up to 24 hours before.',
+    'À :n joueurs, chacun paie :share.': 'With :n players, everyone pays :share.',
+    'Invitez au plus :count autres joueurs, sans vous compter.': 'Invite at most :count other players, not counting yourself.',
+    'Durée d’une partie de padel': 'Length of a padel game',
+    Discipline: 'Sport',
+    'Terrains et tarifs par discipline': 'Courts and prices by sport',
+    Terrains: 'Courts',
+    'Chaque terrain a sa discipline. La discipline fixe la durée du créneau et le nombre de joueurs.':
+        'Each court has its sport. The sport sets the slot length and the number of players.',
+    Joueurs: 'Players',
+    'Tarifs par discipline': 'Prices by sport',
 };
 
 export default en;

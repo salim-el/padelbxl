@@ -215,11 +215,13 @@ const nl: Record<string, string> = {
     'Un autre membre peut prendre la place et payer sa part.': 'Een ander lid kan de plaats nemen en zijn aandeel betalen.',
     'Une place ouverte de moins': 'Eén open plaats minder',
     'Une place ouverte de plus': 'Eén open plaats meer',
-    'Invitez au plus trois autres joueurs, sans vous compter.': 'Nodig hoogstens drie andere spelers uit, jezelf niet meegerekend.',
     'Place ouverte, prise par un membre': 'Open plaats, ingenomen door een lid',
     'Place ouverte, encore libre': 'Open plaats, nog vrij',
+    'Invitation refusée, part à votre charge': 'Uitnodiging geweigerd, aandeel ten laste van jou',
     'Refuser l’invitation ? Votre place sera proposée aux autres membres du club.':
         'De uitnodiging weigeren? Je plaats wordt aan de andere clubleden aangeboden.',
+    'Refuser l’invitation ? Votre part restera à la charge de l’organisateur.':
+        'De uitnodiging weigeren? Je deel blijft ten laste van de organisator.',
     'Je ne peux pas venir': 'Ik kan niet komen',
     'Padel indoor · Anderlecht': 'Indoor padel · Anderlecht',
     'sans attendre.': 'zonder wachten.',
@@ -238,7 +240,8 @@ const nl: Record<string, string> = {
     'Lire les conditions générales': 'Lees de algemene voorwaarden',
     'Politique de confidentialité': 'Privacybeleid',
     'Le club': 'De club',
-    ':name exploite six terrains de padel couverts à Anderlecht.': ':name baat zes overdekte padelterreinen uit in Anderlecht.',
+    ':name exploite six terrains de padel et quatre terrains de foot à 5, tous couverts, à Anderlecht.':
+        ':name baat zes padelterreinen en vier minivoetbalvelden uit, allemaal overdekt, in Anderlecht.',
     'Adresse : :address.': 'Adres: :address.',
     'Numéro de TVA : :vat.': 'Btw-nummer: :vat.',
     'Ces conditions valent pour toute réservation faite sur ArenaBxl ou à l’accueil du club.':
@@ -258,8 +261,10 @@ const nl: Record<string, string> = {
     'Le club peut suspendre un compte. Un compte suspendu ne peut plus réserver ni payer. Cette décision est toujours prise par une personne du club.':
         'De club kan een account schorsen. Met een geschorst account kun je niet meer reserveren of betalen. Die beslissing neemt altijd een medewerker van de club.',
     'Les créneaux et les prix': 'Tijdsloten en prijzen',
-    'Un créneau dure 90 minutes. Le premier commence à 9 h, le dernier à 21 h.':
-        'Een tijdslot duurt 90 minuten. Het eerste begint om 9 uur, het laatste om 21 uur.',
+    'Au padel, un créneau dure 90 minutes. Le premier commence à 9 h, le dernier à 21 h.':
+        'Bij padel duurt een tijdslot 90 minuten. Het eerste begint om 9 uur, het laatste om 21 uur.',
+    'Au foot à 5, un créneau dure 60 minutes. Le premier commence à 9 h, le dernier à 22 h.':
+        'Bij minivoetbal duurt een tijdslot 60 minuten. Het eerste begint om 9 uur, het laatste om 22 uur.',
     'On réserve jusqu’à 30 jours à l’avance.': 'Je reserveert tot 30 dagen vooraf.',
     'Les prix sont affichés TVA comprise. La TVA est de 6 % sur l’accès au terrain et de 21 % sur le matériel loué ou vendu.':
         'De prijzen zijn inclusief btw. De btw bedraagt 6 % op de toegang tot het terrein en 21 % op gehuurd of gekocht materiaal.',
@@ -275,18 +280,20 @@ const nl: Record<string, string> = {
     'Télécharger le PDF': 'Pdf downloaden',
     'Note de crédit :number (PDF)': 'Creditnota :number (pdf)',
     'Le partage du prix': 'De prijs delen',
-    'Pour un match dans plus de 24 h, l’organisateur peut partager le prix avec trois autres joueurs au plus. Il les invite par e-mail ou ouvre des places aux membres du club.':
-        'Voor een match over meer dan 24 uur kan de organisator de prijs delen met hoogstens drie andere spelers. Hij nodigt hen uit per e-mail of stelt plaatsen open voor de leden van de club.',
+    'Pour un match dans plus de 24 h, l’organisateur peut partager le prix avec d’autres joueurs : trois au plus au padel, neuf au plus au foot à 5. Il les invite par e-mail.':
+        'Voor een match over meer dan 24 uur kan de organisator de prijs delen met andere spelers: hoogstens drie bij padel, hoogstens negen bij minivoetbal. Hij nodigt hen uit per e-mail.',
+    'Au padel seulement, il peut aussi ouvrir des places aux membres du club.':
+        'Alleen bij padel kan hij ook plaatsen openstellen voor de leden van de club.',
     'Le prix est divisé en parts égales. Les centimes qui restent sont à la charge de l’organisateur.':
         'De prijs wordt in gelijke delen verdeeld. De overblijvende centen betaalt de organisator.',
     'Chaque joueur paie sa part et reçoit sa propre facture et son propre QR code.':
         'Elke speler betaalt zijn deel en krijgt een eigen factuur en een eigen QR-code.',
     'L’organisateur se porte garant : 24 h avant le match, il paie les parts encore impayées.':
         'De organisator staat borg: 24 uur voor de match betaalt hij de delen die nog openstaan.',
-    'Un invité peut refuser jusqu’à 24 h avant le match. Sa place est alors proposée aux membres du club.':
-        'Een genodigde kan weigeren tot 24 uur voor de match. Zijn plaats wordt dan aangeboden aan de leden van de club.',
-    'Une place ouverte revient au premier membre qui paie sa part. Quand la partie est complète, un membre peut s’inscrire sur la liste d’attente. Si une place se libère, chaque inscrit reçoit un e-mail et le premier qui paie prend la place.':
-        'Een open plaats gaat naar het eerste lid dat zijn deel betaalt. Is het spel volzet, dan kun je je op de wachtlijst zetten. Komt er een plaats vrij, dan krijgt iedereen op de lijst een e-mail en wie eerst betaalt, krijgt de plaats.',
+    'Un invité peut refuser jusqu’à 24 h avant le match. Au padel, sa place est alors proposée aux membres du club. Au foot à 5, sa part reste à la charge de l’organisateur.':
+        'Een genodigde kan weigeren tot 24 uur voor de match. Bij padel wordt zijn plaats dan aangeboden aan de leden van de club. Bij minivoetbal blijft zijn deel ten laste van de organisator.',
+    'Au padel, une place ouverte revient au premier membre qui paie sa part. Quand la partie est complète, un membre peut s’inscrire sur la liste d’attente. Si une place se libère, chaque inscrit reçoit un e-mail et le premier qui paie prend la place.':
+        'Bij padel gaat een open plaats naar het eerste lid dat zijn deel betaalt. Is het spel volzet, dan kun je je op de wachtlijst zetten. Komt er een plaats vrij, dan krijgt iedereen op de lijst een e-mail en wie eerst betaalt, krijgt de plaats.',
     'L’annulation': 'Annuleren',
     'L’organisateur annule depuis son espace.': 'De organisator annuleert in zijn ruimte.',
     'Jusqu’à 24 h avant le début, chaque paiement de la partie est remboursé en entier. Une note de crédit renvoie à la facture d’origine.':
@@ -686,8 +693,8 @@ const nl: Record<string, string> = {
     'le créneau, dès': 'per tijdslot, vanaf',
     'Quatre étapes, du planning au terrain. Le prix se partage entre tous les joueurs.':
         'Vier stappen, van planning tot terrein. De prijs wordt gedeeld tussen alle spelers.',
-    'Le planning montre les terrains libres en temps réel, sans compte. Un créneau dure 90 minutes au padel, une heure au foot.':
-        'De planning toont de vrije terreinen in realtime, zonder account. Een tijdslot duurt 90 minuten bij padel en een uur bij voetbal.',
+    'Le planning montre les terrains libres en temps réel, sans compte. Les tarifs donnent la durée d’un créneau pour chaque sport.':
+        'De planning toont de vrije terreinen in realtime, zonder account. De tarieven geven de duur van een tijdslot per sport.',
     'Partagez le prix': 'Deel de prijs',
     'Invitez vos partenaires par e-mail : jusqu’à 3 au padel, 9 au foot. Chacun paie sa part en ligne et reçoit sa propre facture.':
         'Nodig je partners uit per e-mail: tot 3 bij padel, 9 bij voetbal. Iedereen betaalt zijn deel online en krijgt zijn eigen factuur.',
@@ -708,6 +715,31 @@ const nl: Record<string, string> = {
     'par joueur': 'per speler',
     'L’organisateur invite ses partenaires. Chacun paie sa part en ligne et reçoit sa facture et son QR code. À 24 h du match, l’organisateur règle les parts encore impayées.':
         'De organisator nodigt zijn partners uit. Iedereen betaalt zijn deel online en krijgt zijn factuur en QR-code. 24 uur voor de wedstrijd betaalt de organisator de delen die nog openstaan.',
+    // Écrans du padel et du foot à 5 : choix du sport, planning, paiement et gérant (26/11/2026).
+    'Que voulez-vous réserver ?': 'Wat wil je reserveren?',
+    ':n joueurs par terrain': ':n spelers per terrein',
+    'Créneaux de :n minutes': 'Tijdsloten van :n minuten',
+    'Partage du prix entre :n': 'Prijs gedeeld tussen :n',
+    'À partir de': 'Vanaf',
+    'par terrain': 'per terrein',
+    'Voir les créneaux padel': 'Padeltijdsloten bekijken',
+    'Voir les créneaux foot': 'Voetbaltijdsloten bekijken',
+    'Un seul compte pour les deux sports. Le choix reste affiché en haut du planning : on peut passer de l’un à l’autre à tout moment.':
+        'Eén account voor beide sporten. De keuze blijft bovenaan de planning staan: je kunt altijd van de ene naar de andere sport overschakelen.',
+    Sport: 'Sport',
+    ':n min': ':n min',
+    'Prix TTC par créneau de :n minutes, TVA de 6 % comprise. Annulation remboursée jusqu’à 24 h avant.':
+        'Prijs per tijdslot van :n minuten, inclusief 6 % btw. Terugbetaling bij annulering tot 24 uur vooraf.',
+    'À :n joueurs, chacun paie :share.': 'Met :n spelers betaalt iedereen :share.',
+    'Invitez au plus :count autres joueurs, sans vous compter.': 'Nodig hoogstens :count andere spelers uit, jezelf niet meegerekend.',
+    'Durée d’une partie de padel': 'Duur van een padelmatch',
+    Discipline: 'Sport',
+    'Terrains et tarifs par discipline': 'Terreinen en tarieven per sport',
+    Terrains: 'Terreinen',
+    'Chaque terrain a sa discipline. La discipline fixe la durée du créneau et le nombre de joueurs.':
+        'Elk terrein heeft zijn sport. De sport bepaalt de duur van het tijdslot en het aantal spelers.',
+    Joueurs: 'Spelers',
+    'Tarifs par discipline': 'Tarieven per sport',
 };
 
 export default nl;

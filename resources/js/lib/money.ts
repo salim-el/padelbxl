@@ -19,6 +19,9 @@ export const SHARE_LABELS: Record<string, string> = {
     covered: 'Réglée par l’organisateur',
 };
 
+// Sports du club (Court::SPORTS), traduits à l'affichage.
+export const SPORT_LABELS: Record<string, string> = { padel: 'Padel', foot5: 'Foot à 5' };
+
 // Majuscule au premier mot seulement, comme le veut le français (« Dimanche 25 octobre »).
 export const ucfirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 

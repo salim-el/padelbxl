@@ -26,7 +26,7 @@ type Props = {
     date_local: string;
     items: { name: string; quantity: number; total_cents: number }[];
     invoices: { number: string; total_cents: number; vat_cents: number; ubl: boolean; credit_notes: string[] }[];
-    players: { name: string | null; is_organizer: boolean; open: boolean; taken: boolean; share_cents: number; status: string }[];
+    players: { name: string | null; is_organizer: boolean; open: boolean; declined: boolean; taken: boolean; share_cents: number; status: string }[];
 };
 
 export default function Show({ booking, qr, qr_window, movable, date_local, items, invoices, players }: Props) {
@@ -141,7 +141,12 @@ export default function Show({ booking, qr, qr_window, movable, date_local, item
                             {players.map((p, i) => (
                                 <li key={i} className="flex items-center justify-between gap-3">
                                     <span className="min-w-0 truncate">
-                                        {p.open ? t(p.taken ? 'Place ouverte, prise par un membre' : 'Place ouverte, encore libre') : p.name}{' '}
+                                        {/* Au foot, une invitation refusée ne devient pas une place ouverte : sa part revient à l'organisateur. */}
+                                        {p.declined
+                                            ? t('Invitation refusée, part à votre charge')
+                                            : p.open
+                                              ? t(p.taken ? 'Place ouverte, prise par un membre' : 'Place ouverte, encore libre')
+                                              : p.name}{' '}
                                         {p.is_organizer && <span className="text-[#5F6B78]">({t('vous')})</span>}
                                     </span>
                                     <span className="flex shrink-0 items-center gap-2">

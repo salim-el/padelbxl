@@ -1,23 +1,18 @@
 import LanguageSwitcher from '@/components/language-switcher';
 import { useT } from '@/lib/i18n';
-import { euros } from '@/lib/money';
+import { SPORT_LABELS, euros } from '@/lib/money';
+import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { CalendarDays, CreditCard, QrCode, Users } from 'lucide-react';
 
-type Price = { name: string; start: string; end: string; price_cents: number; sport?: string | null };
+type Price = { name: string; start: string; end: string; price_cents: number; sport: string; players: number; minutes: number };
 
 const NAVY = 'bg-[#0E1B2C] text-[#F7F6F1]';
 const CTA =
     'inline-flex items-center justify-center rounded-lg bg-[#C8E64A] px-6 py-3 font-bold text-[#0E1B2C] transition hover:bg-[#b5d23c] focus-visible:ring-2 focus-visible:ring-[#C8E64A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E1B2C] focus-visible:outline-none';
 const GHOST =
     'inline-flex items-center justify-center rounded-lg border border-[#F7F6F1]/40 px-6 py-3 font-semibold text-[#F7F6F1] transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#C8E64A] focus-visible:outline-none';
-
-// shortcut: copie de Court::PLAYERS et des durées de créneau ; à passer par la route si un sport s'ajoute.
-const SPORTS: Record<string, { label: string; players: number; duration: string }> = {
-    padel: { label: 'Padel', players: 4, duration: '90 minutes' },
-    foot5: { label: 'Foot à 5', players: 10, duration: '1 heure' },
-};
 
 // Photo en deux tailles : le navigateur choisit la plus légère qui suffit à l'écran.
 function Photo({
@@ -72,13 +67,14 @@ function Step({ n, icon: Icon, title, text }: { n: number; icon: typeof Calendar
 export default function Home({ prices }: { prices: Price[] }) {
     const { auth } = usePage<SharedData>().props;
     const t = useT();
-    const from = Math.min(...prices.map((p) => p.price_cents));
+    // Sans tarif en vigueur, le « dès » affiche un tiret plutôt que l'infini.
+    const from = prices.length > 0 ? Math.min(...prices.map((p) => p.price_cents)) : null;
     // Tarifs rangés par sport, padel d'abord.
     const groups = prices.reduce<Record<string, Price[]>>((acc, p) => {
-        (acc[p.sport ?? 'padel'] ??= []).push(p);
+        (acc[p.sport] ??= []).push(p);
         return acc;
     }, {});
-    const sports = Object.keys(SPORTS).filter((s) => groups[s]);
+    const sports = Object.keys(SPORT_LABELS).filter((s) => groups[s]);
 
     return (
         <>
@@ -123,7 +119,9 @@ export default function Home({ prices }: { prices: Price[] }) {
                                 </Link>
                             </li>
                         </ul>
-                        <div className="flex items-center gap-3">
+                        {/* Écran étroit : les liens passent à la ligne au lieu de pousser « Réserver » hors de l'écran.
+                            « Inscription » reste visible à toutes les largeurs : c'est le seul lien de l'accueil vers la création de compte. */}
+                        <div className="flex flex-wrap items-center justify-end gap-3">
                             <LanguageSwitcher />
                             {auth.user ? (
                                 <Link href="/bookings" className="text-sm font-semibold hover:text-[#C8E64A]">
@@ -142,7 +140,8 @@ export default function Home({ prices }: { prices: Price[] }) {
                                     </Link>
                                 </>
                             )}
-                            <Link href="/planning" className={`${CTA} px-4 py-2 text-sm`}>
+                            {/* cn() retire px-6 py-3 de CTA : sans lui, ces classes l'emportent sur px-4 py-2 dans la feuille de style. */}
+                            <Link href="/planning" className={cn(CTA, 'px-4 py-2 text-sm')}>
                                 {t('Réserver')}
                             </Link>
                         </div>
@@ -187,7 +186,7 @@ export default function Home({ prices }: { prices: Price[] }) {
                                 [euros(from), 'le créneau, dès'],
                             ].map(([value, label]) => (
                                 <div key={label} className="text-center">
-                                    <dt className="sr-only">{label}</dt>
+                                    <dt className="sr-only">{t(label)}</dt>
                                     <dd className="text-2xl font-extrabold text-[#0E1B2C] md:text-3xl">{t(value)}</dd>
                                     <dd className="text-sm text-[#5F6B78]">{t(label)}</dd>
                                 </div>
@@ -205,7 +204,7 @@ export default function Home({ prices }: { prices: Price[] }) {
                                 n={1}
                                 icon={CalendarDays}
                                 title="Choisissez un créneau"
-                                text="Le planning montre les terrains libres en temps réel, sans compte. Un créneau dure 90 minutes au padel, une heure au foot."
+                                text="Le planning montre les terrains libres en temps réel, sans compte. Les tarifs donnent la durée d’un créneau pour chaque sport."
                             />
                             <Step
                                 n={2}
@@ -238,14 +237,15 @@ export default function Home({ prices }: { prices: Price[] }) {
                             </p>
                             <div className="mt-8 grid gap-6 md:grid-cols-2">
                                 {sports.map((sport) => {
-                                    const { label, players, duration } = SPORTS[sport];
+                                    // Joueurs et durée viennent du serveur : la durée du padel suit le réglage du club.
+                                    const { players, minutes } = groups[sport][0];
 
                                     return (
                                         <article key={sport} className="overflow-hidden rounded-2xl border border-[#DAD7CC]">
                                             <header className="flex flex-wrap items-baseline justify-between gap-2 bg-[#0E1B2C] px-6 py-4 text-[#F7F6F1]">
-                                                <h3 className="text-xl font-extrabold uppercase">{t(label)}</h3>
+                                                <h3 className="text-xl font-extrabold uppercase">{t(SPORT_LABELS[sport])}</h3>
                                                 <p className="text-sm text-[#F7F6F1]/80">
-                                                    {players} {t('joueurs')} · {t(duration)}
+                                                    {players} {t('joueurs')} · {t(':n minutes', { n: minutes })}
                                                 </p>
                                             </header>
                                             <ul className="divide-y divide-[#DAD7CC] px-6">
@@ -260,7 +260,7 @@ export default function Home({ prices }: { prices: Price[] }) {
                                                         <div className="text-right">
                                                             <p className="text-2xl font-extrabold">{euros(p.price_cents)}</p>
                                                             <p className="text-sm font-semibold text-[#1D5C7A]">
-                                                                {t('soit')} {euros(Math.floor(p.price_cents / players))} {t('par joueur')}
+                                                                {t('soit')} {euros(Math.floor(p.price_cents / p.players))} {t('par joueur')}
                                                             </p>
                                                         </div>
                                                     </li>

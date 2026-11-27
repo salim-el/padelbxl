@@ -13,16 +13,17 @@ import { CalendarDays, Clock, FileText, Users } from 'lucide-react';
 type Props = {
     booking: { id: string; court: string; date: string; time: string; status: string };
     organizer: string;
+    sport: string;
     share_cents: number;
     share_status: string;
     payable: boolean;
     declinable: boolean;
     qr: string | null;
     qr_window: string | null;
-    invoices: { number: string; total_cents: number; vat_cents: number; credit_notes: string[] }[];
+    invoices: { number: string; total_cents: number; vat_cents: number; ubl: boolean; credit_notes: string[] }[];
 };
 
-export default function Share({ booking, organizer, share_cents, share_status, payable, declinable, qr, qr_window, invoices }: Props) {
+export default function Share({ booking, organizer, sport, share_cents, share_status, payable, declinable, qr, qr_window, invoices }: Props) {
     const t = useT();
     // F9 : avec les clés Stripe, le paiement passe par la page de Stripe ; sinon il reste simulé.
     const { stripe } = usePage<{ stripe: boolean }>().props;
@@ -103,7 +104,12 @@ export default function Share({ booking, organizer, share_cents, share_status, p
                         variant="outline"
                         disabled={processing}
                         onClick={() => {
-                            if (window.confirm(t('Refuser l’invitation ? Votre place sera proposée aux autres membres du club.'))) {
+                            // Seul le padel ouvre la place refusée aux membres ; au foot, l'organisateur garde la part.
+                            const question =
+                                sport === 'padel'
+                                    ? t('Refuser l’invitation ? Votre place sera proposée aux autres membres du club.')
+                                    : t('Refuser l’invitation ? Votre part restera à la charge de l’organisateur.');
+                            if (window.confirm(question)) {
                                 router.post(`/bookings/${booking.id}/share/decline`);
                             }
                         }}
@@ -125,6 +131,12 @@ export default function Share({ booking, organizer, share_cents, share_status, p
                         <span className="flex flex-wrap items-center gap-2">
                             <FileText className="size-4 text-[#1D5C7A]" aria-hidden /> {t('Facture :number', { number: i.number })}
                             <InvoiceLinks booking={booking.id} invoice={i.number} creditNotes={i.credit_notes} />
+                            {/* Un partenaire entreprise télécharge aussi l'UBL de la facture de sa part. */}
+                            {i.ubl && (
+                                <a href={`/bookings/${booking.id}/invoices/${i.number}/ubl`} download className="text-[#1D5C7A] underline">
+                                    {t('Facture électronique (UBL)')}
+                                </a>
+                            )}
                         </span>
                         <span>
                             <strong>{euros(i.total_cents)}</strong>{' '}
