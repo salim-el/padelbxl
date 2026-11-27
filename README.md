@@ -1,6 +1,6 @@
 # ArenaBxl
 
-Application web de l'Arena Padel Club, un club fictif de six terrains couverts à Anderlecht.
+Application web de l'Arena Padel Club, un club fictif à Anderlecht. Il a six terrains de padel et quatre terrains de foot à 5, tous couverts.
 Elle gère la réservation en ligne et au comptoir, le paiement, l'accès au terrain par QR code et la facturation.
 Épreuve intégrée, Bachelier en informatique, orientation développement d'applications, ICC Bruxelles, 2025-2026.
 Auteur : EL GHALBZOURI Salim.
@@ -54,6 +54,22 @@ Pour les logiciels partenaires :
 - API REST `/api/v1` avec des jetons Sanctum. Un jeton de joueur expire après 30 jours, un jeton d'appareil du club après un an.
 - Créneaux libres en données ouvertes, au format JSON-LD, sous licence CC BY 4.0.
 
+## Le foot à 5, ajouté après la remise
+
+La branche `develop` ajoute le foot à 5 en salle. Le padel ne change pas.
+
+- Quatre terrains couverts, de « Foot 1 » à « Foot 4 », à côté des six terrains de padel.
+- Créneaux d'une heure, de 9 h à 23 h. Le planning demande d'abord le sport, puis passe de l'un à l'autre par des onglets.
+- Dix joueurs par match. L'organisateur partage le prix avec neuf invités au plus.
+- Heures creuses à 70 € de 9 h à 17 h, heures pleines à 90 € de 17 h à 23 h, TVA de 6 % comprise. La remise flash vaut aussi pour le foot.
+- Ni place ouverte aux membres ni liste d'attente. Une invitation refusée reste à la charge de l'organisateur, prévenu par e-mail. Sa garantie la paie 24 h avant le match.
+- Avec Stripe, un match partagé demande une carte de garantie, même quand l'avoir couvre la part de l'organisateur.
+- La raquette et les balles restent au padel. Une réservation ne se déplace que sur un terrain du même sport.
+- Les conditions générales passent en version 2026.2. Chaque joueur les accepte avant sa prochaine réservation.
+- `GET /api/v1/courts` donne chaque terrain avec son champ `sport`, qui vaut `padel` ou `foot5`.
+- `GET /api/v1/availability?date=AAAA-MM-JJ&sport=foot5` donne tous les créneaux du jour d'un sport, libres ou non (champ `available`). Sans `sport`, c'est le padel. Un autre sport répond 422.
+- Les données ouvertes restent celles du padel.
+
 ## Ce qui suit en version 1.1
 
 Ces points viennent après la remise, avant la défense de mi-décembre 2026.
@@ -92,6 +108,8 @@ L'application répond sur http://localhost:8000.
 Pour la démonstration, une seconde commande remplit toutes les tables avec un historique réaliste.
 Elle couvre trois semaines passées et deux semaines à venir : parties payées, partagées et ouvertes, liste d'attente,
 annulations remboursées ou tardives, comptoir, fermeture de terrain, client entreprise, passages à la borne.
+Elle ajoute trois matchs de foot à 5 d'une heure. Deux sont déjà joués, celui d'une entreprise à midi et un match à dix joueurs.
+Le troisième est à venir et partage aussi le prix entre dix joueurs.
 Elle passe par les règles de l'application et se lance une fois, sur une base fraîche, après `migrate --seed` :
 
 ```bash
@@ -114,14 +132,17 @@ Le conteneur `scheduler` lance les tâches planifiées. PostgreSQL 16 garde ses 
 ## Restaurer la base de démonstration
 
 L'archive du code remise avec le rapport contient aussi `T14-dump_padelbxl.sql`, le dump de cette base.
-Sa restauration demande PostgreSQL 16.10 ou plus récent.
+Sa restauration demande PostgreSQL 16.10 ou plus récent. Mettre d'abord `DB_DATABASE=padelbxl` dans `.env`.
 
 ```bash
 createdb padelbxl
 psql -d padelbxl -f T14-dump_padelbxl.sql
+php artisan migrate
 ```
 
-Mettre ensuite `DB_DATABASE=padelbxl` dans `.env`.
+Le dump date de la version remise. Sans `migrate`, l'accueil et le planning ne s'ouvrent pas.
+`migrate` y ajoute le foot à 5, avec la colonne `sport`, quatre terrains et deux tarifs. Il publie aussi les conditions générales 2026.2.
+Chaque compte de démonstration les accepte à sa prochaine réservation.
 
 ## Comptes de démonstration
 

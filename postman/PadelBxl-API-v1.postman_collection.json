@@ -1,24 +1,39 @@
 {
   "info": {
     "name": "ArenaBxl API v1",
-    "description": "API des logiciels partenaires d’ArenaBxl. Lancer « Connexion joueur » d'abord : le jeton est gardé dans la variable token. Le jeton d'appareil (terminalToken) se crée avec php artisan api:partner-token <e-mail du gérant> \"Écran terrain 1\".",
+    "description": "API des logiciels partenaires d’ArenaBxl. Lancer « Connexion joueur » d'abord : le jeton est gardé dans la variable token. Le jeton d'appareil (terminalToken) se crée avec php artisan api:partner-token <e-mail du gérant> \"Écran terrain 1\". La variable date prend la date de demain quand elle est vide ou passée.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// L'API refuse une date passée (422) : une date vide ou dépassée devient celle de demain, en UTC comme le serveur.",
+          "const today = new Date().toISOString().slice(0, 10);",
+          "const date = pm.collectionVariables.get('date');",
+          "if (!date || date < today) pm.collectionVariables.set('date', new Date(Date.now() + 864e5).toISOString().slice(0, 10));"
+        ]
+      }
+    }
+  ],
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8000/api/v1" },
     { "key": "token", "value": "" },
     { "key": "terminalToken", "value": "" },
     { "key": "bookingId", "value": "" },
     { "key": "courtId", "value": "1" },
-    { "key": "date", "value": "2026-11-20" }
+    { "key": "date", "value": "" }
   ],
   "item": [
     {
       "name": "Public",
       "item": [
-        { "name": "Terrains", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/courts" } },
-        { "name": "Créneaux d'un jour", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/availability?date={{date}}" } },
-        { "name": "Données ouvertes (JSON-LD OpenActive)", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/ld+json" }], "url": "{{baseUrl}}/opendata/slots.jsonld?date={{date}}" } }
+        { "name": "Terrains", "request": { "method": "GET", "description": "Terrains actifs. Le champ sport vaut padel ou foot5.", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/courts" } },
+        { "name": "Créneaux d'un jour", "request": { "method": "GET", "description": "Tous les créneaux du jour, libres ou non (champ available). Sans paramètre sport, c'est le padel.", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/availability?date={{date}}" } },
+        { "name": "Créneaux d'un jour (foot à 5)", "request": { "method": "GET", "description": "Tous les créneaux du jour du foot à 5, libres ou non (champ available). Le paramètre sport vaut padel ou foot5. Un autre sport répond 422.", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{baseUrl}}/availability?date={{date}}&sport=foot5" } },
+        { "name": "Données ouvertes (JSON-LD OpenActive)", "request": { "method": "GET", "description": "Créneaux libres du padel seulement.", "header": [{ "key": "Accept", "value": "application/ld+json" }], "url": "{{baseUrl}}/opendata/slots.jsonld?date={{date}}" } }
       ]
     },
     {
