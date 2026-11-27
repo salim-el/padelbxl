@@ -16,7 +16,9 @@ use App\Http\Controllers\PassController;
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SuspensionAppealController;
+use App\Models\Court;
 use App\Models\PricingRule;
+use App\Services\Clock;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -32,6 +34,9 @@ Route::get('/', fn () => Inertia::render('home', [
             'end' => substr($r->end_time, 0, 5),
             'price_cents' => $r->price_cents,
             'sport' => $r->sport,
+            // Prix par joueur et durée de chaque tarif : 4 joueurs au padel, 10 au foot à 5, une heure de foot.
+            'players' => Court::PLAYERS[$r->sport],
+            'minutes' => Clock::slotMinutes($r->sport),
         ]),
 ]))->name('home');
 

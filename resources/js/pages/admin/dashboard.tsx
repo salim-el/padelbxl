@@ -3,7 +3,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { useT } from '@/lib/i18n';
-import { euros } from '@/lib/money';
+import { SPORT_LABELS, euros } from '@/lib/money';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { CalendarCheck, Gauge, TrendingUp, Wallet } from 'lucide-react';
 import { useState } from 'react';
@@ -37,6 +37,8 @@ const FLAG_LABELS: Record<string, string> = {
     late_payment: 'Paiement tardif',
 };
 const pill = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold';
+// Couleur de la discipline d'un terrain, comme sur la maquette : vert pour le padel, bleu pour le foot à 5.
+const SPORT_PILL: Record<string, string> = { padel: 'bg-[#EEF4D6] text-[#4E6600]', foot5: 'bg-[#E3F0F7] text-[#1D5C7A]' };
 
 function Stat({ label, value, icon: Icon }: { label: string; value: string; icon: typeof Gauge }) {
     return (
@@ -55,6 +57,7 @@ function Stat({ label, value, icon: Icon }: { label: string; value: string; icon
 type Rule = {
     id: number;
     name: string;
+    sport: string;
     start: string;
     end: string;
     price_cents: number;
@@ -92,7 +95,8 @@ function Settings({ settings }: { settings: { opens_at: string; closes_at: strin
                 />
             </label>
             <label>
-                {t('Créneau')}
+                {/* Le foot à 5 garde des créneaux d'une heure : ce réglage ne vaut que pour le padel. */}
+                {t('Durée d’une partie de padel')}
                 <select value={form.data.slot_minutes} onChange={(e) => form.setData('slot_minutes', e.target.value)} className={field}>
                     <option value="60">{t(':n minutes', { n: 60 })}</option>
                     <option value="90">{t(':n minutes', { n: 90 })}</option>
@@ -117,7 +121,7 @@ function Settings({ settings }: { settings: { opens_at: string; closes_at: strin
 function NewRule() {
     const t = useT();
     const today = new Date().toISOString().slice(0, 10);
-    const form = useForm({ name: '', start_time: '09:00', end_time: '17:00', price: '', vat_rate: '6', valid_from: today });
+    const form = useForm({ name: '', sport: 'padel', start_time: '09:00', end_time: '17:00', price: '', vat_rate: '6', valid_from: today });
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         form.transform((d) => ({ ...d, price_cents: Math.round(parseFloat(d.price.replace(',', '.')) * 100) }));
@@ -127,7 +131,7 @@ function NewRule() {
     return (
         <form onSubmit={submit} className="mt-4 grid gap-2 border-t pt-4 text-sm sm:grid-cols-3">
             <p className="font-semibold sm:col-span-3">{t('Nouveau tarif')}</p>
-            <label className="sm:col-span-3">
+            <label className="sm:col-span-2">
                 {t('Nom')}
                 <input
                     required
@@ -136,6 +140,16 @@ function NewRule() {
                     className={field}
                     placeholder={t('Heures creuses hiver')}
                 />
+            </label>
+            <label>
+                {t('Discipline')}
+                <select value={form.data.sport} onChange={(e) => form.setData('sport', e.target.value)} className={field}>
+                    {Object.entries(SPORT_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                            {t(label)}
+                        </option>
+                    ))}
+                </select>
             </label>
             <label>
                 {t('De')}
@@ -251,6 +265,8 @@ export default function Dashboard({
     users,
     search,
     courts,
+    minutes,
+    players,
     rules,
     settings,
     closures,
@@ -261,7 +277,9 @@ export default function Dashboard({
     today: Row[];
     users: Page<Account>;
     search: string;
-    courts: { id: number; name: string }[];
+    courts: { id: number; name: string; sport: string }[];
+    minutes: Record<string, number>;
+    players: Record<string, number>;
     rules: Rule[];
     settings: { opens_at: string; closes_at: string; slot_minutes: number };
     closures: Closure[];
@@ -605,29 +623,81 @@ export default function Dashboard({
                     )}
                 </section>
 
+                <section aria-labelledby="disciplines" className="flex flex-col gap-2">
+                    <h2 id="disciplines" className="text-lg font-semibold">
+                        {t('Terrains et tarifs par discipline')}
+                    </h2>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                        <div className="bg-card rounded-2xl border p-5">
+                            <h3 className="font-semibold">{t('Terrains')}</h3>
+                            <p className="text-muted-foreground mb-2 text-sm">
+                                {t('Chaque terrain a sa discipline. La discipline fixe la durée du créneau et le nombre de joueurs.')}
+                            </p>
+                            <div className="relative overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b text-left">
+                                            <th className="p-2">{t('Terrain')}</th>
+                                            <th className="p-2">{t('Discipline')}</th>
+                                            <th className="p-2">{t('Créneau')}</th>
+                                            <th className="p-2">{t('Joueurs')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {courts.map((c) => (
+                                            <tr key={c.id} className="border-b last:border-0">
+                                                <td className="p-2">{c.name}</td>
+                                                <td className="p-2">
+                                                    <span className={`${pill} ${SPORT_PILL[c.sport]}`}>{t(SPORT_LABELS[c.sport])}</span>
+                                                </td>
+                                                <td className="p-2 whitespace-nowrap">{t(':n min', { n: minutes[c.sport] })}</td>
+                                                <td className="p-2">{players[c.sport]}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div className="bg-card rounded-2xl border p-5">
+                            <h3 className="font-semibold">{t('Tarifs par discipline')}</h3>
+                            <p className="text-muted-foreground mb-2 text-sm">
+                                {t('Prix TTC par créneau. Les réservations déjà payées gardent leur prix.')}
+                            </p>
+                            {Object.keys(SPORT_LABELS)
+                                .filter((s) => rules.some((r) => r.sport === s))
+                                .map((s) => (
+                                    <div key={s} className="mt-3">
+                                        <h4 className="text-sm font-semibold">
+                                            {t(SPORT_LABELS[s])} · {t(':n min', { n: minutes[s] })}
+                                        </h4>
+                                        {rules
+                                            .filter((r) => r.sport === s)
+                                            .map((r) => (
+                                                <PriceRow key={r.id} rule={r} />
+                                            ))}
+                                    </div>
+                                ))}
+                            <NewRule />
+                            {(errors.pricing || errors.valid_until) && (
+                                <p role="alert" className="mt-2 text-sm text-[#9E2833]">
+                                    {errors.pricing ?? errors.valid_until}
+                                </p>
+                            )}
+                            {errors.price_cents && (
+                                <p role="alert" className="mt-2 text-sm text-[#9E2833]">
+                                    {errors.price_cents}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
                 <section className="grid gap-4 lg:grid-cols-2">
                     <div className="bg-card rounded-2xl border p-5">
                         <h2 className="text-lg font-semibold">{t('Horaires')}</h2>
                         <p className="text-muted-foreground mb-2 text-sm">{t('Les réservations déjà faites gardent leurs heures.')}</p>
                         <Settings settings={settings} />
-                        <h2 className="mt-6 text-lg font-semibold">{t('Tarifs')}</h2>
-                        <p className="text-muted-foreground mb-2 text-sm">
-                            {t('Prix TTC par créneau. Les réservations déjà payées gardent leur prix.')}
-                        </p>
-                        {rules.map((r) => (
-                            <PriceRow key={r.id} rule={r} />
-                        ))}
-                        <NewRule />
-                        {(errors.pricing || errors.valid_until) && (
-                            <p role="alert" className="mt-2 text-sm text-[#9E2833]">
-                                {errors.pricing ?? errors.valid_until}
-                            </p>
-                        )}
-                        {errors.price_cents && (
-                            <p role="alert" className="mt-2 text-sm text-[#9E2833]">
-                                {errors.price_cents}
-                            </p>
-                        )}
                     </div>
 
                     <div className="bg-card rounded-2xl border p-5">
@@ -648,7 +718,7 @@ export default function Dashboard({
                                 >
                                     {courts.map((c) => (
                                         <option key={c.id} value={c.id}>
-                                            {c.name}
+                                            {c.name} · {t(SPORT_LABELS[c.sport])}
                                         </option>
                                     ))}
                                 </select>

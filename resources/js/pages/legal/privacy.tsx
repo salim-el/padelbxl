@@ -1,6 +1,9 @@
 import LegalLayout, { clubAddress, type Club } from '@/layouts/legal-layout';
 import { useT } from '@/lib/i18n';
 
+// À changer à chaque modification du texte : c'est la version que le joueur accepte au paiement.
+const VERSION = '11/11/2026';
+
 // Durées et données reprises du code : accounts:anonymize, activitylog:clean, cookies posés par Laravel et le menu.
 export default function Privacy({ club }: { club: Club }) {
     const t = useT();
@@ -10,6 +13,7 @@ export default function Privacy({ club }: { club: Club }) {
     return (
         <LegalLayout
             title={t('Politique de confidentialité')}
+            version={VERSION}
             sections={[
                 {
                     title: t('Qui traite vos données'),

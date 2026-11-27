@@ -25,8 +25,9 @@ class CounterController extends Controller
         $this->ensureStaff($request);
 
         return Inertia::render('admin/counter', [
-            'courts' => Court::where('is_active', true)->orderBy('id')->get(['id', 'name'])->all(),
-            'slots' => Clock::slots(),
+            'courts' => Court::where('is_active', true)->orderBy('id')->get(['id', 'name', 'sport'])->all(),
+            // Heures de départ de chaque sport : l'écran propose celles du terrain choisi.
+            'slots' => collect(Court::SPORTS)->mapWithKeys(fn (string $s) => [$s => Clock::slots($s)]),
             'today' => now(Clock::ZONE)->format('Y-m-d'),
         ]);
     }
@@ -37,7 +38,8 @@ class CounterController extends Controller
         $data = $request->validate([
             'court_id' => ['required', 'integer', 'exists:courts,id'],
             'date' => ['required', 'date_format:Y-m-d'],
-            'time' => ['required', 'in:'.implode(',', Clock::slots())],
+            // Les heures dépendent du sport du terrain : le service refuse celle qui n'est pas un de ses créneaux.
+            'time' => ['required', 'date_format:H:i'],
             'name' => ['required', 'string', 'max:120'],
             // Un e-mail ou un numéro de téléphone, pour prévenir le client en cas de fermeture du terrain.
             'contact' => ['required', 'string', 'max:190', 'regex:/^([^@\s]+@[^@\s]+\.[^@\s]+|\+?[0-9 .\/-]{8,20})$/'],

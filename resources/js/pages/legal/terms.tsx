@@ -2,6 +2,9 @@ import LegalLayout, { clubAddress, type Club } from '@/layouts/legal-layout';
 import { useT } from '@/lib/i18n';
 import { usePage } from '@inertiajs/react';
 
+// À changer à chaque modification du texte : c'est la version que le joueur accepte au paiement (2026.2, avec le foot à 5).
+const VERSION = '26/11/2026';
+
 // Chaque règle reprend ce que fait le code (BookingService) : si l'un change, l'autre suit.
 export default function Terms({ club }: { club: Club }) {
     const t = useT();
@@ -12,11 +15,12 @@ export default function Terms({ club }: { club: Club }) {
     return (
         <LegalLayout
             title={t('Conditions générales')}
+            version={VERSION}
             sections={[
                 {
                     title: t('Le club'),
                     lines: [
-                        t(':name exploite six terrains de padel couverts à Anderlecht.', { name }),
+                        t(':name exploite six terrains de padel et quatre terrains de foot à 5, tous couverts, à Anderlecht.', { name }),
                         address !== null && t('Adresse : :address.', { address }),
                         !!club.email && t('E-mail : :email.', { email: club.email }),
                         club.vat !== null && t('Numéro de TVA : :vat.', { vat: club.vat }),
@@ -42,7 +46,8 @@ export default function Terms({ club }: { club: Club }) {
                 {
                     title: t('Les créneaux et les prix'),
                     lines: [
-                        t('Un créneau dure 90 minutes. Le premier commence à 9 h, le dernier à 21 h.'),
+                        t('Au padel, un créneau dure 90 minutes. Le premier commence à 9 h, le dernier à 21 h.'),
+                        t('Au foot à 5, un créneau dure 60 minutes. Le premier commence à 9 h, le dernier à 22 h.'),
                         t('On réserve jusqu’à 30 jours à l’avance.'),
                         t('Les prix sont affichés TVA comprise. La TVA est de 6 % sur l’accès au terrain et de 21 % sur le matériel loué ou vendu.'),
                         t('Une réservation garde le prix affiché au moment où elle est faite, même si le tarif change ensuite.'),
@@ -73,14 +78,17 @@ export default function Terms({ club }: { club: Club }) {
                     title: t('Le partage du prix'),
                     lines: [
                         t(
-                            'Pour un match dans plus de 24 h, l’organisateur peut partager le prix avec trois autres joueurs au plus. Il les invite par e-mail ou ouvre des places aux membres du club.',
+                            'Pour un match dans plus de 24 h, l’organisateur peut partager le prix avec d’autres joueurs : trois au plus au padel, neuf au plus au foot à 5. Il les invite par e-mail.',
                         ),
+                        t('Au padel seulement, il peut aussi ouvrir des places aux membres du club.'),
                         t('Le prix est divisé en parts égales. Les centimes qui restent sont à la charge de l’organisateur.'),
                         t('Chaque joueur paie sa part et reçoit sa propre facture et son propre QR code.'),
                         t('L’organisateur se porte garant : 24 h avant le match, il paie les parts encore impayées.'),
-                        t('Un invité peut refuser jusqu’à 24 h avant le match. Sa place est alors proposée aux membres du club.'),
                         t(
-                            'Une place ouverte revient au premier membre qui paie sa part. Quand la partie est complète, un membre peut s’inscrire sur la liste d’attente. Si une place se libère, chaque inscrit reçoit un e-mail et le premier qui paie prend la place.',
+                            'Un invité peut refuser jusqu’à 24 h avant le match. Au padel, sa place est alors proposée aux membres du club. Au foot à 5, sa part reste à la charge de l’organisateur.',
+                        ),
+                        t(
+                            'Au padel, une place ouverte revient au premier membre qui paie sa part. Quand la partie est complète, un membre peut s’inscrire sur la liste d’attente. Si une place se libère, chaque inscrit reçoit un e-mail et le premier qui paie prend la place.',
                         ),
                     ],
                 },

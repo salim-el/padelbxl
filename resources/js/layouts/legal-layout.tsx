@@ -15,12 +15,20 @@ export type Club = {
 
 export type Section = { title: string; lines: (string | false)[] };
 
-// À changer à chaque modification d'un des deux textes : c'est la version que le joueur accepte au paiement.
-const VERSION = '11/11/2026';
-
 // Pages publiques : lisibles sans compte, depuis la case « conditions » du paiement ou le pied de page.
 // La page de contact réutilise le même cadre, avec un formulaire à la place des sections.
-export default function LegalLayout({ title, sections = [], children }: { title: string; sections?: Section[]; children?: ReactNode }) {
+// Chaque texte porte sa propre date de version : les conditions générales changent sans la politique de confidentialité.
+export default function LegalLayout({
+    title,
+    version,
+    sections = [],
+    children,
+}: {
+    title: string;
+    version?: string;
+    sections?: Section[];
+    children?: ReactNode;
+}) {
     const t = useT();
 
     return (
@@ -37,7 +45,7 @@ export default function LegalLayout({ title, sections = [], children }: { title:
                 </header>
                 <main id="contenu" className="mx-auto max-w-3xl px-4 py-12">
                     <h1 className="text-3xl font-extrabold uppercase">{title}</h1>
-                    {sections.length > 0 && <p className="mt-2 text-sm text-[#5F6B78]">{t('Version du :date', { date: VERSION })}</p>}
+                    {version && <p className="mt-2 text-sm text-[#5F6B78]">{t('Version du :date', { date: version })}</p>}
                     {sections.map((s) => (
                         <section key={s.title} className="mt-8">
                             <h2 className="text-xl font-bold">{s.title}</h2>
