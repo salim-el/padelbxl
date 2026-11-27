@@ -31,7 +31,9 @@ class ShareInvitation extends Notification
         $start = Clock::local($this->booking->starts_at)->locale($this->locale ?? app()->getLocale());
 
         return (new MailMessage)
-            ->subject(__(':name vous invite à une partie de padel', ['name' => $this->organizer]))
+            ->subject($this->booking->court->sport === 'padel'
+                ? __(':name vous invite à une partie de padel', ['name' => $this->organizer])
+                : __(':name vous invite à un match de foot à 5', ['name' => $this->organizer]))
             ->line(__(':name a réservé le :court le :date à :time et partage le prix avec vous.', [
                 'name' => $this->organizer,
                 'court' => $this->booking->court->name,

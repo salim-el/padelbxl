@@ -43,7 +43,8 @@ class AdminController extends Controller
         $today = $bookingsOf($day);
         $list = $listed->equalTo($day) ? $today : $bookingsOf($listed);
         $played = $today->whereIn('status', ['confirmed', 'used', 'missed'])->count();
-        $slots = Court::where('is_active', true)->count() * count(Clock::slots());
+        // Chaque terrain compte ses propres créneaux : 9 de 90 minutes au padel, 14 d'une heure au foot à 5.
+        $slots = Court::where('is_active', true)->get(['sport'])->sum(fn (Court $c) => count(Clock::slots($c->sport)));
 
         return Inertia::render('admin/dashboard', [
             'stats' => [
@@ -71,11 +72,14 @@ class AdminController extends Controller
             ])->all(),
             'settings' => ['opens_at' => substr(app(ClubSetting::class)->opens_at, 0, 5), 'closes_at' => substr(app(ClubSetting::class)->closes_at, 0, 5),
                 'slot_minutes' => app(ClubSetting::class)->slot_minutes],
-            'courts' => Court::orderBy('id')->get(['id', 'name'])->all(),
+            'courts' => Court::orderBy('id')->get(['id', 'name', 'sport'])->all(),
+            // « Terrains et tarifs par discipline » : durée du créneau et joueurs de chaque sport.
+            'minutes' => collect(Court::SPORTS)->mapWithKeys(fn (string $s) => [$s => Clock::slotMinutes($s)]),
+            'players' => Court::PLAYERS,
             // Tarifs en cours et à venir ; ceux qui sont clos restent en base pour l'historique des prix.
             'rules' => PricingRule::where(fn ($q) => $q->whereNull('valid_until')->orWhereDate('valid_until', '>=', today()))
                 ->orderBy('valid_from')->orderBy('start_time')->get()->map(fn (PricingRule $r) => [
-                    'id' => $r->id, 'name' => $r->name, 'start' => substr($r->start_time, 0, 5), 'end' => substr($r->end_time, 0, 5),
+                    'id' => $r->id, 'name' => $r->name, 'sport' => $r->sport, 'start' => substr($r->start_time, 0, 5), 'end' => substr($r->end_time, 0, 5),
                     'price_cents' => $r->price_cents, 'vat_rate' => (float) $r->vat_rate,
                     'valid_from' => $r->valid_from->format('d/m/Y'), 'valid_until' => $r->valid_until?->format('d/m/Y'),
                     'upcoming' => $r->valid_from->isFuture(),
@@ -238,6 +242,7 @@ class AdminController extends Controller
         $this->ensureStaff($request);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:60'],
+            'sport' => ['nullable', Rule::in(Court::SPORTS)],
             'start_time' => ['required', 'date_format:H:i', 'after_or_equal:'.substr(app(ClubSetting::class)->opens_at, 0, 5)],
             'end_time' => ['required', 'date_format:H:i', 'after:start_time', 'before_or_equal:'.substr(app(ClubSetting::class)->closes_at, 0, 5)],
             'price_cents' => ['required', 'integer', 'min:100', 'max:100000'],
@@ -245,7 +250,9 @@ class AdminController extends Controller
             'vat_rate' => ['required', 'in:6,21'],
             'valid_from' => ['required', 'date', 'after_or_equal:today'],
         ]);
-        $overlap = PricingRule::whereDate('valid_from', $data['valid_from'])
+        // Sans sport, le tarif reste du padel, comme avant le foot à 5. Seuls les tarifs du même sport peuvent se chevaucher.
+        $data['sport'] ??= 'padel';
+        $overlap = PricingRule::where('sport', $data['sport'])->whereDate('valid_from', $data['valid_from'])
             ->where('start_time', '<', $data['end_time'].':00')->where('end_time', '>', $data['start_time'].':00')->exists();
         if ($overlap) {
             return back()->withErrors(['pricing' => __('Un autre tarif commence le même jour sur ces heures.')]);
@@ -284,9 +291,11 @@ class AdminController extends Controller
         if ($next->slots() === []) {
             return back()->withErrors(['settings' => __('Aucun créneau ne tient entre ces heures.')]);
         }
-        $misplaced = Booking::whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->get(['starts_at', 'ends_at'])
-            ->filter(fn (Booking $b) => ! in_array(Clock::local($b->starts_at)->format('H:i'), $next->slots(), true)
-                || $b->starts_at->diffInMinutes($b->ends_at) !== $next->slot_minutes)->count();
+        // Chaque réservation se mesure aux créneaux de son sport : le foot garde ses créneaux d'une heure.
+        // diffInMinutes rend un float (Carbon 3) : sans (int), aucune durée ne serait jamais égale.
+        $misplaced = Booking::with('court')->whereIn('status', ['pending_payment', 'confirmed'])->where('starts_at', '>', now())->get(['court_id', 'starts_at', 'ends_at'])
+            ->filter(fn (Booking $b) => ! in_array(Clock::local($b->starts_at)->format('H:i'), $next->slots($b->court->sport), true)
+                || (int) $b->starts_at->diffInMinutes($b->ends_at) !== $next->minutes($b->court->sport))->count();
         if ($misplaced > 0) {
             return back()->withErrors(['settings' => __(':count réservation(s) à venir ne tomberai(en)t plus sur un créneau. Déplacez-les ou annulez-les d’abord.', ['count' => $misplaced])]);
         }

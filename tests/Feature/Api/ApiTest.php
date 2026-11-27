@@ -59,7 +59,7 @@ class ApiTest extends TestCase
         $response = $this->get('/api/v1/opendata/slots.jsonld?date=2026-10-23')->assertOk()
             ->assertHeader('Content-Type', 'application/ld+json')
             ->assertJsonPath('license', 'https://creativecommons.org/licenses/by/4.0/')
-            ->assertJsonCount(Court::where('is_active', true)->count(), 'items');
+            ->assertJsonCount(Court::where('is_active', true)->where('sport', 'padel')->count(), 'items');
 
         $court1 = collect($response->json('items'))->firstWhere('name', 'Terrain 1');
         $this->assertNotContains($taken->starts_at->toIso8601String(), array_column($court1['event'], 'startDate'));

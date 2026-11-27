@@ -9,15 +9,15 @@ class Clock
 {
     public const ZONE = 'Europe/Brussels';
 
-    /** F24 : heures de départ des créneaux, calculées depuis les réglages du club (9 h à 23 h, 90 minutes par défaut). */
-    public static function slots(): array
+    /** F24 : heures de départ des créneaux d'un sport, depuis les réglages du club (9 h à 23 h ; 90 minutes par défaut pour le padel). */
+    public static function slots(string $sport = 'padel'): array
     {
-        return app(ClubSetting::class)->slots();
+        return app(ClubSetting::class)->slots($sport);
     }
 
-    public static function slotMinutes(): int
+    public static function slotMinutes(string $sport = 'padel'): int
     {
-        return app(ClubSetting::class)->slot_minutes;
+        return app(ClubSetting::class)->minutes($sport);
     }
 
     public static function local(CarbonImmutable $utc): CarbonImmutable

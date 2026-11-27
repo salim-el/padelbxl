@@ -27,12 +27,13 @@ class SlotService
         return $this->isFlash($startUtc) ? (int) round($rule->price_cents * (100 - self::FLASH_PERCENT) / 100) : $rule->price_cents;
     }
 
-    /** Règle de prix d'un créneau, selon l'heure et la date. */
-    public function priceFor(CarbonImmutable $startUtc): ?PricingRule
+    /** Règle de prix d'un créneau, selon le sport, l'heure et la date. */
+    public function priceFor(CarbonImmutable $startUtc, string $sport = 'padel'): ?PricingRule
     {
         $local = Clock::local($startUtc);
 
         return PricingRule::query()
+            ->where('sport', $sport)
             ->where('start_time', '<=', $local->format('H:i:s'))
             ->where('end_time', '>', $local->format('H:i:s'))
             ->whereDate('valid_from', '<=', $local->toDateString())
@@ -41,10 +42,10 @@ class SlotService
             ->first();
     }
 
-    /** Créneaux d'un jour, terrain par terrain, sans aucune donnée personnelle. */
-    public function forDate(string $date): array
+    /** Créneaux d'un jour pour un sport, terrain par terrain, sans aucune donnée personnelle. */
+    public function forDate(string $date, string $sport = 'padel'): array
     {
-        $courts = Court::where('is_active', true)->orderBy('id')->get();
+        $courts = Court::where('is_active', true)->where('sport', $sport)->orderBy('id')->get();
         $dayStart = Clock::slotStart($date, '00:00');
         $busy = Booking::query()
             ->whereIn('status', Booking::ACTIVE)
@@ -56,14 +57,14 @@ class SlotService
         $closures = CourtClosure::where('starts_at', '<', $dayStart->addDay())->where('ends_at', '>', $dayStart)->get(['court_id', 'starts_at', 'ends_at']);
 
         $rows = [];
-        foreach (Clock::slots() as $time) {
+        foreach (Clock::slots($sport) as $time) {
             $start = Clock::slotStart($date, $time);
-            $end = $start->addMinutes(Clock::slotMinutes());
+            $end = $start->addMinutes(Clock::slotMinutes($sport));
             $cells = [];
             foreach ($courts as $court) {
                 $closed = $closures->contains(fn ($c) => $c->court_id === $court->id && $c->starts_at < $end && $c->ends_at > $start);
                 $taken = $closed || $busy->contains(fn ($b) => $b->court_id === $court->id && $b->starts_at < $end && $b->ends_at > $start);
-                $rule = $this->priceFor($start);
+                $rule = $this->priceFor($start, $sport);
                 $cells[] = [
                     'court_id' => $court->id,
                     'available' => ! $taken && $rule !== null && $start->isFuture(),
@@ -78,6 +79,7 @@ class SlotService
         }
 
         return [
+            'sport' => $sport,
             'courts' => $courts->map(fn ($c) => ['id' => $c->id, 'name' => $c->name])->all(),
             'rows' => $rows,
         ];

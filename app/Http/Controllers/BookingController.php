@@ -70,7 +70,11 @@ class BookingController extends Controller
 
         return Inertia::render('bookings/checkout', [
             'booking' => $this->present($booking->load('court')),
-            'products' => Product::where('is_active', true)->orderBy('kind')->orderBy('name')->get(['id', 'name', 'kind', 'price_cents'])->all(),
+            'products' => Product::where('is_active', true)->where(fn ($q) => $q->whereNull('sport')->orWhere('sport', $booking->court->sport))
+                ->orderBy('kind')->orderBy('name')->get(['id', 'name', 'kind', 'price_cents'])->all(),
+            // Partage du prix : 3 invités au padel, 9 au foot à 5 ; l'appel aux membres reste réservé au padel.
+            'sport' => $booking->court->sport,
+            'max_guests' => $booking->court->maxPlayers() - 1,
             // F11 : l'appel propose par défaut le niveau de l'organisateur, à un point près.
             'my_level' => $request->user()->level !== null ? (int) round((float) $request->user()->level) : null,
             // F15 : l'avoir se déduit en priorité, la page annonce ce qui reste à payer par carte.
@@ -81,11 +85,15 @@ class BookingController extends Controller
     public function pay(Request $request, Booking $booking, MatchCallService $calls, StripePayments $stripe, StripeCheckout $checkout): SymfonyResponse
     {
         $this->ensureOwner($request, $booking);
+        // Autres joueurs du sport : 3 au padel, 9 au foot à 5. Le service refuse les places ouvertes au foot.
+        $others = $booking->court->maxPlayers() - 1;
         $data = $request->validate([
             'accept_terms' => ['accepted'],
+            // shortcut: 4 articles au plus, la taille d'une partie de padel (aussi en base) ; le catalogue livré n'a que du padel.
+            // À passer à maxPlayers() le jour où un article sans sport est proposé au foot.
             'items' => ['nullable', 'array'], 'items.*' => ['integer', 'min:0', 'max:4'],
-            'guests' => ['nullable', 'array', 'max:'.(BookingService::MAX_PLAYERS - 1)], 'guests.*' => ['nullable', 'email:rfc', 'max:255', 'distinct:ignore_case'],
-            'open_spots' => ['nullable', 'integer', 'min:0', 'max:'.(BookingService::MAX_PLAYERS - 1)],
+            'guests' => ['nullable', 'array', 'max:'.$others], 'guests.*' => ['nullable', 'email:rfc', 'max:255', 'distinct:ignore_case'],
+            'open_spots' => ['nullable', 'integer', 'min:0', 'max:'.$others],
             // F11 : niveau demandé dans l'appel, obligatoire dès qu'une place est ouverte au club.
             'level_min' => ['required_unless:open_spots,0,null', 'nullable', 'integer', 'between:1,7'],
             'level_max' => ['required_unless:open_spots,0,null', 'nullable', 'integer', 'between:1,7', 'gte:level_min'],
@@ -100,7 +108,7 @@ class BookingController extends Controller
         try {
             // F9 : avec Stripe, le joueur paie sur la page de Stripe ; la réservation se confirme à son retour (paid())
             // ou à la notification signée, selon ce qui arrive en premier. Ce que l'avoir couvre en entier ne passe pas par Stripe.
-            $card = $stripe->enabled() ? $this->bookings->cardAmount($booking, $request->user(), $order['items'], count($guests) + $open) : 0;
+            $card = $stripe->enabled() ? $this->bookings->cardAmount($booking, $request->user(), $order['items'], count($guests), $open) : 0;
             if ($card > 0) {
                 if ($booking->status !== 'pending_payment' || $booking->hold_expires_at?->isPast()) {
                     throw new BookingException(__('Les dix minutes sont écoulées. Le créneau a été libéré, rien n’a été débité.'));
@@ -196,6 +204,8 @@ class BookingController extends Controller
             'booking' => $this->present($booking),
             // Un inconnu venu par une place ouverte ne voit que le prénom : l'organisateur ne l'a pas choisi.
             'organizer' => $player->guest_email === null ? strtok($booking->organizer->name, ' ') : $booking->organizer->name,
+            // Le message de refus dépend du sport : seule une place de padel est proposée aux membres.
+            'sport' => $booking->court->sport,
             'share_cents' => $player->share_cents,
             'share_status' => $player->status,
             'payable' => $player->status === 'invited' && $booking->status === 'confirmed' && $booking->starts_at->isFuture(),
@@ -203,7 +213,8 @@ class BookingController extends Controller
             'qr' => $qr,
             'qr_window' => $pass ? Clock::local($pass->valid_from)->format('H:i').' – '.Clock::local($pass->valid_until)->format('H:i') : null,
             'invoices' => $booking->invoices()->whereIn('payment_id', Payment::where('booking_player_id', $player->id)->where('payer_id', $request->user()->id)->select('id'))->with('creditNotes')->get()
-                ->map(fn ($i) => ['number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents, 'credit_notes' => $i->creditNotes->pluck('number')->all()])->all(),
+                ->map(fn ($i) => ['number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents, 'credit_notes' => $i->creditNotes->pluck('number')->all(),
+                    'ubl' => $i->customer_vat !== null && UblInvoice::sellerIsConfigured()])->all(),
         ]);
     }
 
@@ -234,7 +245,10 @@ class BookingController extends Controller
             return back()->withErrors(['booking' => $e->getMessage()]);
         }
 
-        return to_route('bookings.index')->with('success', __('Invitation refusée. Votre place est proposée aux autres membres du club.'));
+        // Les places ouvertes n'existent qu'au padel : au foot, la part refusée reste à l'organisateur.
+        return to_route('bookings.index')->with('success', $booking->court->sport === 'padel'
+            ? __('Invitation refusée. Votre place est proposée aux autres membres du club.')
+            : __('Invitation refusée. Votre part reste à la charge de l’organisateur.'));
     }
 
     public function show(Request $request, Booking $booking): Response
@@ -248,6 +262,7 @@ class BookingController extends Controller
         $qr = $pass && $pass->revoked_at === null && in_array($booking->status, ['confirmed', 'used'], true)
             ? (new QRCode)->render(BookingService::passToken($player))
             : null;
+        $padel = $booking->court->sport === 'padel';
 
         return Inertia::render('bookings/show', [
             'booking' => $this->present($booking),
@@ -261,9 +276,10 @@ class BookingController extends Controller
             // Liste vide quand l'organisateur a tout payé seul : l'écran n'affiche alors pas le partage.
             'players' => $booking->players->count() < 2 ? [] : $booking->players->sortByDesc('is_organizer')->values()->map(fn ($p) => [
                 // L'organisateur revoit l'adresse qu'il a tapée, jamais le nom du compte : il n'apprend pas qui est inscrit au club.
-                // Une place ouverte n'a pas d'adresse : null, l'écran affiche « place ouverte ».
+                // Sans adresse, c'est une place ouverte au padel ; au foot, une invitation refusée, à la charge de l'organisateur.
                 'name' => $p->is_organizer ? $request->user()->name : $p->guest_email,
-                'open' => ! $p->is_organizer && $p->guest_email === null, 'taken' => $p->user_id !== null, 'is_organizer' => $p->is_organizer, 'share_cents' => $p->share_cents, 'status' => $p->status,
+                'open' => $padel && ! $p->is_organizer && $p->guest_email === null, 'declined' => ! $padel && ! $p->is_organizer && $p->guest_email === null,
+                'taken' => $p->user_id !== null, 'is_organizer' => $p->is_organizer, 'share_cents' => $p->share_cents, 'status' => $p->status,
             ])->all(),
             'invoices' => $booking->invoices->map(fn ($i) => [
                 'number' => $i->number, 'total_cents' => $i->total_cents, 'vat_cents' => $i->vat_cents, 'credit_notes' => $i->creditNotes->pluck('number')->all(),
@@ -272,10 +288,9 @@ class BookingController extends Controller
         ]);
     }
 
-    /** Facture électronique UBL (Peppol BIS 3.0), pour une facture établie au nom d'une entreprise. */
+    /** Facture électronique UBL (Peppol BIS 3.0), pour une facture établie au nom d'une entreprise : organisateur ou partenaire, seul le payeur la télécharge. */
     public function ubl(Request $request, Booking $booking, Invoice $invoice): HttpResponse
     {
-        $this->ensureOwner($request, $booking);
         abort_if($invoice->customer_vat === null, 404);
         abort_unless(Payment::whereKey($invoice->payment_id)->where('payer_id', $request->user()->id)->exists(), 404);
         abort_unless(UblInvoice::sellerIsConfigured(), 503, 'Les coordonnées du club (CLUB_* dans .env) ne sont pas complètes.');
@@ -359,7 +374,7 @@ class BookingController extends Controller
         $start = CarbonImmutable::parse($data['starts_at'])->utc();
         try {
             // F9 : un supplément que l'avoir ne couvre pas se paie sur la page de Stripe ; le déplacement se fait au retour.
-            $card = $stripe->enabled() ? $this->bookings->moveAmount($booking, $request->user(), $start) : 0;
+            $card = $stripe->enabled() ? $this->bookings->moveAmount($booking, $request->user(), $court, $start) : 0;
             if ($card > 0) {
                 return Inertia::location($checkout->start($booking, $request->user(), 'move', $card,
                     'Supplément de déplacement : '.$court->name.' – '.Clock::local($start)->format('d/m/Y H:i'), false,

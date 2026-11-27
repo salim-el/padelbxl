@@ -39,7 +39,8 @@ class LegalConsentTest extends TestCase
         $user = User::where('email', 'emma.lejeune@example.test')->firstOrFail();
         $this->assertSame('1998-03-02', $user->birth_date->toDateString());
         $this->assertEquals(4, $user->level);
-        $this->assertSame(['privacy:2026.1', 'terms:2026.1'], Consent::where('user_id', $user->id)->with('document')->get()
+        // Les conditions en vigueur sont la version 2026.2, publiée avec le foot à 5 ; la vie privée reste en 2026.1.
+        $this->assertSame(['privacy:2026.1', 'terms:2026.2'], Consent::where('user_id', $user->id)->with('document')->get()
             ->map(fn ($c) => "{$c->document->type}:{$c->document->version}")->sort()->values()->all());
     }
 
@@ -69,20 +70,46 @@ class LegalConsentTest extends TestCase
     public function test_a_new_version_must_be_accepted_before_booking_and_the_acceptance_is_dated(): void
     {
         $this->seed(DatabaseSeeder::class);
+        // Inscrit le 14 novembre, ce joueur n'a accepté que les conditions 2026.1 : la version 2026.2 (foot à 5) date du 26.
         $this->travelTo(CarbonImmutable::parse('2026-11-14 10:00', Clock::ZONE));
-        $player = User::where('email', 'lucas.martin@example.test')->first();
-        LegalDocument::create(['type' => 'terms', 'version' => '2026.2', 'locale' => 'fr', 'content' => 'Les réservations au comptoir apparaissent dans l’historique.', 'published_at' => now()->subDay()]);
-        $slot = ['court_id' => Court::first()->id, 'starts_at' => Clock::slotStart('2026-11-20', '19:30')->toIso8601String()];
+        $player = User::factory()->create();
+        $this->travelTo(CarbonImmutable::parse('2026-11-28 10:00', Clock::ZONE));
+        $slot = ['court_id' => Court::first()->id, 'starts_at' => Clock::slotStart('2026-12-04', '19:30')->toIso8601String()];
 
         $this->actingAs($player)->get('/bookings')->assertRedirect('/legal/accept');
         $this->actingAs($player)->post('/bookings', $slot)->assertRedirect('/legal/accept');
-        $this->actingAs($player)->get('/legal/accept')->assertInertia(fn ($page) => $page->component('legal/accept')->has('documents', 1));
+        $this->actingAs($player)->get('/legal/accept')->assertInertia(fn ($page) => $page->component('legal/accept')->has('documents', 1)
+            ->where('documents.0.type', 'terms')->where('documents.0.version', '2026.2')->where('documents.0.published_at', '2026-11-26'));
 
         $this->actingAs($player)->post('/legal/accept', ['accept' => true])->assertRedirect();
         $this->actingAs($player)->get('/bookings')->assertOk();
         $consent = Consent::where('user_id', $player->id)->whereHas('document', fn ($q) => $q->where('version', '2026.2'))->first();
         $this->assertNotNull($consent);
-        $this->assertSame('2026-11-14 10:00', Clock::local($consent->accepted_at->toImmutable())->format('Y-m-d H:i'));
+        $this->assertSame('2026-11-28 10:00', Clock::local($consent->accepted_at->toImmutable())->format('Y-m-d H:i'));
+    }
+
+    public function test_the_migration_publishes_the_2026_2_terms_on_a_database_already_in_service(): void
+    {
+        $migration = require database_path('migrations/2026_11_26_000003_publish_terms_version_2026_2.php');
+        // Base neuve, sans document : DatabaseSeeder publiera la version, la migration n'ajoute rien.
+        $migration->up();
+        $this->assertSame(0, LegalDocument::count());
+
+        // Base en ligne semée avant le foot : elle n'a que la version 2026.1.
+        LegalDocument::create(['type' => 'terms', 'version' => '2026.1', 'locale' => 'fr', 'content' => 'Conditions générales, version 2026.1.', 'published_at' => '2026-01-01 00:00:00']);
+        // Mise en ligne le 1er décembre : un joueur inscrit avant a accepté la version 2026.1, alors en vigueur.
+        $this->travelTo(CarbonImmutable::parse('2026-12-01 14:30', Clock::ZONE));
+        $migration->up();
+        $migration->up();
+        $published = LegalDocument::where('version', '2026.2')->orderBy('locale')->get();
+        $this->assertSame(['en', 'fr', 'nl'], $published->pluck('locale')->all());
+        $this->assertTrue($published->every(fn (LegalDocument $d) => $d->published_at->equalTo(now())));
+
+        // Une base neuve semée par DatabaseSeeder reçoit la même version, à la date du texte.
+        $migration->down();
+        $this->assertFalse(LegalDocument::where('version', '2026.2')->exists());
+        $this->seed(DatabaseSeeder::class);
+        $this->assertSame('2026-11-26', LegalDocument::where('version', '2026.2')->firstOrFail()->published_at->toDateString());
     }
 
     public function test_staff_are_not_stopped_and_the_api_answers_403(): void

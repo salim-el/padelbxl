@@ -29,7 +29,8 @@ class SlotFreed extends Notification
                 'date' => $start->isoFormat(__('dddd D MMMM YYYY')),
                 'time' => $start->format('H:i'),
             ]))
-            ->action(__('Réserver ce créneau'), route('planning', ['date' => $start->toDateString()]))
+            // Avec le sport, le lien ouvre le planning du terrain libéré, pas l'écran de choix du sport.
+            ->action(__('Réserver ce créneau'), route('planning', ['date' => $start->toDateString(), 'sport' => $this->booking->court->sport]))
             ->line(__('Le créneau revient au premier joueur qui le réserve.'));
     }
 }

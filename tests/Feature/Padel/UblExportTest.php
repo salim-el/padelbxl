@@ -84,6 +84,23 @@ class UblExportTest extends TestCase
         $this->actingAs($this->lucas)->get("/bookings/{$booking->public_id}")->assertInertia(fn (Assert $page) => $page->where('invoices.0.ubl', true));
     }
 
+    public function test_a_company_partner_downloads_the_ubl_of_the_share_it_paid(): void
+    {
+        // Inès organise le match de foot, Lucas (entreprise) paie sa part : sa facture porte son numéro de TVA.
+        $service = app(BookingService::class);
+        $ines = User::where('email', 'ines.laurent@example.test')->firstOrFail();
+        $hold = $service->hold($ines, Court::where('name', 'Foot 1')->firstOrFail(), Clock::slotStart('2026-10-23', '20:00'));
+        $booking = $service->confirmPayment($hold, $ines, guests: [$this->lucas->email]);
+        $service->payShare($booking, $this->lucas);
+        $number = Invoice::where('booking_id', $booking->id)->whereNotNull('customer_vat')->sole()->number;
+
+        $this->actingAs($this->lucas)->get("/bookings/{$booking->public_id}/share")->assertInertia(fn (Assert $page) => $page->where('invoices.0.ubl', true));
+        $this->actingAs($this->lucas)->get("/bookings/{$booking->public_id}/invoices/{$number}/ubl")
+            ->assertOk()->assertHeader('Content-Type', 'application/xml; charset=UTF-8');
+        // L'organisatrice n'a pas payé cette facture : elle ne la télécharge pas.
+        $this->actingAs($ines)->get("/bookings/{$booking->public_id}/invoices/{$number}/ubl")->assertNotFound();
+    }
+
     public function test_an_invoice_for_an_individual_has_no_ubl(): void
     {
         $this->lucas->forceFill(['account_type' => 'individual', 'company_name' => null, 'vat_number' => null])->save();
